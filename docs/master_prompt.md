@@ -123,8 +123,7 @@ A sale register includes:
 
 ### Vehicle reference and historical snapshot
 
-- Reference to the selected vehicle/model/version as appropriate.
-- Selected color.
+- Reference ID and text snapshot of the selected vehicle model, version, and color names at the time the sale is created, ensuring future catalog renames do not retroactively alter historical sale records.
 - Snapshot of the selected version's reference price at the time the sale is created.
 
 ### Other sale information
@@ -132,12 +131,12 @@ A sale register includes:
 - Thirteen task records and task-specific data.
 - Progress and timeline information derived from the task records and their ordered sequence.
 - Current active task.
-- Sale temperature: `Hot`, `Warm`, or `Cold`, representing the estimated probability of completion.
+- Sale temperature: `Hot`, `Warm`, or `Cold`, representing the estimated probability of completion at the time of creation. This value must remain immutable after the sale is created to preserve baseline conversion analytics.
 - Automatically recorded creation timestamp (`created_at`).
 - Employee who created the sale (`created_by`), distinct from the assigned Sales Advisor.
 - Last update timestamp and actor where applicable (`updated_at`, `updated_by`).
 - Overall sale state: `active`, `completed`, or `cancelled`.
-- Sale-level notes.
+- Sale-level notes (not visible for customers).
 - Assigned sales advisor.
 
 The exact final relational structure should be justified during data modeling; the list above establishes business information that must be represented, not a mandate to create one table per bullet.
@@ -149,6 +148,9 @@ The exact final relational structure should be justified during data modeling; t
 - Sales managers may cancel any sale and undo cancellations.
 - Cancelled sales must remain available for historical/audit purposes and must not be physically deleted during ordinary operation.
 - System administrators may permanently delete corrupted/test sale records when necessary, subject to careful safeguards and auditability.
+- If a sale is cancelled, all active SLA timers and scheduled reminders must be immediately halted.
+- If a Manager or Admin undoes the completion of Task 13, the overall sale state must transactionally revert from `completed` back to `active`, recording a mandatory audit event.
+- **Resource Conflict Validation:** When a Sales Manager or System Admin attempts to undo a cancellation (reopen a sale), the backend must validate that the physical identifiers (Series, VIN, License Plate) recorded in that sale are not currently in use by another `active` or `completed` sale. If a conflict exists, the system must block the reopening and display an error explaining that the vehicle is already assigned to another active operation.
 
 ### Record provenance and audit trail
 
@@ -172,6 +174,8 @@ Record provenance fields do **not** replace a dedicated audit trail. Maintain an
 - Role/permission changes and other security-sensitive administrative actions.
 
 For relevant audit events, record the actor, target entity and record ID, event/action type, timestamp, and an appropriate before/after change summary. Keep audit records append-only for ordinary application roles. Avoid storing passwords, tokens, full document contents, or unnecessary sensitive data in audit payloads. Define access restrictions and retention rules for audit logs. Authentication access logs described later are a separate, specialized log.
+
+All system timestamps must be stored in UTC in the database and explicitly converted to the America/Lima (UTC-5) timezone for all frontend displays and PDF generations.
 
 ---
 
@@ -239,7 +243,7 @@ Before a task status is changed, show a confirmation message. This is especially
 - Vehicle series number — textbox, unique. **Customer-visible.**
 - Vehicle Identification Number (VIN) — textbox, unique. **Customer-visible.**
 - Final amount payable to Toyota, USD — numeric field. **Customer-visible.**
-- Final Grupo Pana commission, USD — numeric field/calculated value; formula: [Task 1 Quoted final vehicle price] - ([Final amount payable to Toyota] + [Task 1 Accessory amount] + [Task 1 Vehicle release processing amount]). **Customer-visible.**
+- Final Grupo Pana commission, USD — numeric field/calculated value; formula: [Task 1 Quoted final vehicle price] - ([Final amount payable to Toyota] + [Task 1 Accessory amount] + [Task 1 Vehicle release processing amount]). This calculated commission cannot be a negative number; a negative result must block task completion. **Customer-visible.**
 - Settlement document — PDF.
 
 **Recommended duration:** 12 days.
@@ -252,8 +256,8 @@ Before a task status is changed, show a confirmation message. This is especially
 
 - Transaction bank — dropdown, including BCP, BBVA, Scotiabank, Interbank, and other supported banks. **Customer-visible.**
 - Transaction date — date. **Customer-visible.**
-- Transaction number — textbox, unique. **Customer-visible.**
-- Deposited amount, USD — numeric field; expected to match the quoted final vehicle price from Task 1. **Customer-visible.**
+- Transaction number — textbox. Must be unique per bank (composite uniqueness on `transaction_bank` and `transaction_number`).
+- Deposited amount, USD — numeric field; expected to match the quoted final vehicle price from Task 1. If the entered amount does not match the quote, the UI must prompt the user for a mandatory 'Mismatch Reason' before allowing task completion. **Customer-visible.**
 - Payment voucher — PDF. **Customer-visible.**
 
 **Recommended duration:** None.
@@ -266,7 +270,7 @@ Before a task status is changed, show a confirmation message. This is especially
 
 - Transaction bank — dropdown, including BCP, BBVA, Scotiabank, Interbank, and other supported banks.
 - Transaction date — date.
-- Transaction number — textbox, unique.
+- Transaction number — textbox. Must be unique per bank (composite uniqueness on `transaction_bank` and `transaction_number`).
 - Deposited amount, USD — numeric field; expected to match the final amount payable to Toyota established in Task 3.
 - Payment voucher — PDF.
 - Payment confirmation — PDF.
@@ -285,6 +289,8 @@ Before a task status is changed, show a confirmation message. This is especially
 - **Vehicle release processing invoice:** number (textbox, unique), date, amount in USD (expected to match the amount established in Task 1), PDF file. All four fields are **Customer-visible**.
 
 **Recommended duration:** None.
+
+Note: Invoice number fields must include the full series and correlative number (e.g., `F001-000123`) to guarantee uniqueness.
 
 ### Task 7 — Documentos Endosados
 
@@ -370,11 +376,12 @@ Before a task status is changed, show a confirmation message. This is especially
 
 - **Editing Completed Tasks (Data Correction):** Sales Managers and System Admins may edit the fields or replace documents within a `completed` task without changing its status. Every edit to a completed task must trigger a mandatory prompt asking for the "Reason for Edit" and must be strictly recorded in the append-only audit log.
 - **Reverting Task Status (Accidental Completion):** True status rollback is heavily restricted to prevent "time travel" in the customer portal. A Sales Manager or System Admin may only revert the status of the _most recently completed task_ back to `in_progress`.
-- **No Cascading Rollbacks:** It is impossible to reopen Task 4 if Task 6 is the current active task. To reopen Task 4, a manager would manually have to revert Task 6, then revert Task 5, and then revert Task 4. This friction is intentional to protect data integrity and customer milestone visibility.
+- **Reverting Active Tasks:** Sales Managers and System Admins may revert an `in_progress` task back to `pending`. This action requires a documented reason, must be recorded in the audit log, and immediately pauses the task's SLA timer.
+- **No Cascading Rollbacks:** It is impossible to reopen Task 4 if Task 6 is the current active task. To reopen Task 4, a manager would manually have to revert Task 6 to `pending`, then revert Task 5 to `pending`, and then revert Task 4. This friction is intentional to protect data integrity and customer milestone visibility.
 
 ### Task data rules and modeling instructions
 
-- Every task must have an optional Notes textarea.
+- Every task must have an optional Notes textarea (not visible for customers).
 - Every non-optional field/document listed for a task is required before that task can be completed.
 - All task fields and document uploads must remain disabled and read-only until the task's status officially transitions to `in_progress`.
 - Enforce unique constraints where specified.
@@ -547,7 +554,7 @@ The notification strategy should keep customers informed without sending an emai
 
 - **Trigger:** A Sales Advisor creates a sale register and assigns the vehicle to the customer.
 - **Subject:** `Hemos registrado tu nueva solicitud de vehículo`
-- **Content:** Confirm that the process has started; include vehicle model/color, assigned advisor's name and WhatsApp/contact number, and a link to view Phase 1 in the portal.
+- **Content:** Confirm that the process has started; include vehicle model/color, assigned advisor's name and WhatsApp/contact number, and a link to view Milestone 1 in the portal.
 
 ### Notification 3 — Official quotation available
 
@@ -593,6 +600,8 @@ The notification strategy should keep customers informed without sending an emai
 
 Notifications should use reliable event handling: avoid sending duplicate messages if a task transition is retried, a scheduler runs more than once, or an event is replayed. Store delivery attempts and outcomes, and do not attach sensitive documents directly to email when a secure authenticated download link is more appropriate.
 
+Before dispatching an email, the system must check the notification delivery logs. If a milestone notification was already successfully sent for a specific sale register, it must not be sent again, even if the triggering task is reverted and re-completed.
+
 ---
 
 ## 12. Employee task reminders, deadlines, and escalation
@@ -605,6 +614,7 @@ A server-side scheduled process should evaluate tasks with a recommended duratio
 - Use strict elapsed calendar time; weekends and non-business hours do not pause the clock.
 - Example: a three-day task started Friday at 4:00 PM is due Monday at 4:00 PM.
 - Tasks without a recommended duration do not receive these duration-based reminders unless another rule is defined.
+- Reminders and escalations must be implemented statelessly via scheduled database queries comparing the current time to calculated due-date timestamps, rather than using active in-memory timers.
 
 ### Approaching-due warning
 
@@ -612,14 +622,15 @@ A server-side scheduled process should evaluate tasks with a recommended duratio
 
 ### Escalation and recipients
 
-- **Level 1 — Warning through 24 hours overdue:** Notify the assigned Sales Advisor.
-- **Level 2 — 24 to 48 hours overdue:** Escalate to the Sales Manager.
-- **Level 3 — More than 48 hours overdue:** Escalate to the System Admin and visually highlight the task in the UI.
-- Do not automatically unlock or reassign a task because it is overdue.
+Escalations must scale based on the `recurring_reminder_count` rather than fixed hours, ensuring proportionality to the task's total duration:
+
+- **Level 1 — Advisor:** Receives the 80% 'Approaching Due' warning and the 1st overdue recurring reminder.
+- **Level 2 — Manager:** Escalate on the 2nd and 3rd overdue recurring reminders.
+- **Level 3 — System Admin:** Escalate on the 4th recurring reminder and beyond, accompanied by visual UI highlights.
 
 ### Recurring reminders
 
-Reminder frequency should depend on the recommended task duration. Shorter tasks should receive more frequent overdue reminders because their duration is proportionally more critical; longer tasks can use a wider interval. Implement a hard cap on recurring reminders. The exact intervals and cap should be proposed and confirmed before implementation.
+Reminder frequency depends on the recommended duration: tasks of $\leq$ 3 days remind every 12 hours; tasks of 10–15 days remind every 24 hours; the 30-day task reminds every 48 hours. The system must enforce a hard cap of 6 recurring reminders per task to prevent infinite loops.
 
 ### Deduplication state
 
@@ -635,7 +646,7 @@ Record every dispatched reminder in an append-only `Notification_Log` (or equiva
 
 - Show visible indicators for `Approaching`, `Overdue`, and `Escalated/Recurring` tasks.
 - Provide quick filters for urgent tasks.
-- Store `completion_phase` when a task is completed so reporting preserves whether completion was `early`, `in_approaching`, `overdue`, or `recurring_overdue`.
+- Store `completion_phase` when a task is completed so reporting preserves whether completion was `early`, `in_approaching`, `overdue`, or `recurring_overdue`. For tasks without a recommended duration, record this value as `not_applicable` to exclude them from SLA performance averages.
 
 ---
 
@@ -716,6 +727,8 @@ Use the following three employee roles as the initial role model. Preserve the i
 - Treat a Sales Advisor's access as limited to their own assigned/created sales as specified above; define whether reassignment changes access immediately.
 - Clarify and safeguard the System Admin's powerful destructive permissions. Prefer soft deletion/archive for ordinary operations and require audit trails/confirmation for permanent removal.
 - Customers are an additional access class and must only access their own records and customer-visible content. They are not included in the employee RBAC table.
+- Treat a Sales Advisor's access as limited to their own assigned sales. If an advisor encounters a document uniqueness conflict when registering a customer, the system must allow them to link their new sale to the existing customer without exposing that customer's past sales. Advisors retain access to a customer profile as long as they have at least one assigned sale for that customer.
+- When a sale is reassigned, access revocation for the previous advisor and access provisioning for the new advisor must occur immediately upon saving the change.
 
 ---
 
@@ -755,13 +768,12 @@ Validate document format dynamically based on the selected type (for example, DN
 
 ### Sessions and tokens
 
-The initial authentication preference is:
+Authentication must be implemented using a custom dual-token strategy. The backend must enforce:
 
-- Short-lived JWT access tokens.
-- Long-lived refresh tokens stored in HTTP-only cookies.
-- A `Remember Me` option.
-
-Assess the full implementation for security, including `Secure` and `SameSite` cookie flags, refresh-token rotation/revocation, CSRF protection where applicable, logout invalidation, session expiration, and safe storage of access tokens. Do not treat JWT alone as a complete authentication/session strategy.
+- **Short-Lived Access Tokens (JWT):** A stateless JSON Web Token (e.g., 15-minute lifespan) returned to the frontend memory. The server does not store this in the database; it validates it cryptographically via a secret key. User roles must be embedded inside this JWT to enforce backend RBAC.
+- **Long-Lived Refresh Tokens:** A secure token (e.g., 30-day lifespan) stored in the `Refresh_Tokens` database table and sent to the browser exclusively via an `HttpOnly` cookie to prevent XSS theft.
+- **Refresh Token Rotation:** Whenever the frontend uses the refresh token to get a new access token, the backend must rotate the token by invalidating the old refresh token in the database, generating a new one, resetting the 30-day expiration, and returning the new cookie.
+- **"Remember Me" Logic:** If the user checks "Remember Me" during login, the `HttpOnly` cookie must have an explicit expiration (`Max-Age=30 days`). If unchecked, it must be set as a Session Cookie so the browser deletes it automatically when the browser window is closed.
 
 ### Access logs
 
@@ -798,65 +810,325 @@ A customer must never gain access to another customer's sale or document by gues
 
 ---
 
-## 18. Initial technology-stack preference (not a final decision)
+## 18. Technology Stack (Zero-Cost Prototyping)
 
-I have experience with the JavaScript version of this stack and suspect TypeScript may be a good choice for a project of this size. **Because the project is currently in a prototyping phase, a mandatory evaluation criterion for every component is that it must offer a robust, clear, and functional free tier/plan** to ensure zero cost during early development, testing, and initial stakeholder reviews.
+The project is currently in a prototyping phase. The technology stack has been explicitly selected to guarantee a robust, professional environment with permanent free tiers to ensure zero cost during early development, testing, and initial stakeholder reviews. You must adhere to this exact stack:
 
-Treat the following as an initial preference to evaluate under this strict cost constraint:
-
-- **Frontend:** React with TypeScript.
+- **Frontend:** React with Vite and TypeScript.
+- **Frontend BI/Analytics:** Recharts. Recharts is an open-source charting library built specifically for React, providing responsive, SVG-powered charts ideally suited for dashboard development.
 - **Backend:** Node.js with Express and TypeScript.
-- **Database:** PostgreSQL.
-- **Deployment:** Render for the Frontend, Backend, and Database.
-- **Authentication:** JWT access tokens with refresh-token handling as described above.
-- **File storage:** Cloudinary (evaluating its permanent free tier—offering 25 monthly credits and 1 GB of storage—against security, PDF handling, and private asset visibility requirements).
-
-Compare realistic alternatives only where comparison would help make a decision. Base recommendations on maintainability, developer experience, development speed, free-tier limits and zero-cost prototyping viability, security, ecosystem maturity, background jobs, private document storage, deployment, and future evolution. Do not choose technologies simply because they are popular, and always verify current provider quotas to ensure free tiers do not restrict core functionality (such as database connections or private document access) during testing.
+- **Database:** Supabase (PostgreSQL). Use the raw Postgres connection string with the `pg` (node-postgres) driver to execute strictly parameterized raw SQL queries. The 500 MB free tier limit provides sufficient prototyping space, and our automated background jobs will prevent the database from pausing due to the one-week inactivity rule.
+- **File Storage:** Cloudflare R2 (S3-compatible API). Use public buckets for catalog/profile images and private buckets for confidential PDFs (DDC forms, customer IDs, invoices). Private documents must exclusively be accessed via temporary Signed URLs generated by the backend.
+- **Authentication:** Custom authentication using `bcrypt` for password hashing. Sessions will be managed via short-lived JWT access tokens and long-lived refresh tokens stored in HTTP-Only cookies to mitigate XSS risks. "Remember Me" functionality will toggle between persistent cookies (`Max-Age`) and session-only cookies. Roles must be embedded in the signed JWT for backend RBAC validation.
+- **Background Jobs & SLAs:** Cron-job.org will trigger two secure, internal Express API endpoints:
+  1.  `POST /api/internal/process-reminders` (e.g., twice daily) to evaluate task SLA deadlines and dispatch emails.
+  2.  `POST /api/internal/cleanup-tokens` (e.g., once weekly) to permanently delete rows from the `Refresh_Tokens` table where `expires_at` is in the past.
+- **Email Engine:** `nodemailer` configured with a dedicated Gmail account and App Passwords for dispatching automated milestone and escalation notifications.
 
 ---
 
 ## 19. Architecture and database design
 
-Do not finalize architecture or schema until the business rules, entities, status transitions, permissions, file flows, and reporting requirements are sufficiently understood.
+Do not finalize the schema until the business rules, entities, status transitions, permissions, file flows, and reporting requirements are sufficiently understood.
 
-### Architecture topics
+### Architecture requirements
 
-Evaluate the need for:
+- **API Design:** Define a clear modular directory structure for the Express backend. All routes must enforce role-based access control based on the JWT payload.
+- **Data Validation:** Enforce strict server-side request validation before executing any raw SQL queries.
+- **Automated Triggers:** Implement the reminder/escalation logic within a dedicated Express controller secured against external access, awaiting the Cron-job.org trigger.
 
-- React frontend.
-- Backend/API.
-- Database.
-- Authentication and authorization components.
-- Private file storage.
-- Email service.
-- Background scheduler/job runner.
-- Notification delivery/audit mechanism.
-- Analytics and dashboard queries.
-- Logging, monitoring, backups, and deployment.
+### Database Schema
 
-Prefer the simplest architecture that meets the requirements and can be maintained by the project team. Avoid unnecessary microservices or infrastructure unless there is a concrete reason.
+To balance strict database-level data integrity, clean raw SQL queries, and simple application maintenance, the core operational model uses a **Strict 1-to-1 Relational Architecture** spread across four primary tables:
 
-Define a clear directory structure and architectural pattern (e.g., Clean Architecture, MVC, or modular monolith) for both the frontend and backend. Propose specific design patterns that will keep the codebase scalable and maintainable.
+#### 1. `Sale_Registers` Table (1 row per sale)
 
-### Database design topics
+Holds overall sale identity, immutable snapshots, assigned ownership, and macro-level state.
 
-Consider entities/structures for:
+- `id` — primary key (UUID).
+- `customer_id` — foreign key to `Customers`.
+- `customer_legal_name_snapshot` — text snapshot captured at creation.
+- `customer_doc_type_snapshot` — text snapshot captured at creation.
+- `customer_doc_number_snapshot` — text snapshot captured at creation.
+- `vehicle_version_id` — foreign key to `Vehicle_Versions`.
+- `vehicle_model_name_snapshot` — text snapshot of model name at creation.
+- `vehicle_version_name_snapshot` — text snapshot of version name at creation.
+- `vehicle_color_name_snapshot` — text snapshot of selected color name at creation.
+- `vehicle_reference_price_snapshot` — `NUMERIC(12,2)` price snapshot at creation.
+- `sale_temperature` — enum (`Hot`, `Warm`, `Cold`), immutable after creation.
+- `overall_state` — enum (`active`, `completed`, `cancelled`).
+- `assigned_advisor_id` — foreign key to `Employees`.
+- `sale_notes` — text area for general, sale-level notes and commentary.
+- `created_by` — foreign key to `Employees`.
+- `created_at` — `TIMESTAMPTZ` (UTC).
+- `updated_by` — foreign key to `Employees`.
+- `updated_at` — `TIMESTAMPTZ` (UTC).
 
-- Customer records and employee records, including creator/updater attribution.
-- Authentication accounts, credentials, sessions, and refresh-token records.
-- Roles and permissions, if needed beyond a fixed role enum.
-- Vehicle catalog models, versions, categories, colors, and images, including creator/updater attribution.
-- Sale registers, customer/vehicle snapshots, and creator attribution distinct from the assigned Sales Advisor.
-- Ordered task definitions and per-sale task instances.
-- Task-specific data and task status history, with enforcement of the fixed sequential progression rule. Do not introduce a dependency table/graph for the current linear process unless a future requirement justifies branching.
-- Documents, metadata, versions, and visibility rules.
-- Notes and sale cancellation/reopening history.
-- Notifications, notification delivery logs, and reminder tracking/completion phase.
-- An append-only audit trail for business changes.
-- A separate authentication `AccessLogs` mechanism.
-- Other justified domain entities.
+#### 2. `Task_Instances` Table (13 rows per sale)
 
-Provide primary keys, foreign keys, uniqueness constraints, indexes, relationships/cardinalities, integrity rules, and an ERD. Explain key modeling decisions. Do not create a table merely because a concept has a name; justify the need for each entity. Preserve the historical snapshot rules for customer and vehicle price information.
+Tracks overall workflow progress, ordered sequential statuses, and SLA reminder state for each task in a sale.
+
+- `id` — primary key (UUID).
+- `sale_id` — foreign key to `Sale_Registers`.
+- `task_number` — integer (`1` to `13`).
+- `task_name` — text.
+- `status` — enum (`pending`, `in_progress`, `completed`).
+- `started_at` — `TIMESTAMPTZ` (UTC), null until `in_progress`.
+- `completed_at` — `TIMESTAMPTZ` (UTC), null until `completed`.
+- `due_date` — `TIMESTAMPTZ` (UTC), calculated as `started_at + recommended_duration`.
+- `notes` — text area for optional task notes.
+- `completion_phase` — enum (`early`, `in_approaching`, `overdue`, `recurring_overdue`, `not_applicable`).
+- `last_reminder_sent_at` — `TIMESTAMPTZ` (UTC).
+- `current_reminder_phase` — enum (`approaching`, `overdue`, `recurring`).
+- `recurring_reminder_count` — integer, default `0` (hard capped at `6`).
+
+#### 3. `Sale_Operation_Details` Table (1-to-1 relationship with `Sale_Registers`)
+
+Centralizes all typed task fields across the 13 tasks into a single details record per sale. Fields are populated progressively as tasks advance to `completed`.
+
+- `id` — primary key (UUID).
+- `sale_id` — foreign key to `Sale_Registers` (UNIQUE constraint, 1-to-1).
+- **Task 1 fields:**
+  - `initial_toyota_amount` — `NUMERIC(12,2)`.
+  - `initial_commission` — `NUMERIC(12,2)`.
+  - `accessory_amount` — `NUMERIC(12,2)`.
+  - `release_processing_amount` — `NUMERIC(12,2)`.
+  - `quoted_final_price` — `NUMERIC(12,2)` calculated sum.
+- **Task 2 fields:**
+  - `signer_doc_type` — enum (`DNI`, `CE`, `PAS`, `CDI`).
+  - `signer_doc_number` — text.
+  - `signer_first_name` — text.
+  - `signer_last_name` — text.
+  - `pep_status` — enum (`No PEP`, `PEP`, `Relacionado con PEP`).
+  - `ddc_regime` — enum (`General`, `Reforzado`).
+- **Task 3 fields:**
+  - `vehicle_series` — text with Partial Unique Index (active/completed sales only).
+  - `vin` — text with Partial Unique Index (active/completed sales only).
+  - `final_toyota_amount` — `NUMERIC(12,2)`.
+  - `final_commission` — `NUMERIC(12,2)` with `CHECK (final_commission >= 0)`.
+- **Task 4 fields:**
+  - `pana_payment_bank` — text.
+  - `pana_payment_date` — `DATE`.
+  - `pana_payment_transaction_number` — text (composite unique constraint with `pana_payment_bank`).
+  - `pana_deposited_amount` — `NUMERIC(12,2)`.
+  - `pana_payment_mismatch_reason` — text (required if deposited amount != quoted price).
+- **Task 5 fields:**
+  - `toyota_payment_bank` — text.
+  - `toyota_payment_date` — `DATE`.
+  - `toyota_payment_transaction_number` — text (composite unique constraint with `toyota_payment_bank`).
+  - `toyota_deposited_amount` — `NUMERIC(12,2)`.
+- **Task 6 fields:**
+  - `toyota_invoice_number` — text (series + correlative, e.g., `F001-000123`).
+  - `toyota_invoice_date` — `DATE`.
+  - `toyota_invoice_amount` — `NUMERIC(12,2)`.
+  - `commission_invoice_number` — text.
+  - `commission_invoice_date` — `DATE`.
+  - `commission_invoice_amount` — `NUMERIC(12,2)`.
+  - `accessories_invoice_number` — text.
+  - `accessories_invoice_date` — `DATE`.
+  - `accessories_invoice_amount` — `NUMERIC(12,2)`.
+  - `release_processing_invoice_number` — text.
+  - `release_processing_invoice_date` — `DATE`.
+  - `release_processing_invoice_amount` — `NUMERIC(12,2)`.
+- **Task 8 fields:**
+  - `dam_number` — text.
+  - `customs_office` — text.
+  - `control_channel` — enum (`Verde`, `Naranja`, `Rojo`).
+- **Task 9 fields:**
+  - `release_person_in_charge` — text.
+- **Task 10 fields:**
+  - `license_plate` — text with Partial Unique Index (active/completed sales only).
+  - `registration_date` — `DATE`.
+- **Task 11 fields:**
+  - `pds_transfer_date` — `DATE`.
+- **Task 12 fields:**
+  - `equipment_service_order_number` — text.
+  - `equipment_completion_date` — `DATE`.
+- **Task 13 fields:**
+  - `surquillo_transfer_date` — `DATE`, optional.
+  - `vehicle_delivery_date` — `DATE`.
+
+#### 4. `Documents` Table (Relational File Registry)
+
+Stores all file uploads across all tasks.
+
+- `id` — primary key (UUID).
+- `sale_id` — foreign key to `Sale_Registers`.
+- `task_instance_id` — foreign key to `Task_Instances`.
+- `document_type` — enum containing the strictly defined file types (`official_quotation_pdf`, `official_quotation_excel`, `pana_payment_voucher`, `toyota_invoice`, `tive_document`, and others)
+- `original_file_name` — text.
+- `mime_type` — text (e.g., `application/pdf`).
+- `size_bytes` — `BIGINT`.
+- `storage_key` — text (Cloudflare R2 object reference key).
+- `status` — enum (`active`, `archived`).
+- `uploaded_by` — foreign key to `Employees`.
+- `uploaded_at` — `TIMESTAMPTZ` (UTC).
+
+#### 1. `Employees` Table
+
+Manages internal staff, their role-based access levels, and contact information.
+
+- `id` — primary key (UUID).
+- `document_type` — enum (`DNI`, `CE`, `PAS`).
+- `document_number` — text (Composite UNIQUE constraint with `document_type`).
+- `first_name` — text.
+- `last_name` — text.
+- `nationality` — text.
+- `gender` — text.
+- `birthdate` — `DATE`.
+- `hire_date` — `DATE`.
+- `personal_phone` — text.
+- `personal_email` — text.
+- `business_phone` — text.
+- `business_email` — text.
+- `profile_picture_storage_key` — text (Cloudflare R2 object reference, nullable).
+- `profile_picture_mime_type` — text (e.g., `image/jpeg`).
+- `profile_picture_size_bytes` — `BIGINT`.
+- `role` — enum (`System Admin`, `Sales Manager`, `Sales Advisor`).
+- `password_hash` — text (bcrypt hash).
+- `is_active` — boolean (defaults to `true`).
+- `created_by` — foreign key to `Employees`.
+- `created_at` — `TIMESTAMPTZ` (UTC).
+- `updated_by` — foreign key to `Employees`.
+- `updated_at` — `TIMESTAMPTZ` (UTC).
+
+#### 2. `Customers` Table
+
+Manages B2C and B2B identities, ensuring secure onboarding and tracking for sales[cite: 1].
+
+- `id` — primary key (UUID).
+- `customer_type` — enum (`Diplomático`, `Embajada`, `Entidad religiosa católica`, `Entidad religiosa no católica`, `Organismo Internacional`).
+- `document_type` — enum (`DNI`, `CE`, `PAS`, `CDI`, `RUC`).
+- `document_number` — text (Composite UNIQUE constraint with `document_type`).
+- `first_name` — text (nullable for B2B).
+- `last_name` — text (nullable for B2B).
+- `gender` — enum (`M`, `F`) (nullable, used only for B2C to drive UI avatars)
+- `legal_name` — text (`Razón Social`, nullable for B2C).
+- `nationality` — text.
+- `phone` — text.
+- `email` — text.
+- `contact_first_name` — text (nullable, used for B2B).
+- `contact_last_name` — text (nullable, used for B2B).
+- `contact_job_title` — text (nullable, used for B2B).
+- `password_hash` — text (bcrypt hash).
+- `must_change_password` — boolean (defaults to `true` to enforce initial password reset).
+- `created_by` — foreign key to `Employees`.
+- `created_at` — `TIMESTAMPTZ` (UTC).
+- `updated_by` — foreign key to `Employees`.
+- `updated_at` — `TIMESTAMPTZ` (UTC).
+
+#### 3. Vehicle Catalog Tables
+
+A normalized structure to handle models, pricing versions, available colors, and viewpoint images.
+
+**`Vehicle_Models`**
+
+- `id` — primary key (UUID).
+- `model_name` — text (UNIQUE).
+- `description` — text.
+- `categories` — enum (`Camioneta`, `Comercial`, `Familiar`, `Hatchback`, `Sedan`).
+- `is_active` — boolean (used instead of hard deletion).
+- `created_by` — foreign key to `Employees`.
+- `created_at` — `TIMESTAMPTZ` (UTC).
+- `updated_by` — foreign key to `Employees`.
+- `updated_at` — `TIMESTAMPTZ` (UTC).
+
+**`Vehicle_Versions`**
+
+- `id` — primary key (UUID).
+- `model_id` — foreign key to `Vehicle_Models`.
+- `version_name` — text.
+- `reference_price` — `NUMERIC(12,2)`.
+- `is_active` — boolean.
+- `created_by` — foreign key to `Employees`.
+- `created_at` — `TIMESTAMPTZ` (UTC).
+- `updated_by` — foreign key to `Employees`.
+- `updated_at` — `TIMESTAMPTZ` (UTC).
+
+**`Vehicle_Colors`**
+
+- `id` — primary key (UUID).
+- `model_id` — foreign key to `Vehicle_Models` (colors vary by model).
+- `color_name` — text.
+- `is_active` — boolean.
+- `created_by` — foreign key to `Employees`.
+- `created_at` — `TIMESTAMPTZ` (UTC).
+- `updated_by` — foreign key to `Employees`.
+- `updated_at` — `TIMESTAMPTZ` (UTC).
+
+**`Catalog_Images`**
+
+- `id` — primary key (UUID).
+- `vehicle_color_id` — foreign key to `Vehicle_Colors`.
+- `viewpoint` — enum (`Main view`, `Exterior front`, `Exterior left side`, `Exterior right side`, `Exterior rear`, `Interior`).
+- `mime_type` — text (e.g., `image/jpeg`).
+- `size_bytes` — `BIGINT`.
+- `storage_key` — text (Cloudflare R2 object reference).
+- `uploaded_by` — foreign key to `Employees`.
+- `uploaded_at` — `TIMESTAMPTZ` (UTC).
+- _(Constraint: Composite UNIQUE on `(vehicle_color_id, viewpoint)` to prevent multiple "Main view" images for the same color)._
+
+#### 4. `Refresh_Tokens` Table
+
+Manages long-lived secure sessions for both Employees and Customers.
+
+- `id` — primary key (UUID).
+- `user_id` — text/UUID (ID of the Employee or Customer).
+- `user_type` — enum (`Employee`, `Customer`) to distinguish which table the `user_id` belongs to.
+- `token_hash` — text (hashed representation of the refresh token for security).
+- `expires_at` — `TIMESTAMPTZ` (UTC).
+- `created_at` — `TIMESTAMPTZ` (UTC).
+
+### Observability, Audit & Communication Schema
+
+#### 5. `Access_Logs` Table
+
+Tracks all authentication attempts to protect against brute-force attacks and audit unauthorized access.
+
+- `id` — primary key (UUID).
+- `user_type` — enum (`Employee`, `Customer`).
+- `attempted_document_type` — text.
+- `attempted_document_number` — text.
+- `user_id` — foreign key to `Employees` or `Customers` (nullable if login fails for an unknown user).
+- `action_type` — enum (`LOGIN_SUCCESS`, `LOGIN_FAILED`, `LOGOUT`).
+- `device_info` — text (nullable).
+- `ip_address` — text (nullable).
+- `created_at` — `TIMESTAMPTZ` (UTC).
+
+#### 6. `Audit_Logs` Table
+
+An append-only ledger recording all significant business changes, mandatory overrides, and edits[cite: 1].
+
+- `id` — primary key (UUID).
+- `employee_id` — foreign key to `Employees` (tracks the actor performing the change).
+- `entity_type` — enum (`Sale_Register`, `Task_Instance`, `Sale_Operation_Details`, `Document`, `Customer`, `Employee`, `Vehicle_Model`, `Vehicle_Version`, `Vehicle_Color`).
+- `entity_id` — UUID (the ID of the modified record).
+- `action` — enum strictly limited to:
+  - `SALE_CREATED`, `SALE_CANCELLED`, `SALE_REOPENED`, `ADVISOR_REASSIGNED`
+  - `TASK_COMPLETED`, `TASK_REVERTED`, `TASK_EDITED`
+  - `DOCUMENT_UPLOADED`, `DOCUMENT_ARCHIVED`
+  - `CATALOG_CREATED`, `CATALOG_UPDATED`, `CATALOG_ARCHIVED`
+  - `CUSTOMER_CREATED`, `CUSTOMER_UPDATED`
+  - `EMPLOYEE_CREATED`, `EMPLOYEE_UPDATED`, `EMPLOYEE_ROLE_CHANGED`, `EMPLOYEE_DEACTIVATED`
+- `changes_summary` — `JSONB` (stores the flexible before/after payload of the change, e.g., `{ "field": "vin", "old": "A", "new": "B" }`).
+- `reason` — text (mandatory for cancellations and edits to completed tasks).
+- `created_at` — `TIMESTAMPTZ` (UTC).
+
+#### 7. `Notification_Logs` Table
+
+Tracks all dispatched emails to prevent duplicate milestones and monitor SLA escalation delivery.
+
+- `id` — primary key (UUID).
+- `sale_id` — foreign key to `Sale_Registers`.
+- `task_instance_id` — foreign key to `Task_Instances` (nullable if the email is a general welcome email).
+- `notification_type` — text (e.g., `Welcome`, `Milestone_4`, `Escalation_Level_2`).
+- `recipient_email` — text.
+- `status` — enum (`SENT`, `FAILED`).
+- `dispatched_at` — `TIMESTAMPTZ` (UTC).
+
+Unique identifiers tied to physical assets (Vehicle Series, VIN in Task 3, and License Plate in Task 10) must use partial unique indexes scoped only to `active` and `completed` sales. If a sale is `cancelled`, its Series/VIN/Plate must become available for reuse in a new sale register.
+
+Provide indexes, relationships/cardinalities, and an ERD.
 
 ---
 
@@ -888,6 +1160,8 @@ Assign stable IDs such as `FR-001`, `FR-002`, etc. Group them by:
 Each requirement should be testable and include relevant permissions and acceptance criteria.
 
 ### Non-functional requirements
+
+**User Interface Language:** The application must be built entirely in Spanish for the MVP/V1 to minimize scope, though the codebase should not unnecessarily hinder future internationalization.
 
 Define realistic requirements for:
 
@@ -932,6 +1206,7 @@ Candidate customer areas include:
 - Customer-visible document access.
 - Advisor contact information.
 - Account/onboarding states.
+- The customer profile must display a static, high-quality avatar served directly from the frontend repository's local assets (e.g., SVG/PNG files). The frontend must conditionally render one of three static illustrations based on the customer record (B2C Male, B2C Female, or B2B Entity). Do not build a database upload or file storage system for customer avatars.
 
 For every screen, describe its purpose, key content, primary actions, role access, validation, loading/empty/error states, and responsive behavior. Use UX patterns that make the current task, task progress, delays, next steps, and required actions easy to understand. Do not begin detailed visual implementation before the information architecture and user journeys are agreed.
 

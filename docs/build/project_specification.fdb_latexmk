@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1792076381.49664 "project_specification.tex" "project_specification.pdf" "project_specification" 1792076382.58065 0
+["pdflatex"] 1792130946.17006 "project_specification.tex" "project_specification.pdf" "project_specification" 1792130948.30917 0
   "/home/luisalejandrordc/.texlive2023/texmf-var/luatex-cache/generic/fonts/otl/lmroman10-regular.luc" 1778827564.87612 127309 677951b359b90ddbfa3eb54f696122f6 ""
   "/home/luisalejandrordc/.texlive2023/texmf-var/luatex-cache/generic/names/luaotfload-names.luc.gz" 1778827564.60745 397162 3f643c21f62bc6fba210e83287373b9e ""
   "/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii" 1461363279 71627 94eb9990bed73c364d7f53f960cc8c5b ""
@@ -155,10 +155,10 @@
   "/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map" 1778824519.56652 5472669 54eaf61a88b6b7896ebd0dac973cb29c ""
   "/var/lib/texmf/tex/generic/config/language.dat" 1778824521.54145 5334 116339d95956313208e45c6bf7c0d5bf ""
   "/var/lib/texmf/web2c/luahbtex/lualatex.fmt" 1778824554 12234086 759ded2db715893ff38090d1833bc6e2 ""
-  "build/project_specification.aux" 1792076382.48943 9747 1cbeb39be93a69dd0cf444655cde2b0a "pdflatex"
-  "build/project_specification.out" 1792076382.49255 9917 a59c9bcbef3c250baa84efc5cce3705f "pdflatex"
-  "build/project_specification.toc" 1792076382.49255 4623 005e9b92916a98a19440279ef108b1a6 "pdflatex"
-  "project_specification.tex" 1792076374.19126 78557 67c6116bdf8ef681324831ad666cd154 ""
+  "build/project_specification.aux" 1792130948.1579 9744 cfd7f868a7b58f08f69b183920fa30be "pdflatex"
+  "build/project_specification.out" 1792130948.1579 9917 a59c9bcbef3c250baa84efc5cce3705f "pdflatex"
+  "build/project_specification.toc" 1792130948.1579 4623 1f881734dcbbb650173e5779b6228ea3 "pdflatex"
+  "project_specification.tex" 1792130932.39535 82583 91a118302f68f9181525ed89f564795d ""
   (generated)
   "build/project_specification.aux"
   "build/project_specification.log"

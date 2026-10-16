@@ -8,7 +8,7 @@
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
 \usepackage[english]{babel}
-\usepackage[margin=2.4cm]{geometry}
+\usepackage[margin=2.1cm]{geometry}
 \usepackage{microtype}
 \usepackage{xcolor}
 \usepackage{array}
@@ -36,13 +36,13 @@ Specification},
 \setlength{\headheight}{14pt}
 \setlist{itemsep=1pt,topsep=3pt}
 \renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3pt}
 \setlength{\LTpre}{6pt}
 \setlength{\LTpost}{6pt}
 
 \pagestyle{fancy}
 \fancyhf{}
-\lhead{\small\textcolor{panablue}{EndoTrack --- Requirements \& Product
-Specification}}
+\lhead{\small\textcolor{panablue}{EndoTrack --- Requirements \& Product Specification}}
 \rhead{\small v0.1 (baseline draft)}
 \cfoot{\small\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
@@ -84,30 +84,19 @@ Specification}}
 
 \begin{longtable}{@{}L{4.2cm}L{11.6cm}@{}}
 	\toprule
-	\textbf{Field}          & \textbf{Value}
-	\\
+	\textbf{Field}          & \textbf{Value}                                                         \\
 	\midrule
 	\endhead
-	Document title          & Software Requirements \& Product Specification
-	\\
+	Document title          & Software Requirements \& Product Specification                         \\
 	Product (working name)  & EndoTrack --- Endoso Operations \& Customer Tracking
-	Platform \tagprop{} (name pending approval)
-	\\
-	Client / business owner & Grupo Pana (official Toyota and Hino dealership,
-	Peru)
-	\\
-	Product owner           & Luis Alejandro
-	\\
-	Prepared with           & Claude (AI collaborator for product analysis and
-	architecture)                                                                  \\
-	Version / status        & 0.1 --- baseline draft for review; not yet approved
-	\\
-	Date                    & 15 October 2026
-	\\
-	Source material         & \code{Grupo_Pana_Endoso_Master_Prompt.md} (product
-	brief, 28 sections)
-	\\
-	Project phase           & Design (no application code has been written)        \\
+	Platform \tagprop{} (name pending approval)                                                      \\
+	Client / business owner & Grupo Pana (official Toyota and Hino dealership, Peru)                 \\
+	Product owner           & Luis Alejandro                                                         \\
+	Prepared with           & Claude (AI collaborator for product analysis and architecture)         \\
+	Version / status        & 0.1 --- baseline draft for review; not yet approved                    \\
+	Date                    & 15 October 2026                                                        \\
+	Source material         & \code{Grupo_Pana_Endoso_Master_Prompt.md} (product brief, 28 sections) \\
+	Project phase           & Design (no application code has been written)                          \\
 	\bottomrule
 \end{longtable}
 
@@ -117,20 +106,15 @@ Every statement is classified so that assumptions are never silently turned into
 
 \begin{longtable}{@{}L{3.2cm}L{12.6cm}@{}}
 	\toprule
-	\textbf{Tag} & \textbf{Meaning}
-	\\
+	\textbf{Tag} & \textbf{Meaning}                                                                                                                \\
 	\midrule
 	\endhead
-	\tagconf{}   & Explicitly specified in the product brief; treated as a requirement or decision. \\
+	\tagconf{}   & Explicitly specified in the product brief; treated as a requirement or decision.                                                \\
 	\tagprop{}   & A proposal or technical recommendation to be evaluated; not yet a
-	business requirement.
-	\\
-	\tagassm{}   & A temporary assumption made to progress; must be validated.
-	\\
-	\tagopen{}   & An open question requiring a business decision or more
-	information (see Appendix~\ref{app:open}).                                                      \\
-	\cv{}        & \emph{Customer-visible}: the field or document must be
-	accessible in the customer portal, subject to server-side authorization.                        \\
+	business requirement.                                                                                                                          \\
+	\tagassm{}   & A temporary assumption made to progress; must be validated.                                                                     \\
+	\tagopen{}   & An open question requiring a business decision or more information (see Appendix~\ref{app:open}).                               \\
+	\cv{}        & \emph{Customer-visible}: the field or document must be accessible in the customer portal, subject to server-side authorization. \\
 	\bottomrule
 \end{longtable}
 
@@ -140,28 +124,18 @@ Untagged descriptive text summarizes confirmed material. Spanish terms used by t
 
 \begin{longtable}{@{}L{3.2cm}L{12.6cm}@{}}
 	\toprule
-	\textbf{Term}          & \textbf{Definition}
-	\\
+	\textbf{Term}          & \textbf{Definition}                                                                                                                         \\
 	\midrule
 	\endhead
-	Endoso                 & The Grupo Pana vehicle-sales channel managed by this
-	platform.
-	\\
-	Sale register          & The record of exactly one vehicle sale, with its own
-	13 tasks, documents, timeline, notes and overall state.
-	\\
-	DDC                    & \emph{Debida Diligencia del Cliente}: customer due diligence (regime \code{General} or \code{Reforzado}). \\
-	PEP                    & Politically Exposed Person (statuses: \code{No PEP}, \code{PEP}, \code{Relacionado con PEP}).             \\
-	DAM                    & Customs Declaration of Goods.
-	\\
-	TIVe                   & Electronic Vehicle Identification Card.
-	\\
-	VIN                    & Vehicle Identification Number.                                                                            \\
-	PDS                    & Pre-delivery inspection center.
-	\\
-	DNI, CE, PAS, CDI, RUC & Identification document types used for customers and
-	employees (RUC is used by B2B customers only; CDI is a customer/signer document
-	type).                                                                                                                             \\
+	Endoso                 & The Grupo Pana vehicle-sales channel managed by this platform.                                                                              \\
+	Sale register          & The record of exactly one vehicle sale, with its own 13 tasks, documents, timeline, notes and overall state.                                \\
+	DDC                    & \emph{Debida Diligencia del Cliente}: customer due diligence (regime \code{General} or \code{Reforzado}).                                   \\
+	PEP                    & Politically Exposed Person (statuses: \code{No PEP}, \code{PEP}, \code{Relacionado con PEP}).                                               \\
+	DAM                    & Customs Declaration of Goods.                                                                                                               \\
+	TIVe                   & Electronic Vehicle Identification Card.                                                                                                     \\
+	VIN                    & Vehicle Identification Number.                                                                                                              \\
+	PDS                    & Pre-delivery inspection center.                                                                                                             \\
+	DNI, CE, PAS, CDI, RUC & Identification document types used for customers and employees (RUC is used by B2B customers only; CDI is a customer/signer document type). \\
 	\bottomrule
 \end{longtable}
 
@@ -172,12 +146,8 @@ Grupo Pana sells vehicles through a channel called \emph{endoso}. Each sale pass
 The platform has two connected experiences:
 
 \begin{enumerate}
-	\item An \textbf{employee application} for managing customers, vehicles, sale
-	      registers, the 13-task process, documents, assignments, notes, reminders, audit
-	      history, exports and operational analytics.
-	\item A \textbf{customer portal} where customers securely follow their own
-	      purchase through six customer-friendly milestones and access only the
-	      information and documents explicitly made available to them.
+	\item An \textbf{employee application} for managing customers, vehicles, sale registers, the 13-task process, documents, assignments, notes, reminders, audit history, exports and operational analytics.
+	\item A \textbf{customer portal} where customers securely follow their own purchase through six customer-friendly milestones and access only the information and documents explicitly made available to them.
 \end{enumerate}
 
 Key characteristics of the product:
@@ -186,18 +156,13 @@ Key characteristics of the product:
 	\item Each sale register represents exactly one vehicle; a customer buying two
 	      vehicles has two independent sale registers.
 	\item The internal process is a \textbf{strictly linear sequence of 13 tasks}; the customer sees a derived six-milestone view of the same sequence.
-	\item Customer and vehicle-price snapshots are captured at sale creation and
-	      remain immutable; significant changes are recorded in an append-only
-	      audit
-	      trail.
+	\item Customer and vehicle-price snapshots are captured at sale creation and remain immutable; significant changes are recorded in an append-only audit trail.
 	\item Authorization, task sequencing and document visibility are enforced by
 	      the backend.
 	\item The prototype must run at zero cost, so every component must offer a functional free tier.
 \end{itemize}
 
-The existing internal tools (a Power Apps application and a Power BI dashboard)
-are background context only; this document specifies the product described in
-the brief and does not aim to recreate them.
+The existing internal tools (a Power Apps application and a Power BI dashboard) are background context only; this document specifies the product described in the brief and does not aim to recreate them.
 
 % =====================================================================
 %  2. BUSINESS CONTEXT, PROBLEM, OBJECTIVES, SCOPE
@@ -206,13 +171,7 @@ the brief and does not aim to recreate them.
 
 \subsection{Business context}
 
-Grupo Pana is a Peruvian automotive company and an official Toyota and Hino
-dealership that provides vehicle sales and other automotive services. A customer
-typically first contacts a sales advisor by WhatsApp or telephone and receives
-an initial, non-final quotation outside the tracked operation. If the customer
-decides to proceed, the advisor creates the sale register and the formal process
-starts with Task~1, the official quotation. The initial informal quotation is
-not a task and is outside the system. \tagconf{}
+Grupo Pana is a Peruvian automotive company and an official Toyota and Hino dealership that provides vehicle sales and other automotive services. A customer typically first contacts a sales advisor by WhatsApp or telephone and receives an initial, non-final quotation outside the tracked operation. If the customer decides to proceed, the advisor creates the sale register and the formal process starts with Task~1, the official quotation. The initial informal quotation is not a task and is outside the system. \tagconf{}
 
 \subsection{Problem statement}
 
@@ -224,35 +183,20 @@ The brief lists the objectives below as initial candidates; they are not yet app
 
 \begin{longtable}{@{}L{4.6cm}L{5.8cm}L{5.4cm}@{}}
 	\toprule
-	\textbf{Objective}                                               &
-	\textbf{Candidate measure}
-	                                                                 & \textbf{Baseline data
-		                                                                   needed}
-	\\
+	\textbf{Objective}                                               & \textbf{Candidate measure}                                                                    & \textbf{Baseline data
+		                                                                                                                                                                   needed}                            \\
 	\midrule
 	\endhead
-	Centralize sale information and documents                        & Share of
-	active sales with all
-	required documents stored in the platform                        & Current
-	document locations and
-	completeness audit
-	\\
-	Improve visibility of task status, active task, order and delays & Time to
-	answer ``where is this sale?''; number of overdue tasks surfaced vs.\
-	discovered
-	late                                                             & Current
-	lookup effort; historical delay records
-	\\
-	Give customers a secure, understandable view                     & Share of
-	customers using the portal; inbound status-inquiry volume
-	                                                                 & Current inquiry volume per sale                                                                       \\
-	Improve accountability and auditability                          & Share of significant changes with actor, timestamp and reason & Current traceability gaps             \\
-	Identify tasks and operations needing attention                  & Overdue tasks per week; median overdue time                   & Historical task durations             \\
-	Provide management analytics                                     & Dashboard usage by managers; decisions supported              & Current reporting process and cadence \\
-	Reduce avoidable communication effort                            & Manual status messages per sale                               & Current messages per sale             \\
-	Protect customer, employee, financial and legal information      & Zero
-	cross-customer access incidents; security test pass rate
-	                                                                 & Security review of current practice                                                                   \\
+	Centralize sale information and documents                        & Share of active sales with all
+	required documents stored in the platform                        & Current document locations and
+	completeness audit                                                                                                                                                                                                 \\
+	Improve visibility of task status, active task, order and delays & Time to answer ``where is this sale?''; number of overdue tasks surfaced vs.\ discovered late & Current lookup effort; historical delay records \\
+	Give customers a secure, understandable view                     & Share of customers using the portal; inbound status-inquiry volume                            & Current inquiry volume per sale                 \\
+	Improve accountability and auditability                          & Share of significant changes with actor, timestamp and reason                                 & Current traceability gaps                       \\
+	Identify tasks and operations needing attention                  & Overdue tasks per week; median overdue time                                                   & Historical task durations                       \\
+	Provide management analytics                                     & Dashboard usage by managers; decisions supported                                              & Current reporting process and cadence           \\
+	Reduce avoidable communication effort                            & Manual status messages per sale                                                               & Current messages per sale                       \\
+	Protect customer, employee, financial and legal information      & Zero cross-customer access incidents; security test pass rate                                 & Security review of current practice             \\
 	\bottomrule
 \end{longtable}
 
@@ -274,19 +218,16 @@ The following scope split is a proposal for review. \tagprop{}
 	dashboard; the informal initial quotation; parallel or branching tasks;
 	customers editing their own identity or contact data; accounting or revenue
 	recognition (the platform records amounts but cannot verify accounting facts);
-	processing payments (payments are only recorded and verified).
-	\\
+	processing payments (payments are only recorded and verified).                                                                                                                                                                                                                                                                                                                                                                                      \\
 	\bottomrule
 \end{longtable}
 
 \subsection{Assumptions and constraints}
 
 \begin{itemize}
-	\item \tagconf{} The prototype must have zero hosting cost; every technology
-	      must offer a robust free tier, verified against current provider quotas.
+	\item \tagconf{} The prototype must have zero hosting cost; every technology must offer a robust free tier, verified against current provider quotas.
 	\item \tagconf{} Amounts are recorded in USD.
-	\item \tagassm{} Timestamps are stored in UTC and displayed in the Lima time
-	      zone.
+	\item \tagassm{} Timestamps are stored in UTC and displayed in the Lima time zone.
 	\item \tagopen{} User-interface language(s) for employees and customers; customer emails are specified with Spanish subjects.
 	\item \tagopen{} Expected workload (sales per month, number of employees, documents per sale), needed to turn performance targets from proposals into requirements.
 \end{itemize}
@@ -309,35 +250,18 @@ will be justified during data modeling. \tagconf{}
 	\endhead
 	Customer             & Customer type; document type and number; first/last name (B2C) or legal name \emph{Razón Social} (B2B); nationality/country; phone and email; for B2B a contact person (first name, last name, job title); credentials managed by the authentication system. \\
 	Employee             & Document type (DNI, CE, PAS) and number; first/last name; nationality/country; gender; profile picture; birthdate; hire date; active/inactive; role; personal and business phone/email; credentials.                                                         \\
-	Vehicle model        & Name; description; one or more categories (for example
-	\emph{Camioneta, Comercial, Familiar, Hatchback, Sedan}); available versions and
-	colors.
-	\\
-	Version              & Name; reference price; active/inactive (or equivalent
-	archival).
-	\\
-	Color and images     & Colors vary per model; per-color images for six
-	viewpoints: main (required), exterior front, left, right, rear, and interior.
-	\\
-	Sale register        & Customer reference and snapshot; vehicle selection and
-	price snapshot; 13 task records; current active task; temperature (\code{Hot},
-	\code{Warm}, \code{Cold}); overall state; notes; assigned advisor; provenance
-	fields.                                                                                                                                                                                                                                                                             \\
-	Task instance        & One of the 13 ordered tasks per sale with status,
-	task-specific data, optional notes, timing and completion information.
-	\\
+	Vehicle model        & Name; description; one or more categories (for example \emph{Camioneta, Comercial, Familiar, Hatchback, Sedan}); available versions and colors.                                                                                                              \\
+	Version              & Name; reference price; active/inactive (or equivalent archival).                                                                                                                                                                                             \\
+	Color and images     & Colors vary per model; per-color images for six viewpoints: main (required), exterior front, left, right, rear, and interior.                                                                                                                                \\
+	Sale register        & Customer reference and snapshot; vehicle selection and price snapshot; 13 task records; current active task; temperature (\code{Hot}, \code{Warm}, \code{Cold}); overall state; notes; assigned advisor; provenance fields.                                  \\
+	Task instance        & One of the 13 ordered tasks per sale with status, task-specific data, optional notes, timing and completion information.                                                                                                                                     \\
 	Document             & Uploaded file with type/MIME, size in bytes, original name, upload
 	timestamp, uploader, task/sale association, visibility and version history.                                                                                                                                                                                                         \\
-	Notes                & Sale-level notes and per-task notes.
-	\\
+	Notes                & Sale-level notes and per-task notes.                                                                                                                                                                                                                         \\
 	Audit event          & Append-only record of significant changes (Section~\ref{sec:audit}).                                                                                                                                                                                         \\
-	Access log           & Append-only authentication log, separate from the audit
-	trail
-	(Section~\ref{sec:auth}).
-	\\
-	Notification and log & Customer and employee notifications, delivery attempts
-	and outcomes, reminder state (Section~\ref{sec:notif}).
-	\\
+	Access log           & Append-only authentication log, separate from the audit trail
+	(Section~\ref{sec:auth}).                                                                                                                                                                                                                                                           \\
+	Notification and log & Customer and employee notifications, delivery attempts and outcomes, reminder state (Section~\ref{sec:notif}).                                                                                                                                               \\
 	\bottomrule
 \end{longtable}
 
@@ -353,12 +277,7 @@ will be justified during data modeling. \tagconf{}
 	\bottomrule
 \end{longtable}
 
-Document type plus document number must uniquely identify a customer, and
-likewise an employee, within its own table. Document numbers are identifiers,
-not numbers: leading zeros must be preserved. \tagconf{} For Task~2, the
-\emph{signer} is the customer for a Diplomatic customer and the
-representative/executing person for an Embassy, Religious Entity or
-International Organization. \tagconf{}
+Document type plus document number must uniquely identify a customer, and likewise an employee, within its own table. Document numbers are identifiers, not numbers: leading zeros must be preserved. \tagconf{} For Task~2, the \emph{signer} is the customer for a Diplomatic customer and the representative/executing person for an Embassy, Religious Entity or International Organization. \tagconf{}
 
 \subsection{Sale register rules}
 
@@ -369,8 +288,7 @@ International Organization. \tagconf{}
 	\item Overall sale state is \code{active}, \code{completed} or \code{cancelled}. A sale becomes \code{completed} automatically when all 13 tasks are completed. \tagconf{}
 	\item Sales advisors may cancel their own sales with a reason but cannot undo a cancellation. Sales managers may cancel any sale and undo cancellations. \tagconf{}
 	\item Cancelled sales are retained for history and audit and are not physically deleted in ordinary operation; System Admins may permanently delete corrupted or test sale records under safeguards and audit. \tagconf{}
-	\item The creator (\code{created_by}) is recorded separately from the assigned
-	      Sales Advisor, who may change by reassignment. \tagconf{}
+	\item The creator (\code{created_by}) is recorded separately from the assigned Sales Advisor, who may change by reassignment. \tagconf{}
 	\item \tagopen{} Who sets the sale temperature
 	      (\code{Hot}/\code{Warm}/\code{Cold}), and whether it changes over time.
 	\item \tagopen{} Behavior of tasks and timers when a sale is cancelled and when a cancellation is undone; and whether reverting Task~13 returns a completed sale to \code{active} (proposal: yes, transactionally, with an audit event).
@@ -380,16 +298,13 @@ International Organization. \tagconf{}
 
 \begin{longtable}{@{}L{3.6cm}L{12.2cm}@{}}
 	\toprule
-	\textbf{Snapshot}      & \textbf{Rule}
-	\\
+	\textbf{Snapshot}      & \textbf{Rule}                                                                                                                                                                              \\
 	\midrule
 	\endhead
-	Customer snapshot      & At sale creation, capture the customer's legal/name
-	value,
+	Customer snapshot      & At sale creation, capture the customer's legal/name value,
 	document type and document number. Sale records and snapshots are immutable for
 	financial and legal audit, even if the customer profile changes later.
-	\tagconf{}
-	\\
+	\tagconf{}                                                                                                                                                                                                          \\
 	Vehicle price snapshot & At sale creation, capture the selected version's
 	reference price; later catalog price changes must not alter the sale.
 	\tagconf{}                                                                                                                                                                                                          \\
@@ -420,42 +335,24 @@ Each task has exactly one of three statuses: \code{pending}, \code{in_progress},
 \code{completed}. \tagconf{}
 
 \begin{itemize}
-	\item The process is strictly linear. Task~1 is the only task eligible to
-	      start initially; Task~$N$ may move from \code{pending} to \code{in_progress}
-	      only after Task~$N-1$ is \code{completed}. \tagconf{}
+	\item The process is strictly linear. Task~1 is the only task eligible to start initially; Task~$N$ may move from \code{pending} to \code{in_progress} only after Task~$N-1$ is \code{completed}. \tagconf{}
 	\item Parallel tasks, branches and out-of-order completion are not allowed in
 	      the normal workflow; at most one task is \code{in_progress} per sale. \tagconf{}
 	\item The current active task is the single \code{in_progress} task; if none exists, the next eligible task is derived from the ordered statuses. \tagconf{}
-	\item No dependency table or graph is introduced for the linear process unless
-	      a future requirement justifies branching. \tagconf{}
+	\item No dependency table or graph is introduced for the linear process unless a future requirement justifies branching. \tagconf{}
 	\item A confirmation message is shown before any task status change, especially completion. \tagconf{}
-	\item All backend endpoints, not only UI controls, enforce sequencing,
-	      required data, uniqueness and permissions. \tagconf{}
+	\item All backend endpoints, not only UI controls, enforce sequencing, required data, uniqueness and permissions. \tagconf{}
 \end{itemize}
 
 \begin{longtable}{@{}L{3.3cm}L{3.3cm}L{4.0cm}L{5.2cm}@{}}
 	\toprule
-	\textbf{Transition}                               & \textbf{Allowed actors}
-	                                                  & \textbf{Preconditions}                                                      &
-	\textbf{Notes}
-	\\
+	\textbf{Transition}                               & \textbf{Allowed actors}            & \textbf{Preconditions}                                           & \textbf{Notes}                                                                                               \\
 	\midrule
 	\endhead
-	\code{pending} $\rightarrow$ \code{in_progress}   & Advisor (own sale),
-	Manager, Admin                                    & Task $N-1$ is \code{completed} (Task~1: sale is \code{active})
-	                                                  & Records start timestamp; due date is computed here (Section~\ref{sec:sla});
-	confirmation required.                                                                                                                                                                                  \\
-	\code{in_progress} $\rightarrow$ \code{completed} & Advisor (own sale),
-	Manager, Admin                                    & All required fields and documents present; validations pass
-	                                                  & Records completion timestamp and \code{completion_phase}; may trigger a
-	notification; confirmation required.
-	\\
-	\code{completed} $\rightarrow$ \code{in_progress} & Manager, Admin only
-	                                                  & Task is the \emph{most
-		                                                                recently completed} task; reason recorded                                  & No
-	cascading rollback; fully audited.
-	\\
-	\code{in_progress} $\rightarrow$ \code{pending}   & \tagopen{}                                                                  & \tagopen{} & Not specified in the brief; see Appendix~\ref{app:open}. \\
+	\code{pending} $\rightarrow$ \code{in_progress}   & Advisor (own sale), Manager, Admin & Task $N-1$ is \code{completed} (Task~1: sale is \code{active})   & Records start timestamp; due date is computed here (Section~\ref{sec:sla}); confirmation required.           \\
+	\code{in_progress} $\rightarrow$ \code{completed} & Advisor (own sale), Manager, Admin & All required fields and documents present; validations pass      & Records completion timestamp and \code{completion_phase}; may trigger a notification; confirmation required. \\
+	\code{completed} $\rightarrow$ \code{in_progress} & Manager, Admin only                & Task is the \emph{most recently completed} task; reason recorded & No cascading rollback; fully audited.                                                                        \\
+	\code{in_progress} $\rightarrow$ \code{pending}   & \tagopen{}                         & \tagopen{}                                                       & Not specified in the brief; see Appendix~\ref{app:open}.                                                     \\
 	\bottomrule
 \end{longtable}
 
@@ -467,20 +364,9 @@ Each task has exactly one of three statuses: \code{pending}, \code{in_progress},
 	\item All task fields and document uploads are disabled and read-only until the task becomes \code{in_progress}. \tagconf{}
 	\item Unique constraints specified per task must be enforced. \tagconf{}
 	\item After completion, only a Sales Manager or System Admin may modify fields or documents; Sales Advisors see completed tasks read-only. \tagconf{}
-	\item \textbf{Data correction:} Managers and Admins may edit fields or replace
-	      documents of a \code{completed} task without changing its status; every
-	      such
-	      edit requires a mandatory ``Reason for Edit'' and is recorded in the append-only
-	      audit log. \tagconf{}
-	\item \textbf{Accidental completion:} only the most recently completed task
-	      may be reverted to \code{in_progress}. To reopen Task~4 while Task~6 is active,
-	      a manager must revert Task~6, then Task~5, then Task~4. This friction is
-	      intentional to protect data integrity and customer milestone visibility.
-	      \tagconf{}
-	\item The recommended duration is the elapsed time from \code{in_progress} to
-	      \code{completed}; tasks without a recommended duration have no
-	      predefined
-	      duration. \tagconf{}
+	\item \textbf{Data correction:} Managers and Admins may edit fields or replace documents of a \code{completed} task without changing its status; every such edit requires a mandatory ``Reason for Edit'' and is recorded in the append-only audit log. \tagconf{}
+	\item \textbf{Accidental completion:} only the most recently completed task may be reverted to \code{in_progress}. To reopen Task~4 while Task~6 is active, a manager must revert Task~6, then Task~5, then Task~4. This friction is intentional to protect data integrity and customer milestone visibility. \tagconf{}
+	\item The recommended duration is the elapsed time from \code{in_progress} to \code{completed}; tasks without a recommended duration have no predefined duration. \tagconf{}
 \end{itemize}
 
 \subsection{Financial reconciliation rules}
@@ -489,32 +375,20 @@ All amounts are USD. Let $Q$ be the \emph{quoted final vehicle price} of Task~1,
 
 \begin{longtable}{@{}L{1.2cm}L{14.6cm}@{}}
 	\toprule
-	\textbf{Rule} & \textbf{Definition}
-	\\
+	\textbf{Rule} & \textbf{Definition}                                                                                                                                                                  \\
 	\midrule
 	\endhead
-	F1            & Task~1: $Q = T_0 + C_0 + A + R$ (calculated). $T_0$ and $C_0$ are provisional; $A$ and $R$ stay constant for the whole operation. \tagconf{} \\
-	F2            & Task~3: the quoted price does not change. $C_1 = Q - (T_1 + A
-		                                                          + R)$, so that $T_1 + C_1 + A + R = Q$. \tagconf{}
-	\\
-	F3            & Task~4: the deposited amount is expected to equal $Q$.
-	\tagconf{}
+	F1            & Task~1: $Q = T_0 + C_0 + A + R$ (calculated). $T_0$ and $C_0$ are provisional; $A$ and $R$ stay constant for the whole operation. \tagconf{}                                         \\
+	F2            & Task~3: the quoted price does not change. $C_1 = Q - (T_1 + A + R)$, so that $T_1 + C_1 + A + R = Q$. \tagconf{}                                                                     \\
+	F3            & Task~4: the deposited amount is expected to equal $Q$. \tagconf{}
 	\tagopen{} Whether a mismatch blocks completion or requires a documented
-	reason.
-	\\
-	F4            & Task~5: the deposited amount is expected to equal $T_1$.
-	\tagconf{}
-	\\
-	F5            & Task~6: invoice amounts are expected to equal $T_1$ (Toyota),
-	$C_1$ (commission), $A$ (accessories) and $R$ (release processing). \tagconf{}
-	The four invoices therefore sum to $Q$.
-	\\
-	F6            & \tagprop{} Store money as exact decimals (for example two
-	decimal places),
+	reason.                                                                                                                                                                                              \\
+	F4            & Task~5: the deposited amount is expected to equal $T_1$. \tagconf{}                                                                                                                  \\
+	F5            & Task~6: invoice amounts are expected to equal $T_1$ (Toyota), $C_1$ (commission), $A$ (accessories) and $R$ (release processing). \tagconf{} The four invoices therefore sum to $Q$. \\
+	F6            & \tagprop{} Store money as exact decimals (for example two decimal places),
 	never floating point; define a rounding rule. \tagopen{} If $C_1$ would be
 	negative (that is, $T_1 + A + R > Q$), whether to block, or require manager
-	approval and a reason.
-	\\
+	approval and a reason.                                                                                                                                                                               \\
 	\bottomrule
 \end{longtable}
 
@@ -522,35 +396,22 @@ All amounts are USD. Let $Q$ be the \emph{quoted final vehicle price} of Task~1,
 
 \begin{longtable}{@{}rL{4.9cm}L{2.4cm}L{2.3cm}L{3.4cm}@{}}
 	\toprule
-	\textbf{\#}        & \textbf{Task}                         & \textbf{Duration}
-	                   &
-	\textbf{Milestone} & \textbf{Customer email on completion}
-	\\
+	\textbf{\#} & \textbf{Task}                 & \textbf{Duration} & \textbf{Milestone} & \textbf{Customer email on completion} \\
 	\midrule
 	\endhead
-	1                  & Cotización del Vehículo               & None                   & 1
-	                   & Yes (quotation ready)                                                                        \\
-	2                  & Debida Diligencia del Cliente         & 3 days
-	                   & 1
-	                   & No                                                                                           \\
-	3                  & Liquidación de Unidad                 & 12 days
-	                   & 2                                     & Yes (vehicle assigned)                               \\
-	4                  & Pago a Grupo Pana                     & None                   & 2 & No                      \\
-	5                  & Pago a Toyota                         & None                   & 3 & No                      \\
-	6                  & Facturación                           & None                   & 3 & Yes (invoices issued)   \\
-	7                  & Documentos Endosados                  & 10 days                & 4 & Yes (customs begins)    \\
-	8                  & Trámite Aduanero                      & 12 days                & 4
-	                   & No
-	\\
-	9                  & Trámite de Liberación                 & 30 days                & 5 & No                      \\
-	10                 & Inmatriculación y Placas              & 15 days                & 5
-	                   & Yes (plate assigned)                                                                         \\
-	11                 & Traslado a PDS                        & None                   & 6 & Yes (final preparation) \\
-	12                 & Equipamiento                          & None                   & 6
-	                   & No
-	\\
-	13                 & Entrega de Vehículo                   & None                   & 6
-	                   & Yes (delivery completed)                                                                     \\
+	1           & Cotización del Vehículo       & None              & 1                  & Yes (quotation ready)                 \\
+	2           & Debida Diligencia del Cliente & 3 days            & 1                  & No                                    \\
+	3           & Liquidación de Unidad         & 12 days           & 2                  & Yes (vehicle assigned)                \\
+	4           & Pago a Grupo Pana             & None              & 2                  & No                                    \\
+	5           & Pago a Toyota                 & None              & 3                  & No                                    \\
+	6           & Facturación                   & None              & 3                  & Yes (invoices issued)                 \\
+	7           & Documentos Endosados          & 10 days           & 4                  & Yes (customs begins)                  \\
+	8           & Trámite Aduanero              & 12 days           & 4                  & No                                    \\
+	9           & Trámite de Liberación         & 30 days           & 5                  & No                                    \\
+	10          & Inmatriculación y Placas      & 15 days           & 5                  & Yes (plate assigned)                  \\
+	11          & Traslado a PDS                & None              & 6                  & Yes (final preparation)               \\
+	12          & Equipamiento                  & None              & 6                  & No                                    \\
+	13          & Entrega de Vehículo           & None              & 6                  & Yes (delivery completed)              \\
 	\bottomrule
 \end{longtable}
 
@@ -563,8 +424,7 @@ Fields marked \cv{} are customer-visible. All uploaded documents record at least
 \begin{itemize}
 	\item Initial amount payable to Toyota, USD (numeric)\cv{} --- provisional,
 	      finalized in Task~3
-	\item Initial Grupo Pana commission, USD (numeric)\cv{} --- provisional,
-	      finalized in Task~3
+	\item Initial Grupo Pana commission, USD (numeric)\cv{} --- provisional, finalized in Task~3
 	\item Accessory amount, USD (numeric)\cv{} --- constant for the operation
 	\item Vehicle release processing amount, USD (numeric)\cv{} --- constant for the operation
 	\item Quoted final vehicle price, USD (calculated sum of the four amounts)\cv{}
@@ -598,16 +458,14 @@ amount and commission, and upload the unit settlement.
 \subsubsection*{Task 4 --- Pago a Grupo Pana (duration: none)}
 \textit{Purpose:} verify the customer's payment.
 \begin{itemize}
-	\item Transaction bank (BCP, BBVA, Scotiabank, Interbank and other supported
-	      banks)\cv{}
+	\item Transaction bank (BCP, BBVA, Scotiabank, Interbank and other supported banks)\cv{}
 	\item Transaction date\cv{}; transaction number (unique)\cv{}
 	\item Deposited amount, USD (expected to equal $Q$)\cv{}
 	\item Payment voucher --- PDF\cv{}
 \end{itemize}
 
 \subsubsection*{Task 5 --- Pago a Toyota (duration: none)}
-\textit{Purpose:} record the internal payment to Toyota. No fields are
-customer-visible.
+\textit{Purpose:} record the internal payment to Toyota. No fields are customer-visible.
 \begin{itemize}
 	\item Transaction bank; transaction date; transaction number (unique)
 	\item Deposited amount, USD (expected to equal $T_1$)
@@ -687,9 +545,7 @@ The brief requires validations for amounts, dates, identifiers and required docu
 	      invoice numbers and plate. \tagopen{} Scope of uniqueness: for example
 	      transaction numbers per bank, invoice numbers per series, and whether
 	      series/VIN/plate of a \emph{cancelled} sale may be reused.
-	\item Documents: allowed formats PDF (and Excel for the Task~1 quotation);
-	      maximum size and content-type verification to be defined (see
-	      Section~\ref{sec:files}).
+	\item Documents: allowed formats PDF (and Excel for the Task~1 quotation); maximum size and content-type verification to be defined (see Section~\ref{sec:files}).
 \end{itemize}
 
 % =====================================================================
@@ -699,13 +555,7 @@ The brief requires validations for amounts, dates, identifiers and required docu
 
 \subsection{Customer portal capabilities}
 
-Customers can sign in through a customer-specific interface, view all sale
-registers associated with their customer record, view vehicle information and
-the assigned advisor (full name, contact email and phone), follow progress
-through six milestones, access only customer-visible fields and documents,
-receive the defined emails and reset their password. \tagconf{} Customers must
-not be able to view or infer another customer's sales, documents or private
-information. \tagconf{}
+Customers can sign in through a customer-specific interface, view all sale registers associated with their customer record, view vehicle information and the assigned advisor (full name, contact email and phone), follow progress through six milestones, access only customer-visible fields and documents, receive the defined emails and reset their password. \tagconf{} Customers must not be able to view or infer another customer's sales, documents or private information. \tagconf{}
 
 For each sale the customer sees: vehicle model, version, categories,
 reference-price snapshot, selected color and images; assigned advisor contact
@@ -716,10 +566,7 @@ details; sale creation timestamp, overall state and progress timeline.
 
 \begin{itemize}
 	\item Employees create customer accounts, subject to permissions. \tagconf{}
-	\item The system generates a secure temporary password and emails the portal
-	      link and login data (document type, document number, temporary
-	      password).
-	      \tagconf{}
+	\item The system generates a secure temporary password and emails the portal link and login data (document type, document number, temporary password). \tagconf{}
 	\item On first login with the temporary password the customer is forced to a mandatory ``Set New Password'' screen and cannot use the portal until a new secure password is saved. \tagconf{}
 	\item Customers cannot edit their document, name, email or phone through the portal; they can reset their password through ``Forgot Password''. \tagconf{}
 	\item \tagprop{} Because the email carries a credential, make the temporary
@@ -735,14 +582,10 @@ details; sale creation timestamp, overall state and progress timeline.
 	\midrule
 	\endhead
 	1           & Cotización y Documentación & 1, 2           & Official quotation established and signer's identity documentation validated.            \\
-	2           & Asignación y Pago          & 3, 4           & Physical vehicle
-	assigned by series number; payment to Grupo Pana enabled.                                                                                            \\
-	3           & Facturación Oficial        & 5, 6           & Toyota payment
-	processed and official invoices
-	issued.
-	\\
-	4           & Trámites Aduaneros         & 7, 8           & Endorsed documents
-	processed; vehicle in customs/nationalization.                                                                                                       \\
+	2           & Asignación y Pago          & 3, 4           & Physical vehicle assigned by series number; payment to Grupo Pana enabled.               \\
+	3           & Facturación Oficial        & 5, 6           & Toyota payment processed and official invoices
+	issued.                                                                                                                                              \\
+	4           & Trámites Aduaneros         & 7, 8           & Endorsed documents processed; vehicle in customs/nationalization.                        \\
 	5           & Liberación y Placas        & 9, 10          & Release period and progress toward
 	registration and definitive plate.                                                                                                                   \\
 	6           & Preparación y Entrega      & 11, 12, 13     & Move to pre-delivery inspection, equipment installation and final delivery coordination. \\
@@ -756,18 +599,13 @@ details; sale creation timestamp, overall state and progress timeline.
 	      \code{in_progress} when its task group contains the single active task;
 	      otherwise \code{pending}. \tagconf{}
 	\item The current milestone is \textbf{not stored} as an editable field on the
-	      sale register; it is derived from ordered task statuses and exposed
-	      consistently
-	      through the API, operations filters and BI queries (for example through
-	      a
+	      sale register; it is derived from ordered task statuses and exposed consistently
+	      through the API, operations filters and BI queries (for example through a
 	      database view or reusable query). \tagconf{}
 	\item A cached or denormalized value is allowed only if measurements show a
-	      real performance problem, and then it must be updated transactionally
-	      and never
+	      real performance problem, and then it must be updated transactionally and never
 	      become a second source of truth. \tagconf{}
-	\item Future milestones cannot be active or completed ahead of earlier ones.
-	      The overall sale state (\code{active}, \code{completed}, \code{cancelled}) is
-	      displayed separately from milestone state. \tagconf{}
+	\item Future milestones cannot be active or completed ahead of earlier ones. The overall sale state (\code{active}, \code{completed}, \code{cancelled}) is displayed separately from milestone state. \tagconf{}
 	\item \tagassm{} Because a manager may revert the most recently completed task, a customer may occasionally see a milestone move backward; the portal should present this neutrally.
 \end{itemize}
 
@@ -787,51 +625,24 @@ internal transition. \tagconf{}
 
 \begin{longtable}{@{}rL{3.6cm}L{4.6cm}L{4.4cm}@{}}
 	\toprule
-	\textbf{\#}                                                   &
-	\textbf{Trigger}                                              & \textbf{Subject (Spanish)}
-	                                                              & \textbf{Content summary}
-	\\
+	\textbf{\#}                                                 & \textbf{Trigger}                                                      & \textbf{Subject (Spanish)}                                              & \textbf{Content summary}                                                                 \\
 	\midrule
 	\endhead
-	1                                                             & Advisor
-	registers the customer for the first time (once per customer) &
-	Bienvenido a Grupo Pana - Acceso a tu portal de seguimiento   & Welcome,
-	portal
-	link, login identifier and temporary password; must state the password has to
-	be
-	changed at first login.
-	\\
-	2                                                             & Advisor creates
-	the sale register and assigns the vehicle                     & Hemos registrado
-	tu nueva solicitud de vehículo                                & Process started; vehicle model/color; advisor
-	name and contact number; link to view the first milestone.
-	\\
-	3                                                             & Task 1 completed
-	                                                              & Tu cotización oficial está lista para revisión &
-	Quotation available; link to download the PDF from the authenticated portal.
-	\\
-	4                                                             & Task 3 completed
-	                                                              & Siguiente paso: Tu vehículo ha sido asignado   &
-	Vehicle assigned with series number and VIN; direct to portal for payment to
-	Grupo Pana.                                                                                                                                                                                                                                              \\
-	5                                                             & Task 6 completed
-	                                                              & Tus comprobantes de pago han sido emitidos     &
-	Payment/invoicing steps recorded; invoices available for download.
-	\\
-	6                                                             & Task 7 completed                               & Iniciamos los trámites aduaneros de tu vehículo & Endorsed documents processed; customs underway; no unsupported delivery-date promise. \\
-	7                                                             & Task 10
-	completed                                                     & ¡Tu vehículo ya cuenta con placa
-	oficial!                                                      & Definitive
-	plate and secure link to the TIVe PDF.                                                                                                                                                                                                                   \\
-	8                                                             & Task 11
-	completed                                                     & Tu vehículo
-	está
-	en fase de preparación final                                  & Vehicle entered
-	pre-delivery preparation/equipment phase.                                                                                                                                                                                                                \\
-	9                                                             & Task 13
-	completed                                                     & ¡Felicidades por
-	tu nuevo vehículo! / Gracias por confiar en Grupo Pana        & Thank you, delivery
-	date, secure link to the signed delivery record.                                                                                                                                                                                                         \\
+	1                                                           & Advisor registers the customer for the first time (once per customer) &
+	Bienvenido a Grupo Pana - Acceso a tu portal de seguimiento & Welcome, portal
+	link, login identifier and temporary password; must state the password has to be
+	changed at first login.                                                                                                                                                                                                                                                                                  \\
+	2                                                           & Advisor creates the sale register and assigns the vehicle             & Hemos registrado
+	tu nueva solicitud de vehículo                              & Process started; vehicle model/color; advisor
+	name and contact number; link to view the first milestone.                                                                                                                                                                                                                                               \\
+	3                                                           & Task 1 completed                                                      & Tu cotización oficial está lista para revisión                          & Quotation available; link to download the PDF from the authenticated portal.             \\
+	4                                                           & Task 3 completed                                                      & Siguiente paso: Tu vehículo ha sido asignado                            & Vehicle assigned with series number and VIN; direct to portal for payment to Grupo Pana. \\
+	5                                                           & Task 6 completed                                                      & Tus comprobantes de pago han sido emitidos                              & Payment/invoicing steps recorded; invoices available for download.                       \\
+	6                                                           & Task 7 completed                                                      & Iniciamos los trámites aduaneros de tu vehículo                         & Endorsed documents processed; customs underway; no unsupported delivery-date promise.    \\
+	7                                                           & Task 10 completed                                                     & ¡Tu vehículo ya cuenta con placa oficial!                               & Definitive
+	plate and secure link to the TIVe PDF.                                                                                                                                                                                                                                                                   \\
+	8                                                           & Task 11 completed                                                     & Tu vehículo está en fase de preparación final                           & Vehicle entered pre-delivery preparation/equipment phase.                                \\
+	9                                                           & Task 13 completed                                                     & ¡Felicidades por tu nuevo vehículo! / Gracias por confiar en Grupo Pana & Thank you, delivery date, secure link to the signed delivery record.                     \\
 	\bottomrule
 \end{longtable}
 
@@ -847,18 +658,14 @@ this should read ``Milestone~1''. \tagprop{}
 
 \begin{longtable}{@{}L{3.4cm}L{12.4cm}@{}}
 	\toprule
-	\textbf{Actor} & \textbf{Description}
-	\\
+	\textbf{Actor} & \textbf{Description}                                                                                             \\
 	\midrule
 	\endhead
 	System Admin   & Full administrative control, including staff management and exceptional destructive operations under safeguards. \\
-	Sales Manager  & Global business and operational control over sales, overrides
-	and reassignment.
-	\\
+	Sales Manager  & Global business and operational control over sales, overrides and reassignment.                                  \\
 	Sales Advisor  & Manages own customers and sales and works own active tasks.                                                      \\
 	Customer       & Separate access class (not in the employee RBAC table): own records
-	and customer-visible content only.
-	\\
+	and customer-visible content only.                                                                                                \\
 	System actor   & \tagprop{} Non-human actor for scheduler, migrations and seeded data, used for provenance and audit.             \\
 	\bottomrule
 \end{longtable}
@@ -867,47 +674,22 @@ this should read ``Milestone~1''. \tagprop{}
 
 \begin{longtable}{@{}L{2.6cm}L{4.5cm}L{4.4cm}L{4.3cm}@{}}
 	\toprule
-	\textbf{Module}                                                   &
-	\textbf{System Admin}
-	                                                                  & \textbf{Sales Manager}                                                      &
-	\textbf{Sales
-		Advisor}
-	\\
+	\textbf{Module}                                                   & \textbf{System Admin}                                                                               & \textbf{Sales Manager}                                                      & \textbf{Sales
+		                                                                                                                                                                                                                                                        Advisor}                                                               \\
 	\midrule
 	\endhead
-	Staff management                                                  & Full CRUD:
-	create staff, assign roles, reset passwords, permanently delete when genuinely
-	necessary                                                         & View active staff, limited to Sales Advisors, for reassignment
-	                                                                  & No access                                                                                                                                                                      \\
-	Vehicle catalog                                                   & Full CRUD                                                                   & Create/edit models, upload photos, archive models/versions & View only; browse/select for a sale \\
-	Customers                                                         & Full CRUD,
-	including exceptional permanent deletion
-	                                                                  &
-	View/edit/create any customer; no hard delete                     & Create
-	customers; view/edit only
-	customers associated with own sales
-	\\
-	Sale registers                                                    & Full CRUD;
-	delete corrupted/test records under controlled conditions
-	                                                                  & View all, reassign advisors, cancel any sale, undo cancellations            &
-	Create/update/cancel own sales (reason required); cannot undo cancellation                                                                                                                                                                         \\
-	Tasks and documents                                               & Full
-	access for exceptional intervention
-	                                                                  & Override tasks across all sales, edit/replace files, reopen completed tasks &
-	Update own active tasks; completed tasks read-only                                                                                                                                                                                                 \\
-	BI dashboard                                                      & Global
-	view
-	                                                                  & Global
-	business/operational view                                         &
-	Individual view
-	of own pipeline and permitted metrics
-	\\
-	Raw exports                                                       &
-	Full-system export including audit/access logs
-	                                                                  & Business exports:
+	Staff management                                                  & Full CRUD: create staff, assign roles, reset passwords, permanently delete when genuinely necessary & View active staff, limited to Sales Advisors, for reassignment              & No access                                                                  \\
+	Vehicle catalog                                                   & Full CRUD                                                                                           & Create/edit models, upload photos, archive models/versions                  & View only; browse/select for a sale                                        \\
+	Customers                                                         & Full CRUD, including exceptional permanent deletion                                                 &
+	View/edit/create any customer; no hard delete                     & Create customers; view/edit only
+	customers associated with own sales                                                                                                                                                                                                                                                                                                \\
+	Sale registers                                                    & Full CRUD; delete corrupted/test records under controlled conditions                                & View all, reassign advisors, cancel any sale, undo cancellations            & Create/update/cancel own sales (reason required); cannot undo cancellation \\
+	Tasks and documents                                               & Full access for exceptional intervention                                                            & Override tasks across all sales, edit/replace files, reopen completed tasks & Update own active tasks; completed tasks read-only                         \\
+	BI dashboard                                                      & Global view                                                                                         & Global business/operational view                                            & Individual view
+	of own pipeline and permitted metrics                                                                                                                                                                                                                                                                                              \\
+	Raw exports                                                       & Full-system export including audit/access logs                                                      & Business exports:
 	customer list, sale registers, task audit logs, cancellation logs & No raw
-	exports
-	\\
+	exports                                                                                                                                                                                                                                                                                                                            \\
 	\bottomrule
 \end{longtable}
 \tagconf{} The matrix above is the intended permission model.
@@ -918,27 +700,21 @@ this should read ``Milestone~1''. \tagprop{}
 	      default. \tagconf{}
 	\item Viewing is separated from modifying, cancelling, reopening, exporting
 	      and deleting. \tagconf{}
-	\item Security-sensitive actions, overrides, cancellations, role changes and
-	      exceptional deletions are logged. \tagconf{}
+	\item Security-sensitive actions, overrides, cancellations, role changes and exceptional deletions are logged. \tagconf{}
 	\item Prefer soft deletion/archival; permanent removal requires confirmation and an audit trail. \tagconf{}
 \end{itemize}
 
 \subsubsection*{Concerns and proposed resolutions}
 \begin{itemize}
 	\item \tagopen{} \textbf{Advisor customer access.} Advisors may create
-	      customers but view only customers tied to their own sales; a newly
-	      created
+	      customers but view only customers tied to their own sales; a newly created
 	      customer has no sale yet, and a uniqueness conflict on document number reveals
 	      that a customer exists. \tagprop{} Treat customers created by the advisor as
-	      accessible, and offer a controlled ``attach existing customer'' flow
-	      that
+	      accessible, and offer a controlled ``attach existing customer'' flow that
 	      exposes minimal data.
-	\item \tagopen{} \textbf{Reassignment.} Whether access changes immediately
-	      when a sale is reassigned (proposal: yes, access follows the current assignee;
-	      history stays in the audit trail).
+	\item \tagopen{} \textbf{Reassignment.} Whether access changes immediately when a sale is reassigned (proposal: yes, access follows the current assignee; history stays in the audit trail).
 	\item \tagprop{} \textbf{Admin destructive power.} Require a reason, an
-	      explicit confirmation and an audit event for permanent deletion;
-	      consider a
+	      explicit confirmation and an audit event for permanent deletion; consider a
 	      restricted time window or two-person approval later.
 \end{itemize}
 
@@ -946,17 +722,12 @@ this should read ``Milestone~1''. \tagprop{}
 
 \begin{itemize}
 	\item \textbf{Two interfaces and routes:} employees at \code{/admin} (document
-	      types DNI, CE, PAS) and customers at \code{/portal} (DNI, CE, RUC, PAS,
-	      CDI).
-	      \tagconf{} Separate pages are for usability and routing only; identity,
-	      user
-	      type, role and resource authorization are enforced by the backend.
-	      \tagconf{}
+	      types DNI, CE, PAS) and customers at \code{/portal} (DNI, CE, RUC, PAS, CDI).
+	      \tagconf{} Separate pages are for usability and routing only; identity, user
+	      type, role and resource authorization are enforced by the backend. \tagconf{}
 	\item \textbf{Login fields (both):} document type, document number, password, a ``Forgot password'' link and a ``Keep me signed in'' checkbox. Email is not the login identifier. \tagconf{}
 	\item \textbf{Validation:} document format depends on the selected type (for example DNI typically eight digits, RUC eleven), configurable and validated on both client and server. \tagconf{}
-	\item \textbf{Uniqueness:} composite unique \code{(document_type,
-		      document_number)} in both the customers and employees tables, normalized
-	      consistently while preserving leading zeros. \tagconf{}
+	\item \textbf{Uniqueness:} composite unique \code{(document_type, document_number)} in both the customers and employees tables, normalized consistently while preserving leading zeros. \tagconf{}
 	\item \textbf{Same person in both tables:} the authentication system must
 	      distinguish account types and prevent cross-portal leaks. \tagprop{} Separate
 	      account namespaces, a mandatory \code{user_type} claim and token audience, and
@@ -977,24 +748,18 @@ The brief requires evaluation of at least the following; the baseline controls a
 
 \begin{longtable}{@{}L{4.2cm}L{11.6cm}@{}}
 	\toprule
-	\textbf{Area}           & \textbf{Baseline control}                                                                                                                           \\
+	\textbf{Area}           & \textbf{Baseline control}                                                                                                                                                            \\
 	\midrule
 	\endhead
-	Customer isolation      & Every customer query is scoped by the authenticated customer id on the server; opaque identifiers; tests that attempt cross-customer access (IDOR). \\
-	Document access         & Private storage; downloads only through backend authorization with short-lived links; no public URLs for private documents.                         \\
-	Brute force             & Rate limiting and progressive lockout on login and
-	password-reset endpoints; all failures logged in \code{AccessLogs}.
-	\\
-	Input and uploads       & Server-side validation with a schema library; file
-	type, size and content verification.
-	\\
-	Sensitive data exposure & Exclude passwords, tokens and document contents from logs, audit payloads, analytics and API responses.                                             \\
-	Web vulnerabilities     & Standard protections: parameterized queries, output encoding, security headers, CORS allow-list, dependency scanning.                               \\
+	Customer isolation      & Every customer query is scoped by the authenticated customer id on the server; opaque identifiers; tests that attempt cross-customer access (IDOR).                                  \\
+	Document access         & Private storage; downloads only through backend authorization with short-lived links; no public URLs for private documents.                                                          \\
+	Brute force             & Rate limiting and progressive lockout on login and password-reset endpoints; all failures logged in \code{AccessLogs}.                                                               \\
+	Input and uploads       & Server-side validation with a schema library; file type, size and content verification.                                                                                              \\
+	Sensitive data exposure & Exclude passwords, tokens and document contents from logs, audit payloads, analytics and API responses.                                                                              \\
+	Web vulnerabilities     & Standard protections: parameterized queries, output encoding, security headers, CORS allow-list, dependency scanning.                                                                \\
 	Audit integrity         & Append-only tables for ordinary roles; restricted access and
-	defined retention.                                                                                                                                                            \\
-	Privacy and legal       & \tagopen{} Review obligations under Peruvian
-	personal-data protection law with qualified counsel, including consent,
-	retention and handling of identity and due-diligence documents.                                                                                                               \\
+	defined retention.                                                                                                                                                                                             \\
+	Privacy and legal       & \tagopen{} Review obligations under Peruvian personal-data protection law with qualified counsel, including consent, retention and handling of identity and due-diligence documents. \\
 	\bottomrule
 \end{longtable}
 
@@ -1005,12 +770,7 @@ The brief requires evaluation of at least the following; the baseline controls a
 
 \subsection{Append-only audit trail}\label{sec:audit}
 
-The audit trail is distinct from provenance fields and from authentication
-access logs. It is append-only for ordinary roles, and it avoids storing
-passwords, tokens, full document contents or unnecessary sensitive data.
-\tagconf{} Each event records the actor, target entity and record id,
-event/action type, timestamp, and an appropriate before/after summary.
-\tagconf{}
+The audit trail is distinct from provenance fields and from authentication access logs. It is append-only for ordinary roles, and it avoids storing passwords, tokens, full document contents or unnecessary sensitive data. \tagconf{} Each event records the actor, target entity and record id, event/action type, timestamp, and an appropriate before/after summary. \tagconf{}
 
 \begin{longtable}{@{}L{4.4cm}L{11.4cm}@{}}
 	\toprule
@@ -1019,18 +779,11 @@ event/action type, timestamp, and an appropriate before/after summary.
 	\endhead
 	Task status changes  & Previous/new status, actor, timestamp, reason where
 	applicable.                                                                                                                                                   \\
-	Sale state changes   & Cancellation, reopening, completion changes, and the
-	reason for cancellation/override.
-	\\
-	Assignment           & Assignment and reassignment of Sales Advisors.
-	\\
+	Sale state changes   & Cancellation, reopening, completion changes, and the reason for cancellation/override.                                                 \\
+	Assignment           & Assignment and reassignment of Sales Advisors.                                                                                         \\
 	Field changes        & Important changes to sale, customer, vehicle/catalog and task fields; edits to completed tasks with the mandatory ``Reason for Edit''. \\
-	Documents            & Uploads, replacements, archival/deletion and visibility
-	changes.
-	\\
-	Security             & Role/permission changes and other security-sensitive
-	administrative actions, including permanent deletions.
-	\\
+	Documents            & Uploads, replacements, archival/deletion and visibility changes.                                                                       \\
+	Security             & Role/permission changes and other security-sensitive administrative actions, including permanent deletions.                            \\
 	\bottomrule
 \end{longtable}
 
@@ -1061,8 +814,7 @@ event/action type, timestamp, and an appropriate before/after summary.
 	\textbf{Level}                            & \textbf{Recipient}     & \textbf{Additional behavior}         \\
 	\midrule
 	\endhead
-	Level 1: warning through 24 hours overdue & Assigned Sales Advisor & Visible
-	indicator.                                                                                                \\
+	Level 1: warning through 24 hours overdue & Assigned Sales Advisor & Visible indicator.                   \\
 	Level 2: 24 to 48 hours overdue           & Sales Manager          & Escalation indicator.                \\
 	Level 3: more than 48 hours overdue       & System Admin           & Task visually highlighted in the UI. \\
 	\bottomrule
@@ -1076,26 +828,11 @@ event/action type, timestamp, and an appropriate before/after summary.
 \code{recurring}) and \code{recurring_reminder_count}; record every dispatched
 reminder in an append-only \code{Notification_Log} (or equivalent). \tagconf{}
 
-\textbf{UI and analytics.} Show indicators for \emph{Approaching},
-\emph{Overdue} and \emph{Escalated/Recurring}, with quick filters for urgent
-tasks. \tagconf{} Store \code{completion_phase} on completion with values
-\code{early}, \code{in_approaching}, \code{overdue} or \code{recurring_overdue}.
-\tagconf{} \tagopen{} Value of \code{completion_phase} for tasks without a
-recommended duration (proposal: null).
+\textbf{UI and analytics.} Show indicators for \emph{Approaching}, \emph{Overdue} and \emph{Escalated/Recurring}, with quick filters for urgent tasks. \tagconf{} Store \code{completion_phase} on completion with values \code{early}, \code{in_approaching}, \code{overdue} or \code{recurring_overdue}. \tagconf{} \tagopen{} Value of \code{completion_phase} for tasks without a recommended duration (proposal: null).
 
 \subsection{File and document management}\label{sec:files}
 
-The platform must support secure upload, validation and storage; MIME type and
-size in bytes per upload; original file name, upload timestamp, uploader and
-task/sale association; replacement behavior with version history where needed;
-deletion/deactivation rules with audit history; defined maximum size and
-formats; role-based upload, update and download permissions; explicit
-per-field/document customer visibility; authenticated or time-limited access;
-and safe behavior when a stored file is missing. \tagconf{} The database stores
-metadata and storage references rather than file contents. \tagconf{} Private
-documents must never be exposed merely because a URL is known. \tagconf{}
-\tagopen{} Maximum file size and allowed formats (proposal: PDF, plus Excel for
-the Task~1 quotation; a size limit to be set from storage quotas).
+The platform must support secure upload, validation and storage; MIME type and size in bytes per upload; original file name, upload timestamp, uploader and task/sale association; replacement behavior with version history where needed; deletion/deactivation rules with audit history; defined maximum size and formats; role-based upload, update and download permissions; explicit per-field/document customer visibility; authenticated or time-limited access; and safe behavior when a stored file is missing. \tagconf{} The database stores metadata and storage references rather than file contents. \tagconf{} Private documents must never be exposed merely because a URL is known. \tagconf{} \tagopen{} Maximum file size and allowed formats (proposal: PDF, plus Excel for the Task~1 quotation; a size limit to be set from storage quotas).
 
 % =====================================================================
 %  8. ARCHITECTURE & TECHNOLOGY SELECTION
@@ -1111,12 +848,10 @@ the Task~1 quotation; a size limit to be set from storage quotas).
 
 \begin{itemize}
 	\item Prefer the simplest architecture that meets the requirements: a
-	      \textbf{modular monolith} with a React frontend, an Express/TypeScript
-	      API and
+	      \textbf{modular monolith} with a React frontend, an Express/TypeScript API and
 	      PostgreSQL; no microservices.
 	\item Keep business rules (task sequencing, snapshots, permissions,
-	      visibility) in the backend domain layer, independent of HTTP and the
-	      database.
+	      visibility) in the backend domain layer, independent of HTTP and the database.
 	\item Use clean-code practices, SOLID principles and safe design patterns;
 	      provide a complete modular project structure before generating individual files.
 	      \tagconf{}
@@ -1141,9 +876,7 @@ the Task~1 quotation; a size limit to be set from storage quotas).
 
 \subsection{Technology selection under the zero-cost constraint}
 
-Provider information was checked on 15 October 2026 from public documentation
-and third-party summaries; \textbf{sources disagree on some details, and quotas
-	must be re-verified on each provider's official page before relying on them.}
+Provider information was checked on 15 October 2026 from public documentation and third-party summaries; \textbf{sources disagree on some details, and quotas must be re-verified on each provider's official page before relying on them.}
 
 \begin{longtable}{@{}L{2.4cm}L{3.6cm}L{9.8cm}@{}}
 	\toprule
@@ -1163,15 +896,11 @@ and third-party summaries; \textbf{sources disagree on some details, and quotas
 
 \subsection{Modeling task-specific data}
 
-The brief requires comparing approaches rather than forcing all fields into one
-unstructured column. \tagconf{}
+The brief requires comparing approaches rather than forcing all fields into one unstructured column. \tagconf{}
 
 \begin{longtable}{@{}L{3.0cm}L{4.1cm}L{4.1cm}L{4.6cm}@{}}
 	\toprule
-	\textbf{Option}                            & \textbf{Advantages}
-	                                           & \textbf{Drawbacks}
-	                                           & \textbf{Fit}
-	\\
+	\textbf{Option}                            & \textbf{Advantages}                                                                         & \textbf{Drawbacks}                                                                & \textbf{Fit}                               \\
 	\midrule
 	\endhead
 	Fully relational (one table per task type) & Strong typing, native unique and foreign-key constraints, easy reporting                    & More tables and migrations; changes to a task need schema changes                 & Strong for constrained and reported fields \\
@@ -1184,8 +913,7 @@ unstructured column. \tagconf{}
 
 \subsection{Backend and frontend structure}
 
-\tagprop{} Modular monolith with layered, feature-oriented modules
-(presentation, application, domain, infrastructure).
+\tagprop{} Modular monolith with layered, feature-oriented modules (presentation, application, domain, infrastructure).
 
 \begin{verbatim}
 endotrack/
@@ -1213,9 +941,7 @@ Candidate patterns: repository and unit-of-work for persistence, a task state ma
 \subsection{Key technical risks}
 
 \begin{itemize}
-	\item Free-tier behavior (sleeping API, expiring or pausing databases, storage
-	      quotas) conflicts with scheduling and confidential-file requirements; mitigated
-	      by the scheduler design and storage abstraction above.
+	\item Free-tier behavior (sleeping API, expiring or pausing databases, storage quotas) conflicts with scheduling and confidential-file requirements; mitigated by the scheduler design and storage abstraction above.
 	\item Strict-sequence integrity under concurrent updates requires transactional checks and database-level constraints in addition to application logic.
 	\item Confidential identity and financial documents require a storage and retention policy reviewed for legal compliance.
 \end{itemize}
