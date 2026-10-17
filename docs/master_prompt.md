@@ -4,14 +4,15 @@
 
 Help me design and plan a substantial, production-oriented web platform for managing Grupo Pana's vehicle sales through the **endoso** sales channel. Treat this document as the project's current source of truth. It includes business rules, workflow details, security expectations, a preferred technology stack, and an initial database proposal. Some implementation details may still need validation; distinguish confirmed decisions from recommendations and unresolved questions.
 
+- **Product Name:** EndosoFlow
+- **GitHub Repository:** `grupo-pana-endoso`
+
 The product has two connected experiences:
 
 1. **Employee application:** manage customers, employees, the vehicle catalog, sale registers, the 13-task operational process, documents, assignments, reminders, audit history, and operational analytics.
 2. **Customer portal:** allow customers to securely view their own sale registers, follow six customer-facing milestones, contact their assigned sales advisor, and access only the information/documents explicitly approved for customer visibility.
 
-The company currently has a basic internal application in Power Apps and a Power BI dashboard, but I will not provide their screenshots or detailed documentation. Treat that only as background context. **Design the product described here; do not attempt to recreate another tool.**
-
-Do not start by writing application code. First establish the business/domain model and the baseline project documentation requested in the final section. Then guide me iteratively through requirements, data modeling, UX, architecture, API, implementation, testing, and deployment.
+Do not start by writing application code. First establish the business/domain model. Then guide me iteratively through requirements, data modeling, UX, architecture, API, implementation, testing, and deployment.
 
 ---
 
@@ -52,11 +53,11 @@ A sale operation must be tracked from the official quotation through final vehic
 
 The platform should centralize operation information, improve the employee workflow, make task progress and delays easier to understand, provide management with actionable analytics, preserve important history, and give customers a secure and understandable view of their own purchase.
 
-Potential problem areas include operational coordination, traceability, delays, bottlenecks, document management, customer uncertainty, data quality, and management reporting. Validate and refine these as part of the analysis rather than treating every possible problem as already proven.
+Potential problem areas include operational coordination, traceability, delays, bottlenecks, document management, customer uncertainty, data quality, and management reporting.
 
 ### 2.3 Desired outcomes
 
-Help define measurable objectives and success metrics. Candidate outcomes include:
+Candidate outcomes include:
 
 - Centralize sale-operation information and documents.
 - Improve visibility into task status, the current task, strict process order, and delays.
@@ -66,8 +67,6 @@ Help define measurable objectives and success metrics. Candidate outcomes includ
 - Improve operational and management reporting.
 - Reduce avoidable communication and coordination effort.
 - Protect customer, employee, financial, and legal information.
-
-For each proposed metric, explain its calculation and the baseline data needed to evaluate improvement. Do not claim that an outcome has improved before data exists to support that conclusion.
 
 ### 2.4 Scope discipline
 
@@ -789,7 +788,7 @@ Enforce composite uniqueness on `(document_type, document_number)` within both `
 
 ### 14.3 Custom token strategy
 
-Use custom authentication with `bcrypt` password hashing, short-lived JWT access tokens and long-lived refresh tokens:
+Use custom authentication with password hashing, short-lived JWT access tokens and long-lived refresh tokens:
 
 - **Access token:** stateless signed JWT, 15-minute lifetime, returned to frontend memory rather than browser persistent storage. Validate it cryptographically. Include account type, user ID, role, and appropriate claims; ensure role changes/deactivation do not leave stale privileges effective longer than the chosen policy permits.
 - **Refresh token:** secure opaque random token, 30-day lifetime, stored as a hash in `Refresh_Tokens` and delivered only using an `HttpOnly` cookie to prevent XSS theft.
@@ -819,7 +818,7 @@ Log successful logins, failed attempts (unknown ID or wrong credentials), and ex
 
 The current intent is to keep prototyping, development, testing, and stakeholder reviews at **zero cost** using provider free tiers. Use this specified stack unless you identify a blocker that requires approval before a change:
 
-- **Frontend:** React with Vite and TypeScript, Recharts for BI/Analytics.
+- **Frontend:** React with Vite and TypeScript, hosted in Render (Free Static Site), Recharts for BI/Analytics.
 
 * **Backend:** Go (Golang) using the **Chi** router (`github.com/go-chi/chi`). Chi is chosen for its strict adherence to Go's standard `net/http` library, zero-allocation routing, and lightweight middleware execution—ideal for enforcing strict Role-Based Access Control (RBAC) and cross-portal auth isolation. Hosted in Render (Free Web Service tier), running as a single compiled Go executable.
 * **Database:** Supabase PostgreSQL, using `pgx` (`github.com/jackc/pgx/v5`) for high-performance connectivity and query execution. Consider integrating `sqlc` to generate type-safe Go code from SQL queries. The 500 MB free tier limit provides sufficient prototyping space, and our automated background jobs will prevent the database from pausing due to the one-week inactivity rule.
@@ -1177,8 +1176,6 @@ Each requirement must be testable and specify applicable roles, validation/busin
 
 ### Non-functional requirements
 
-The application UI must be entirely in **Spanish** for MVP/V1 to minimize scope, while the codebase should not unnecessarily prevent future internationalization.
-
 Define realistic requirements for:
 
 - Security and privacy.
@@ -1201,6 +1198,10 @@ Avoid vague requirements such as “must be fast.” Propose measurable targets 
 ## 18. UX/UI and navigation
 
 Design a professional, modern, responsive interface consistent with Grupo Pana's brand while prioritizing clarity and usability.
+
+The application UI must be entirely in **Spanish** for MVP/V1 to minimize scope, while the codebase should not unnecessarily prevent future internationalization.
+
+Across the interface (headers, login screens, email templates, and page titles), the product must be presented as **"EndosoFlow — Grupo Pana"** to maintain its own identity while retaining the corporate context.
 
 ### Employee areas to evaluate
 
@@ -1266,8 +1267,6 @@ Define a testing strategy before the implementation grows. Include, as appropria
 - UI/component and end-to-end tests for critical user journeys.
 - Regression tests for sale completion/reopening, resource conflicts, and immutable historical snapshots.
 
-Every major functional requirement should map to one or more acceptance tests.
-
 ---
 
 ## 21. Implementation roadmap
@@ -1282,113 +1281,15 @@ Treat this as a starting sequence, not an unquestionable constraint. Recommend c
 
 ---
 
-## 22. Project documentation and decision log
+## 22. First response
 
-Recommend and maintain useful documentation without documenting for its own sake. Possible artifacts include:
+For your first response, do not generate any application code, database migration scripts, or folder structures. Instead, perform the following initialization steps:
 
-- Root `README.md` and local development setup.
-- Product overview and scope.
-- Business rules and 13-task specification.
-- Functional and non-functional requirements.
-- Role-permission matrix.
-- UX information architecture and screen flows.
-- Architecture diagrams and Architecture Decision Records (ADRs).
-- Database schema and ERD.
-- API documentation.
-- Security/document-access model.
-- Testing strategy.
-- Deployment/operations guide.
-- User/admin guide.
-- Changelog.
+1. **Acknowledge and Summarize:** Briefly confirm your understanding of the EndosoFlow product, its dual-portal nature, the 13-task workflow, and the chosen tech stack.
+2. **Identify Gaps (Open Questions):** Analyze this document for any logical contradictions, missing business rules, or technical edge cases (e.g., edge cases in state transitions, missing data validation rules, or API constraints). Present these as a numbered list of **Open questions** for me to clarify.
+3. **Propose the Rigorous Execution Plan:** Expand the Phase 1, Phase 2, and Phase 3 roadmap from Section 21 into a rigorous, step-by-step execution plan. Break down Phase 1 into discrete, manageable sub-phases (e.g., Data Modeling, Auth Foundation, API Setup, Core Workflow Engine).
 
-Keep a decision log containing each major decision, status, reason, alternatives, consequences, and date/version where useful. Relevant decisions include data modeling, authentication/session handling, storage, notification strategy, SLA timing/rollback behavior, milestone rules, and architecture choices.
-
----
-
-## 23. Target design deliverables
-
-Through our collaborative design phase, iteratively create and refine these 22 artifacts before application implementation begins:
-
-1. Project overview and problem statement.
-2. Business/product objectives and proposed success metrics.
-3. Scope boundaries (MVP/V1/future), non-goals, and assumptions.
-4. Actors and role-permission matrix (RBAC).
-5. Sale lifecycle, cancellation rules, and historical snapshot integrity.
-6. Complete 13-task operational specification and strict linear state transitions.
-7. Six customer-facing milestones and derived-state mapping.
-8. Functional and non-functional requirements catalog.
-9. Primary domain use cases and user journeys.
-10. Document management, storage, and access-authorization strategy.
-11. Customer/employee notification engine rules.
-12. SLA duration, reminders, and escalation rules.
-13. UX information architecture and screen specifications.
-14. Relational schema, relationships/cardinalities, constraints, and ERD.
-15. REST API endpoints and payload contracts.
-16. System architecture, directory structure, and technology selection under cost constraints.
-17. Security, privacy, and data-isolation model.
-18. BI/analytics specification and KPI definitions.
-19. Comprehensive testing strategy.
-20. Step-by-step development roadmap.
-21. Deployment, infrastructure, and operations strategy.
-22. Documentation structure and architectural decision log.
-
-Do not generate all 22 as if they were final on the first turn. The first response has a separate, concrete deliverable requirement below.
-
----
-
-## 24. First response — baseline project package
-
-**Do not write application code.** Use this prompt as the starting point for product design and baseline project documentation. The first response must be structured into **exactly three top-level parts**, in this order. Use the information provided; mark unresolved details as assumptions/open decisions instead of inventing answers.
-
-### Part 1 — Repository `README.md`
-
-Generate a polished Markdown file called `README.md` for the repository root. It must include:
-
-- Executive overview of the two connected experiences (Employee App and Customer Portal).
-- The specified technology stack, clearly distinguishing selected components from any provider limits that still need verification.
-- RBAC/user types overview.
-- All 13 strictly linear internal tasks and how they map to the 6 customer-facing milestones.
-- A concise project status/scope section that distinguishes planned functionality from implemented functionality.
-
-### Part 2 — Formal `PROJECT_SPECIFICATION.tex`
-
-Generate a complete, fully compilable LaTeX source file named `PROJECT_SPECIFICATION.tex`. Transform the prompt's requirements into a formal Software Requirements & Product Specification, removing “instructions to an LLM” language from the document itself.
-
-Use a clean `article` or `report` class, `hyperref`, structured sectioning, readable tables, and appropriate packages. Ensure special characters/underscores are escaped correctly, tables fit page widths, and the source is compilable without relying on unavailable external images or files.
-
-Cover at minimum:
-
-1. Document metadata and executive summary.
-2. Business context, problem statement, objectives, scope, assumptions, and non-goals.
-3. Actors, roles, RBAC, and authentication.
-4. Core domain entities and historical snapshot rules.
-5. The complete 13-task operational lifecycle, exact fields, customer visibility, durations, financial reconciliation rules, and linear transitions.
-6. Customer portal and six macro-milestones.
-7. Document storage/access policy.
-8. Notifications, SLA/reminders, and escalation rules.
-9. Record provenance, audit events, and access logs.
-10. BI/analytics and KPI definitions/candidates.
-11. Proposed database model and invariants, with undecided design details labelled appropriately.
-12. Proposed architecture and required technology stack.
-13. Functional/non-functional requirements, testing strategy, and roadmap.
-
-### Part 3 — Execution Master Plan & High-Impact Decisions
-
-- Map the 22 target deliverables in Section 23 into a step-by-step plan for future turns. Explain the order and dependencies (for example, validate domain rules/schema, then API/auth, then UX flows, then implementation/testing/deployment).
-- Identify the most consequential unresolved business or architecture decisions that should be resolved before finalizing the database schema or writing application code.
-- Explicitly highlight internal inconsistencies or risks in this prompt, including at least:
-  - Exact task rollback/reversion behavior versus the strict linear workflow.
-  - How an SLA timer behaves when an in-progress task is reverted to pending and restarted.
-  - Customer visibility of sensitive identity/affidavit documents.
-  - Temporary-password email versus safer activation-link alternatives.
-  - Enforcing series/VIN/license-plate uniqueness only across active/completed sales in a schema where sale state and identifiers may live in different tables.
-  - Polymorphic user references in `Refresh_Tokens` and `Access_Logs`.
-  - The amount/rounding/mismatch rules and invoice-number uniqueness scope.
-  - The best way to retain catalog references (especially selected vehicle color) while preserving immutable sale snapshots.
-  - Current provider free-tier quotas/limits, which must be verified before implementation rather than treated as permanent guarantees.
-- Do not “resolve” these by guessing. Explain recommended options and mark decisions for confirmation.
-
-If the environment supports creating files, provide actual downloadable `README.md` and `PROJECT_SPECIFICATION.tex` files rather than only describing them. Keep the first response focused on these four parts, and do not start implementing application source code.
+Wait for my answers to your open questions and my approval of the execution plan before moving on to designing the database schema or writing code.
 
 ---
 
