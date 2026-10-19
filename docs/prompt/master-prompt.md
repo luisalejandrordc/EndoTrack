@@ -1,1348 +1,1091 @@
-# Grupo Pana - Endoso Operations & Customer Tracking Platform
+# Grupo Pana — Endoso Operations & Customer Tracking Platform
 
-Hi! I want you to help me design and plan a relatively large software project from the ground up.
+## 1. Project mission and your role
 
-I am going to give you everything I currently know about the project: the business context, the existing process, the current internal application, the current BI dashboard, ideas for the new application, questions I have, and decisions that have not yet been made.
+Hi! I want you to help me design and plan a substantial software project from the ground up.
 
-I will also provide reference files containing screenshots/material from the systems currently used by Grupo Pana.
+Act as my collaborative partner across product discovery, business analysis, UX/UI design, software architecture, database design, backend/API design, security, analytics, testing, and project planning. Bring the perspective of a senior product analyst and software architect, but explain decisions clearly and help me understand the reasoning behind them.
 
-Your role is to act as a:
+The goal is to design a professional web platform for managing vehicle sales through Grupo Pana's **endoso** sales channel. The platform will have two connected experiences:
 
-- Senior Product Analyst
-- Business Analyst
-- Software Architect
-- Database Architect
-- UX/UI Designer
-- Backend/API Architect
-- Security/Authorization consultant
-- BI/Analytics consultant
-- Technical Project Planner
+1. **An employee application** for managing customers, vehicles, sale registers, the 14-task process, documents, assignments, reminders, and operational analytics.
+2. **A customer portal** where customers can securely access their sale registers, follow the process through customer-friendly milestones, and view the information and documents explicitly made available to them.
 
-The objective at this stage is NOT to start coding immediately.
+Do **not** start coding immediately. First, establish a coherent understanding of the product, process, requirements, data, roles, and business rules. Then guide me through UX, data modeling, architecture, technology selection, API design, implementation, testing, and deployment.
 
-First, I want us to understand the business problem correctly, model the process, define requirements and business rules, clarify open questions, and design the product.
-
-Only after those foundations are sufficiently clear should we move into database design, architecture, technology selection, API design, and implementation planning.
+The company currently has a basic internal application built with Power Apps and a Power BI dashboard. I will not provide screenshots or detailed documentation of those tools for this exercise. Treat that fact only as background context; **focus on the product described in this prompt, not on recreating an existing system**.
 
 ---
 
-# 1. Core principle
+## 2. Collaboration principles
 
-I do not want this project to become a web-based copy of the existing Power Apps application.
+Throughout the project, distinguish clearly between:
 
-The existing Power Apps application and BI dashboard should be treated as:
+- **Confirmed requirements and decisions:** Explicitly specified in this prompt.
+- **Proposals:** Ideas that should be evaluated rather than automatically implemented.
+- **Assumptions:** Temporary assumptions used to make progress.
+- **Open questions:** Matters that still require a business decision or further information.
+- **Technical recommendations:** Your reasoned recommendations, which are not automatically business requirements.
+- **Future enhancements:** Valuable possibilities that should not unnecessarily complicate the first release.
 
-> Reference material for understanding the current business process, terminology, workflows, information, and reporting needs.
+Do not silently turn assumptions into requirements, invent missing business rules, or make a major change to a stated requirement without calling it out. If you detect contradictions, risks, or an idea that may be unnecessarily complex, explain the issue, its implications, and a recommended resolution. Preserve the specified business intent even when you suggest a safer or more maintainable implementation.
 
-They are NOT automatically the specification for the new system.
+Use an iterative approach. Do not produce a giant specification and assume every detail is final. Maintain consistency across:
 
-For every important existing feature, ask:
+**business process → business rules → requirements → UX → permissions → data model → API → architecture → implementation → tests.**
 
-- What business problem does this solve?
-- Is it actually useful?
-- Is there a better way to implement it?
-- Should it remain?
-- Should it be redesigned?
-- Should it be removed?
-- Does it belong in the employee application, customer application, or both?
-
-The objective is to design a better system, not simply reproduce the current one.
+When new information arrives, update the relevant artifacts and explain which previous decisions are affected.
 
 ---
 
-# 2. How I want you to analyze information
+## 3. Business context and problem
 
-Throughout the project, clearly distinguish between:
+Grupo Pana is a Peruvian automotive company and an official Toyota and Hino dealership. It provides vehicle sales and other automotive services. Within its vehicle sales operations, the company manages sales through a channel known as **endoso**.
 
-### Confirmed facts
+An endoso vehicle sale passes through a series of commercial, administrative, financial, documentation, customs, registration, preparation, and delivery activities. These activities require coordination among the customer and Grupo Pana employees. The operation needs to be tracked from the official quotation through vehicle delivery.
 
-Information that is explicitly known about the current business or system.
+The platform should centralize the information needed to manage each operation and make progress easier to understand. It should improve employee workflow and management visibility while giving customers a secure, clear view of the relevant progress of their own purchase.
 
-### Proposed ideas
+Potential problem areas include operational coordination, traceability, delays, bottlenecks, document management, customer uncertainty, data quality, and management reporting. Validate and refine these as part of the analysis rather than assuming they are all proven problems.
 
-Ideas that I am considering but that have not yet been validated.
+### Desired outcomes
 
-### Open business decisions
+Help define measurable business and product objectives. Initial candidates include:
 
-Questions that Grupo Pana or the relevant users need to answer.
+- Centralize sale-operation information and documents.
+- Improve employee visibility into task status, dependencies, and delays.
+- Give customers a secure and understandable way to follow their purchase.
+- Improve accountability and auditability for important changes.
+- Identify tasks and operations that need attention.
+- Provide management with useful operational analytics.
+- Reduce avoidable communication and coordination effort.
+- Protect customer, employee, financial, and legal information.
 
-### Assumptions
+Do not treat these examples as automatically approved success metrics. Recommend suitable measures and identify what baseline data would be needed to assess improvement.
 
-Things that we temporarily assume so we can continue designing.
+### Scope management
 
-### Technical decisions
-
-Implementation choices that should be made only after the business requirements are sufficiently clear.
-
-### Future possibilities
-
-Ideas that could be useful later but should not unnecessarily complicate the initial version.
-
-Do not silently convert assumptions into requirements.
-
-Do not invent missing business rules.
-
-When information is missing, explicitly identify it and explain why it matters.
-
-When I suggest something that may be unnecessarily complex, challenge it and explain the trade-offs.
-
-When you believe something important is missing, point it out.
+Help define what belongs in the MVP, what belongs in the first complete release (V1), what is explicitly out of scope, and what should remain a future possibility. Prevent scope creep and explain dependencies between features.
 
 ---
 
-# 3. Current internal application
+## 4. Product overview
 
-The current internal application (Power Apps) contains screens/functions that include, among other things:
+### 4.1 Employee application
 
-- Active sales listing.
-- Completed sales listing.
-- Filtering and searching.
-- Customer registration.
-- Sale registration.
-- Vehicle/model selection.
-- Color selection.
-- Customer information.
-- Sale classification/evaluation.
-- Detailed sale view.
-- 14-task process visualization.
-- Task-specific detail/editing.
-- Notes.
-- Task timing information.
-- Specific task management such as official quotation, and others.
+Authorized employees should be able to:
 
-These screens should help us understand the current workflow, information used by employees, and existing terminology.
+- Create and manage customer accounts and customer records.
+- Manage employee accounts and roles according to permissions.
+- Manage the vehicle catalog, versions, colors, and images.
+- Create and manage sale registers, each representing one vehicle sale.
+- Assign a sales advisor to each sale register.
+- Track the sale through 14 tasks with dependencies and required data.
+- Enter task-specific fields and upload required documents.
+- Add notes to tasks and sale registers.
+- Cancel or reopen sale registers according to permissions.
+- Search, filter, sort, and paginate operations and reference data.
+- Monitor task deadlines, reminders, and escalations.
+- View operational and management analytics through a polished BI dashboard.
+- Access appropriate histories, audit records, and exports according to role.
 
-However, do NOT assume that the current navigation, categories, layout, or interaction patterns are the correct UX for the new system.
+These capabilities are governed by the role-permission matrix in this prompt. Do not assume every employee can perform every action.
 
----
-
-# 4. Business context
-
-Grupo Pana is a Peruvian automotive company that operates as an official Toyota and Hino dealership, providing vehicle sales, after-sales services, maintenance, spare parts, and corporate mobility solutions.
-
-Within its vehicle sales operations, Grupo Pana also manages vehicle sales through different channels. One of these is the "endoso" sales channel.
-
-The endoso channel involves a particular type of vehicle sale in which an operation goes through a specialized sequence of administrative, financial, commercial, and documentation-related stages.
-
-Because each operation involves multiple stages and coordination between Grupo Pana employees and the customer, tracking the progress of an operation can become difficult.
-
-The project I have in mind is a web application that centralizes these operations and provides two main experiences:
-
-### Employee / Grupo Pana side
-
-Employees should be able to:
-
-- Create and manage employees.
-- Create and manage customers.
-- Create and manage cars/vehicles.
-- Create and manage sale operations.
-- Track progress through the sale tasks/stages.
-- Enter task-specific information (could be simple data like text, numbers, or dates, or even document uploads and management).
-- Update the state of each of the tasks (respecting the correspondent dependencies and data requirements).
-- Add notes for each sale operation.
-- Search/filter/sort operations for employees, customers, cars models, and sale operations.
-- Access operational analytics and a beautiful BI dashboard.
-- Receive useful reminders/notifications.
-
-Notice that some of these actions may be reserved to certain roles. I haven't thought too much about it yet. But it is probably recommendable to add them, please tell me what you think about this.
-
-### Customer side
+### 4.2 Customer portal
 
 Customers should be able to:
 
-- Log in.
-- See their vehicle sale operations.
-- See meaningful progress information.
-- Access information and documentation that Grupo Pana chooses to expose.
-- Receive meaningful updates and notifications.
+- Sign in through a customer-specific login interface.
+- View all sale registers associated with their customer record.
+- View the vehicle and assigned advisor information specified in this prompt.
+- Follow progress through six customer-facing macro-milestones.
+- Access only those fields and documents explicitly designated as customer-visible.
+- Receive the defined milestone notifications and account emails.
+- Reset their password.
 
-The customer-facing tracking experience is one of the main improvements over the existing system.
-
----
-
-# 5. Problem statement
-
-We need to define the problem rigorously rather than assuming it is simply:
-
-"Grupo Pana needs a better web application."
-
-The real problem may involve several dimensions:
-
-- Internal operational tracking.
-- Visibility across a long multi-stage process.
-- Coordination between employees.
-- Traceability.
-- Delays and bottlenecks.
-- Customer uncertainty about progress.
-- Fragmented communication.
-- Document management.
-- Reporting.
-- Management visibility.
-- Data quality.
-- Process standardization.
-
-Analyze the actual problem and help formulate a professional problem statement.
+Customers must not be able to view or infer another customer's sale registers, documents, or private information.
 
 ---
 
-# 6. Project objectives
+## 5. Sale lifecycle and general business rules
 
-Help define both:
+Each sale register represents **exactly one vehicle sale**. If one customer purchases two vehicles, create two independent sale registers. Each has its own vehicle selection, task progress, documents, timeline, notes, and overall state.
 
-## Business objectives
+A sale register includes:
 
-Examples:
+### Customer reference and historical snapshot
 
-- Improve operational visibility.
-- Improve customer transparency.
-- Reduce uncertainty.
-- Improve traceability.
-- Detect delays and bottlenecks.
-- Centralize information.
-- Improve management reporting.
-- Improve data quality.
+- `customer_id` reference to the customer record.
+- A snapshot, captured when the sale is created, of the customer's legal/name value, document type, and document number.
+- Historical sale records and snapshots must remain immutable for financial and legal audit purposes, even if the customer profile is updated later.
 
-## Product objectives
+### Vehicle reference and historical snapshot
 
-Examples:
+- Reference to the selected vehicle/model/version as appropriate.
+- Selected color.
+- Snapshot of the selected version's reference price at the time the sale is created.
 
-- Provide a reliable employee workspace.
-- Provide a customer tracking portal.
-- Provide secure document access.
-- Provide operational dashboards.
-- Provide task-level traceability.
-- Provide role-based access.
+### Other sale information
 
-Do not assume that all examples above must become final objectives.
+- Fourteen task records and task-specific data.
+- Progress and timeline information.
+- Sale temperature: `Hot`, `Warm`, or `Cold`, representing the estimated probability of completion.
+- Automatically recorded creation timestamp.
+- Overall sale state: `active`, `completed`, or `cancelled`.
+- Sale-level notes.
+- Assigned sales advisor.
 
----
+The exact final relational structure should be justified during data modeling; the list above establishes business information that must be represented, not a mandate to create one table per bullet.
 
-# 7. Scope
+### Sale completion and cancellation
 
-Define:
+- A sale becomes `completed` automatically when all 14 tasks have been completed.
+- Employees may cancel a sale or reopen it according to their role and permissions.
+- Sales advisors may cancel their own sales, providing a reason, but may not undo a cancellation.
+- Sales managers may cancel any sale and undo cancellations.
+- Cancelled sales must remain available for historical/audit purposes and must not be physically deleted during ordinary operation.
+- System administrators may permanently delete corrupted/test sale records when necessary, subject to careful safeguards and auditability.
 
-### In scope
-
-Capabilities that belong in the initial product.
-
-### Out of scope
-
-Capabilities that are intentionally excluded.
-
-### Future scope
-
-Features that could be implemented later.
-
-Help prevent scope creep.
+If reopening a sale conflicts with the rule that completion is automatic, explain and define the lifecycle behavior without silently changing either requirement.
 
 ---
 
-# 8. Main business process
+## 6. The 14-task process
 
-A potential customer contacts a Grupo Pana sales advisor, primarily through WhatsApp or telephone, showing interest in purchasing a vehicle through the endoso channel.
+The customer may first contact a sales advisor through WhatsApp or telephone and receive an initial, non-final quotation outside this tracked operation. If the customer decides to proceed, the advisor creates the sale register and the formal 14-task process starts with **Task 1: Cotización del Vehículo**, which is the official quotation. Do not add the initial informal quotation as a fifteenth task unless the business requirements later change.
 
-The operation then reaches the previous first stage: preparing and sending an initial quotation.
+Each task has three statuses:
 
-Some time may pass while the customer evaluates the proposal.
+- `pending`
+- `in_progress`
+- `completed`
 
-If the customer decides to proceed, the sales advisor prepares an updated/final quotation, now the official first stage.
+A task may start only after **all of its dependencies** have been completed. Every non-optional field/document listed for a task is required before that task can be completed. Every task must have an optional Notes textarea.
 
-Afterward, the operation progresses through a sequence of 14 tasks, including the present task.
+The recommended duration refers to the elapsed time from the task transitioning to `in_progress` until it transitions to `completed`. A task without a specified duration has no predefined recommended duration.
+
+The label **Customer-visible** below means that the data or document should be accessible in the customer portal, subject to secure authorization checks. All uploaded documents must have, at minimum, their file type/MIME type and size in bytes recorded as metadata.
+
+Before a task status is changed, show a confirmation message. This is especially important when completing a task: after a task is marked `completed`, only a Sales Manager or System Admin may undo completion or modify its fields/documents. Sales Advisors may update active, non-completed tasks; completed tasks are read-only to them.
+
+### Task 1 — Cotización del Vehículo
+
+**Purpose:** Prepare the official vehicle quotation in Word and Excel, defining the base price, Grupo Pana commission in percentage and USD, and final vehicle price.
+
+**Fields:**
+
+- Vehicle price before commission, USD — textbox.
+- Grupo Pana commission, USD — textbox; automatically recalculated when commission percentage is manually changed.
+- Grupo Pana commission, percentage — textbox; automatically recalculated when commission in USD is manually changed.
+- Final vehicle price, USD — textbox; calculated as vehicle price before commission plus commission. **Customer-visible.**
+- Official vehicle quotation — Word document. **Customer-visible.**
+- Official vehicle quotation — Excel document. **Customer-visible.**
+
+**Recommended duration:** None.
+
+**Dependencies:** None.
+
+**Implementation note:** Define reliable handling of decimal precision, currency formatting, rounding, and which field is the source of truth when either commission value is edited. The two commission inputs must not become inconsistent.
+
+### Task 2 — Debida Diligencia del Cliente
+
+**Purpose:** Collect the signer's identity documents and the Customer Knowledge Affidavit, determine PEP status, and record the applicable DDC regime.
+
+**Fields:**
+
+- Signer's identity information. For a Diplomatic customer, the signer is the customer; for an Embassy, Religious Entity, or International Organization, the signer is the representative/executing person:
+  - Document type — dropdown: DNI, CE, PAS, CDI. **Customer-visible.**
+  - Document number — textbox. **Customer-visible.**
+  - Full name — textbox. **Customer-visible.**
+  - Scanned identity document — PDF. **Customer-visible.**
+- Customer Knowledge Affidavit — PDF. **Customer-visible.**
+- Power of Attorney validity document (`Vigencia de Poder`) — PDF, required if `customer.type` is not `Diplomático`. **Customer-visible.**
+- PEP status — dropdown: `No PEP`, `PEP`, `Relacionado con PEP`.
+- DDC regime — dropdown: `General`, `Reforzado`.
+
+**Recommended duration:** 3 days.
+
+**Dependencies:** Task 1.
+
+**Security note:** The prompt marks some due-diligence files as customer-visible. Evaluate the privacy and business implications of exposing identity documents and due-diligence material, and flag any concern for explicit review; do not silently change the specified visibility.
+
+### Task 3 — Liquidación de Unidad
+
+**Purpose:** Assign the vehicle's unique series/VIN identifier, calculate the amount payable to Toyota, and upload the settlement PDF.
+
+**Fields:**
+
+- Vehicle series number — textbox, unique. **Customer-visible.**
+- Amount payable to Toyota — numeric field.
+- Settlement document — PDF.
+
+**Recommended duration:** 12 days.
+
+**Dependencies:** Task 2.
+
+### Task 4 — Resumen de Venta
+
+**Purpose:** Consolidate associated costs, including accessory cost, updated commission, and vehicle release processing costs.
+
+**Fields:**
+
+- Accessory amount, USD — numeric field.
+- Commission amount, USD — numeric field. It may differ from the commission established in Task 1 due to updated prices in the endoso settlement.
+- Vehicle release processing amount, USD — numeric field.
+- Sales summary — PDF. **Customer-visible.**
+
+**Recommended duration:** None.
+
+**Dependencies:** Task 3.
+
+### Task 5 — Pago a Grupo Pana
+
+**Purpose:** Verify the customer's payment, recording the bank, transaction date, unique transaction number, amount, and payment voucher.
+
+**Fields:**
+
+- Transaction bank — dropdown, including BCP, BBVA, Scotiabank, Interbank, and other supported banks. **Customer-visible.**
+- Transaction date — date. **Customer-visible.**
+- Transaction number — textbox, unique. **Customer-visible.**
+- Deposited amount, USD — numeric field; expected to match the final vehicle price from Task 1 unless the business defines an exception. **Customer-visible.**
+- Payment voucher — PDF. **Customer-visible.**
+
+**Recommended duration:** None.
+
+**Dependencies:** Task 1.
+
+### Task 6 — Pago a Toyota
+
+**Purpose:** Record the internal payment to Toyota, including banking details, proof of payment, and official payment confirmation.
+
+**Fields:**
+
+- Transaction bank — dropdown, including BCP, BBVA, Scotiabank, Interbank, and other supported banks.
+- Transaction date — date.
+- Transaction number — textbox, unique.
+- Deposited amount, USD — numeric field; expected to match the price established in Task 3 unless the business defines an exception.
+- Payment voucher — PDF.
+- Payment confirmation — PDF.
+
+**Recommended duration:** None.
+
+**Dependencies:** Tasks 3 and 5.
+
+### Task 7 — Facturación
+
+**Purpose:** Record the official invoices for the vehicle, accessories, commission, and vehicle release processing. Each invoice includes its number, date, amount, and PDF file.
+
+**Fields:**
+
+- **Toyota invoice:** number (textbox), date, amount in USD (expected to match the price established in Task 3), PDF file.
+- **Accessories invoice:** number (textbox), date, amount in USD (expected to match the amount established in Task 4), PDF file. All four fields are **Customer-visible**.
+- **Commission invoice:** number, date, amount in USD (expected to match the amount established in Task 4), PDF file.
+- **Vehicle release processing invoice:** number, date, amount in USD (expected to match the amount established in Task 4), PDF file.
+
+**Recommended duration:** None.
+
+**Dependencies:** Tasks 5 and 6.
+
+### Task 8 — Documentos Endosados
+
+**Purpose:** Receive and upload the official endorsed documents needed to continue with customs processing.
+
+**Fields:**
+
+- Endorsed documents — PDF.
+
+**Recommended duration:** 10 days.
+
+**Dependencies:** Task 7.
+
+### Task 9 — Trámite Aduanero
+
+**Purpose:** Manage vehicle nationalization/customs processing, recording the deposit order, DAM number, customs office, control channel, and customs certificate.
+
+**Fields:**
+
+- Deposit order (`Pedido de Depósito`) — PDF.
+- Customs Declaration of Goods (DAM) number — textbox.
+- Customs office — dropdown populated with available customs offices in Peru.
+- Control channel — dropdown: `Verde`, `Naranja`, `Rojo`.
+- Customs certificate — PDF.
+
+**Recommended duration:** 12 days.
+
+**Dependencies:** Task 8.
+
+### Task 10 — Trámite de Liberación
+
+**Purpose:** Assign an internal person in charge and track the vehicle's release period.
+
+**Fields:**
+
+- Person in charge — textbox.
+
+**Recommended duration:** 30 days.
+
+**Dependencies:** Task 9.
+
+### Task 11 — Inmatriculación y Placas
+
+**Purpose:** Register the vehicle legally, assign the definitive license plate number, and upload the Electronic Vehicle Identification Card (`TIVe`).
+
+**Fields:**
+
+- License plate number — textbox, unique. **Customer-visible.**
+- Registration date — date. **Customer-visible.**
+- Electronic Vehicle Identification Card (`TIVe`) — PDF. **Customer-visible.**
+
+**Recommended duration:** 15 days.
+
+**Dependencies:** Task 10.
+
+### Task 12 — Traslado a PDS
+
+**Purpose:** Record the date when the vehicle is transferred to the pre-delivery inspection center.
+
+**Fields:**
+
+- Transfer date — date. **Customer-visible.**
+
+**Recommended duration:** None.
+
+**Dependencies:** Task 11.
+
+### Task 13 — Equipamiento
+
+**Purpose:** Record accessory installation, the service-order number, service-order document, and completion date.
+
+**Fields:**
+
+- Service order number — textbox.
+- Service order — PDF.
+- Equipment completion date — date. **Customer-visible.**
+
+**Recommended duration:** None.
+
+**Dependencies:** Task 12.
+
+### Task 14 — Entrega de Vehículo
+
+**Purpose:** Coordinate final delivery, recording the optional transfer date to Surquillo, official delivery date, and signed delivery record.
+
+**Fields:**
+
+- Transfer date to Surquillo — date, optional. **Customer-visible.**
+- Vehicle delivery date — date. **Customer-visible.**
+- Signed vehicle delivery record — PDF. **Customer-visible.**
+
+**Recommended duration:** None.
+
+**Dependencies:** Task 13.
+
+### Task data rules and modeling instructions
+
+- All tasks have optional notes.
+- Fields/documents are mandatory unless explicitly marked optional.
+- Respect the dependency graph above; a task can start only when all its dependencies are completed.
+- Enforce unique constraints for vehicle series, transaction numbers where specified, and license plates.
+- Capture task status history, including who changed a status and when.
+- Define validations for amounts, dates, identifiers, and required documents.
+- Define exactly when task-specific data is editable and how it is protected after completion.
+- When reopening a completed task, preserve history and ensure that the sale's automatic completion state is recalculated consistently.
+- The Task 1/Task 3/Task 4/Task 5/Task 6/Task 7 amount relationships are stated as expected matches in several places. Do not enforce these as hard financial invariants until exceptions and rounding rules are confirmed; identify them as cross-field business validations to review.
+- Recommend a maintainable approach to task-specific data (relational tables, JSON/metadata, or hybrid). Compare the trade-offs before deciding; do not force all task fields into one unstructured JSON field without analysis.
 
 ---
 
-# 9. The 14-task process
+## 7. Customer data and customer accounts
 
-Each sale consists of 14 tasks/stages.
+### Customer categories
 
-1. **Cotización del Vehículo**
-   - _Description:_ Elaboración de la cotización oficial en Word y Excel que define el precio base, la comisión porcentual y en dólares de Grupo Pana, y el precio final del vehículo.
-   - _Fields_:
-     - Precio del vehículo sin comisión in USD [Textbox]
-     - Comisión de Grupo Pana in USD [Textbox - automatically filled if next field was manually set]
-     - Comisión de Grupo Pana in % [Textbox - automatically filled if previous field was manually set]
-     - Precio final del vehículo in USD [Textbox - sum of vehicle price and commission] **(visible)**
-     - Cotización del vehículo [Document - Word] **(visible)**
-     - Cotización del vehículo [Document - Excel] **(visible)**
-   - _Recommended duration:_ None
-   - _Task dependency:_ None
-2. **Debida Diligencia del Cliente**
-   - _Description:_ Recopilación de los documentos de identidad del firmante y registro de la Declaración Jurada de Conocimiento del Cliente, determinando su condición PEP y el régimen DDC aplicable.
-   - _Fields:_
-     - Documento de Identidad del Firmante (Diplomático -> cliente, Embajada/Entidad Religiosa/OI -> representante/ejecutante)
-       - Tipo de Documento [Combobox - Documento Nacional de Identidad (DNI), Carné de Extranjería (CE), Pasaporte (PAS), Cédula Diplomática de Identidad (CDI)] **(visible)**
-       - Número de Documento [Textbox] **(visible)**
-       - Nombre Completo [Textbox] **(visible)**
-       - Documento Escaneado [Document - PDF] **(visible)**
-     - Declaración Jurada de Conocimiento del Cliente [Document - PDF] **(visible)**
-     - If customer.type != Diplomático then ask for Vigencia de Poder [Document - PDF] **(visible)**
-     - Condición PEP [Combobox - No PEP, PEP, Relacionado con PEP]
-     - Régimen DDC [Combobox - General, Reforzado]
-   - _Recommended duration:_ 3 days
-   - _Task dependency:_ 1
-3. **Liquidación de Unidad**
-   - _Description:_ Asignación del número de serie único al vehículo, cálculo del monto a pagar a Toyota y carga del documento PDF de liquidación.
-   - _Fields:_
-     - Número de serie [Textbox - Unique] **(visible)**
-     - Monto a pagar a Toyota [Textbox]
-     - Liquidación [Document - PDF]
-   - _Recommended duration:_ 12 days
-   - _Task dependency:_ 2
-4. **Resumen de Venta**
-   - _Description:_ Consolidación de los costos asociados, incluyendo el monto en dólares de los accesorios, las comisiones actualizadas y los costos del trámite de liberación.
-   - _Fields:_
-     - Monto Accesorios in USD [Textbox]
-     - Monto Comisión in USD [Textbox] (may've changed from the commission stablished at the first task/stage, because of the new prices in "Liquidación de Endoso")
-     - Monto Trámite de Liberación in USD [Textbox]
-     - Resumen de Venta [Document - PDF] **(visible)**
-   - _Recommended duration:_ None
-   - _Task dependency:_ 3
-5. **Pago a Grupo Pana**
-   - _Description:_ Verificación del abono realizado por el cliente, registrando el banco, la fecha, el número de operación único y adjuntando el voucher en PDF.
-   - _Fields:_
-     - Banco de Operación [Combobox - BCP, BBVA, Scotiabank, Interbank, ...] **(visible)**
-     - Fecha de Operación [Date] **(visible)**
-     - Número de Operación [Textbox - Unique] **(visible)**
-     - Monto Depositado in USD [Textbox] (Theoretically should be the same as the final car price stablished in the first task) **(visible)**
-     - Voucher de Pago [Document - PDF] **(visible)**
-   - _Recommended duration:_ None
-   - _Task dependency:_ 1
-6. **Pago a Toyota**
-   - _Description:_ Registro del abono interno realizado a Toyota, documentando los datos bancarios, el voucher y la confirmación oficial del pago.
-   - _Fields:_
-     - Banco de Operación [Combobox - BCP, BBVA, Scotiabank, Interbank, ...]
-     - Fecha de Operación [Date]
-     - Número de Operación [Textbox - Unique]
-     - Monto Depositado in USD [Textbox] (Theoretically should be the same as the price stablished in the third task)
-     - Voucher de Pago [Document - PDF]
-     - Confirmación de Pago [Document - PDF]
-   - _Recommended duration:_ None
-   - _Task dependency:_ 3 and 5
-7. **Facturación**
-   - _Description:_ Emisión y registro de las facturas oficiales (vehículo, accesorios, comisión y trámite de liberación), especificando número, fecha y monto para cada una.
-   - _Fields:_
-     - Factura Toyota
-       - Número [Textbox]
-       - Fecha [Date]
-       - Monto in USD [Textbox] (Should be the same as the price stablished in the third task)
-       - Archivo [Document - PDF]
-     - Factura Accesorios
-       - Número [Textbox] **(visible)**
-       - Fecha [Date] **(visible)**
-       - Monto in USD [Textbox] (Should be the same as the price stablished in the fourth task) **(visible)**
-       - Archivo [Document - PDF] **(visible)**
-     - Factura Comisión
-       - Número [Textbox]
-       - Fecha [Date]
-       - Monto in USD [Textbox] (Should be the same as the price stablished in the fourth task)
-       - Archivo [Document - PDF]
-     - Factura Trámite de Liberación
-       - Número [Textbox]
-       - Fecha [Date]
-       - Monto in USD [Textbox] (Should be the same as the price stablished in the fourth task)
-       - Archivo [Document - PDF]
-   - _Recommended duration:_ None
-   - _Task dependency:_ 5 and 6
-8. **Documentos Endosados**
-   - _Description:_ Recepción y carga en el sistema de los documentos endosados oficiales para continuar con el proceso aduanero.
-   - _Fields:_
-     - Documentos endosados [Document - PDF]
-   - _Recommended duration:_ 10 days
-   - _Task dependency:_ 7
-9. **Trámite Aduanero**
-   - _Description:_ Gestión de nacionalización del vehículo, registrando el Pedido de Depósito, el número DAM, la aduana, el canal de control y adjuntando el Certificado Aduanero.
-   - _Fields:_
-     - Pedido de Depósito [Document - PDF]
-     - Número de Declaración Aduanera de Mercancías (DAM) [Textbox]
-     - Aduana [Combobox - Aduanas disponibles en Perú]
-     - Canal de control [Combobox - Verde, Naranja, Rojo]
-     - Certificado Aduanero [Document - PDF]
-   - _Recommended duration:_ 12 days
-   - _Task dependency:_ 8
-10. **Trámite de Liberación**
-    - _Description:_ Asignación de un encargado interno y seguimiento del periodo de liberación del vehículo.
-    - _Fields:_
-      - Encargado [Textbox]
-    - _Recommended duration:_ 30 days
-    - _Task dependency:_ 9
-11. **Inmatriculación y Placas**
-    - _Description:_ Registro legal del vehículo, asignación del número de placa definitivo y carga de la Tarjeta de Identificación Vehicular Electrónica (TIVe).
-    - _Fields:_
-      - N.° de Placa [Textbox - Unique] **(visible)**
-      - Fecha de Inmatriculación [Date] **(visible)**
-      - Tarjeta de Identificación Vehicular Electrónica (TIVe) [Document - PDF] **(visible)**
-    - _Recommended duration:_ 15 days
-    - _Task dependency:_ 10
-12. **Traslado a PDS**
-    - _Description:_ Confirmación y registro de la fecha en la que el vehículo es trasladado al centro de inspección de pre-entrega.
-    - _Fields:_
-      - Fecha de Traslado [Date] **(visible)**
-    - *Recommended duration: None
-    - _Task dependency:_ 11
-13. **Equipamiento**
-    - _Description:_ Instalación de accesorios registrando el número de la Orden de Servicio, el documento adjunto y la fecha de finalización.
-    - _Fields:_
-      - N.° de Orden de Servicio [Textbox]
-      - Orden de Servicio [Document - PDF]
-      - Fin de Equipamiento [Date] **(visible)**
-    - _Recommended duration:_ None
-    - _Task dependency:_ 12
-14. **Entrega de Vehículo**
-    - _Description:_ Coordinación final que registra la fecha opcional de traslado a Surquillo, la fecha de entrega oficial y el Acta de Entrega firmada.
-    - _Fields:_
-      - Fecha de Traslado a Surquillo [Date - Optional] **(visible)**
-      - Fecha de Entrega del Vehículo [Date] **(visible)**
-      - Acta de Entrega del Vehículo [Document - PDF] **(visible)**
-    - _Recommended duration:_ None
-    - _Task dependency:_ 13
+Customers are grouped into B2C and B2B categories.
 
-**Important observations:**
+- **B2C:** Diplomatic customer.
+- **B2B:** Embassy, Catholic religious entity, non-Catholic religious entity, and International Organization.
 
-- The **(visible)** tag tells that the field (data or document) should be available for the customer site.
-- A task can only start once all its dependencies have been completed.
-- All fields and documents that are not specified to be optional, are required for the task to be completed.
-- The recommended duration time refers to the elapsed time between a task going from In Progress to Completed.
-- Each task must have a field for Notes [Textarea, optional].
-- For each document upload, the system must save the file type and size in bytes, this could be particularly useful for data analytics.
-- Every task has three available statuses: "pending", "in_progress", and "completed".
-- Add confirmation messages before updating a task status, this is specially important, cause after setting a task as completed, only a sale manager and system admin can undo it or update fields/documents.
+### Identification documents
 
----
+- **B2C:** DNI, CE, PAS, CDI.
+- **B2B:** RUC.
 
-# 11. Sale register
+Document type + document number must uniquely identify a customer within the customer table. Preserve leading zeros where applicable; treat document numbers as identifiers, not arithmetic values.
 
-Each sale register currently represents exactly one vehicle sale.
-
-A customer purchasing two vehicles would normally have two independent sale registers.
-
-Each register includes information such as:
-
-- About the customer
-  - Customer_ID
-  - Historical sales records must remain immutable for financial and legal auditing purposes, so we save snapshots at the time of the sale's creation of:
-    - Legal Name
-    - Document Type
-    - Document Number
-- About the vehicle
-  - Vehicle_ID
-  - Version
-    - Snapshot of its reference price
-  - Color
-- General
-  - 14 tasks data.
-  - Progress.
-  - Timeline.
-  - Documents.
-  - Temperature (represents the probability of completion) [Combobox - Hot, Warm, Cold]
-  - Creation timestamp [Timestamp - Automatically saved]
-  - State [active, completed, cancelled]
-  - Notes
-  - Assigned sales advisor.
-
-A sale becomes completed automatically after all its 14 tasks have been completed.
-
-An employee (role dependent) should be able to cancel a sale operation or reopen it if necessary.
-
-A cancelled operation should remain stored for historical purposes rather than being physically deleted.
-
-Again, this doesn't have to be necessarily the final structure for the sale register.
-
----
-
-# 12. Customer model
-
-A customer needs information such as:
+### Customer profile fields
 
 - Customer type.
-  - Business-to-Customer (B2C)
-    - Diplomático.
-  - Business-to-Business (B2B)
-    - Embajada.
-    - Entidad religiosa (católica).
-    - Entidad religiosa (no católica).
-    - Organización Internacional.
 - Document type.
-  - Business-to-Customer (B2C)
-    - Documento Nacional de Identidad (DNI).
-    - Carné de Extranjería (CE).
-    - Pasaporte (PAS).
-    - Cédula Diplomática de Identidad (CDI).
-  - Business-to-Business (B2B)
-    - Registro Único de Contribuyente (RUC).
 - Document number.
-- First Name (B2C).
-- Last Name (B2C).
-- Razon Social (B2B).
-- Nationality / country.
-- Password.
-- Contact.
-  - First name. (B2B)
-  - Last name. (B2B)
-  - Job Title. (B2B)
-  - Phone.
-  - Email.
+- First name and last name for B2C individuals.
+- Legal name (`Razón Social`) for B2B entities.
+- Nationality/country.
+- Contact information.
+  - For B2B: contact person's first name, last name and job title.
+  - For all customers: phone and email.
+- Account credentials managed by the authentication system.
 
-For RUC and DNI customers, the relevant name must be automatically filled by using one of these two options:
+### Name lookup
 
-- External API from a free plan provider like (https://api-codart.cgrt.org/), I could create an account and get a token for which I would obtain 110 DNI/RUC requests per month for free. Which is fine for the prototype.
-- Web scrapper (using python for example). You could visit https://eldni.com/pe/buscar-datos-por-dni for DNI lookups and https://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/FrameCriterioBusquedaWeb.jsp for RUC lookups.
-  If the process does not run as expected, there could be a fallback for manually inserting the information.
+For DNI and RUC records, I would like the system to retrieve the relevant name automatically, with manual entry as a fallback if lookup fails. Candidate approaches include a provider with a free API tier (for example, `https://api-codart.cgrt.org/`) or data lookup services such as `https://eldni.com/pe/buscar-datos-por-dni` and SUNAT's RUC lookup website at `https://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/FrameCriterioBusquedaWeb.jsp`.
 
-Document type + document number should uniquely identify the customer.
+Evaluate these options before recommending an implementation. Consider current availability, terms of service, privacy, reliability, rate limits, cost, security, and legal/ethical implications. Do not recommend scraping a service without checking whether it is appropriate. Provide a manual fallback regardless of the chosen lookup mechanism. Do not assume any stated free-tier quota remains current without verification.
 
-A single customer can have multiple independent sale registers.
+### Customer accounts
 
-**Customer Accounts:** Employees create customer accounts (based on role). The system auto-generates a temporary password and emails it to the customer. Customers cannot edit their profile data (Document, Name, Email, Phone) to protect contract integrity, but they can reset their passwords.
+- Employees create customer accounts, subject to role permissions.
+- The system creates an initial temporary credential and sends an onboarding email to the customer.
+- The customer is required to change/set a secure password at first access.
+- Customers cannot directly edit their document, name, email, or phone through the portal, to protect contract integrity.
+- Customers can reset their passwords.
+- Login uses the official identification document, not email, as the primary identifier.
+
+For security, assess whether emailing a temporary password or emailing a short-lived, single-use activation link is safer. Preserve the intended account-onboarding experience, explain the trade-off, and clearly ask for a decision if a security-related change to this specified behavior is recommended. Never store plaintext passwords.
 
 ---
 
-# 13. Employees model
+## 8. Employee data and employee accounts
 
-An employee needs information such as:
+Employees have the following profile information:
 
-- Document type.
-  - Documento Nacional de Identidad (DNI).
-  - Carné de Extranjería (CE).
-  - Pasaporte (PAS).
+- Document type: DNI, CE, or PAS.
 - Document number.
-- First Name.
-- Last Name.
-- Nationality / country.
+- First name and last name.
+- Nationality/country.
 - Gender.
 - Profile picture.
 - Birthdate.
-- Password.
 - Hire date.
-- Active [boolean]
+- Active/inactive status.
 - Role.
-  - System admin.
-  - Sales manager.
-  - Sales advisor.
-- Personal contact.
-  - Phone.
-  - Email.
-- Business contact.
-  - Phone.
-  - Email.
+- Personal contact: phone and email.
+- Business contact: phone and email.
+- Authentication credentials managed securely by the authentication system.
+
+Document type + document number must be unique within the employee table.
+
+Employee roles are:
+
+- `System Admin`
+- `Sales Manager`
+- `Sales Advisor`
+
+Employee access and capabilities must follow the RBAC matrix below.
 
 ---
 
-# 13. Vehicles/Models catalog
+## 9. Vehicle catalog: models, versions, colors, images
 
-A sale contains vehicle information.
+The employee application needs a vehicle catalog. A sale selects a model, a version, and a color that is available for that model.
 
-The vehicle model should determine which colors are available.
+### Vehicle model fields
 
-I am considering a dedicated vehicle catalog section where authorized employees can:
+- Model name.
+- Description.
+- One or more categories, such as `Camioneta`, `Comercial`, `Familiar`, `Hatchback`, and `Sedan`.
+- Available versions.
+- Available colors.
 
-- Create new vehicle models.
-- Edit models.
-- Edit versions.
-- Deactivate models or versions.
-- Manage colors.
-- Upload images for each color.
-- Replace images.
+### Version fields
 
-A vehicle currently needs information such as:
+- Version name.
+- Reference price.
+- Active/inactive status or equivalent archival behavior.
 
-- Model name
-- Description
-- Categories
-  - Camioneta.
-  - Comercial.
-  - Familiar.
-  - Hatchback.
-  - Sedan.
-- Available versions (could be many)
-  - Version name
-  - Reference price
-- Available colors (could be many)
-  - Images per color (perhaps at least the main view image should be required, and then the system could display a special image for fields with no-image, but the ideal situation is that the user uploads all of them)
-    - Main view
-    - Exterior front.
-    - Exterior left side.
-    - Exterior right side.
-    - Exterior rear.
-    - Interior.
+### Color and image management
 
-The system should support a professional visual representation of vehicle models.
+- Available colors may vary by model.
+- Upload and replace images for each color.
+- Image viewpoints to support:
+  - Main view.
+  - Exterior front.
+  - Exterior left side.
+  - Exterior right side.
+  - Exterior rear.
+  - Interior.
+- The main view image should be required. Other viewpoints should be supported, but the exact requirement for every viewpoint should be a configurable/business decision. Display a clean placeholder when an optional image is missing.
+- Authorized managers can create/edit models and versions, upload photos, and archive old entries. System Admins have full catalog CRUD. Sales Advisors have read-only access for selecting vehicles.
+
+The catalog and sale-register model must preserve the reference price applicable at the time a sale was created, even if the catalog price later changes.
 
 ---
 
-# 16. Audit trail and history
+## 10. Customer portal and six macro-milestones
 
-The system should probably maintain a history of important changes.
+The customer portal is designed to communicate progress clearly without exposing all internal operational complexity.
 
-At minimum, consider:
+The customer must be able to view:
 
-- Task state changes.
-- Sale status changes.
-- Assignment changes.
-- Important field modifications.
-- Document uploads/replacements/deletions.
-- Permission-sensitive actions.
+- Vehicle model, version, categories, reference price snapshot, selected color, and images.
+- Assigned Sales Advisor's full name, contact email, and contact phone number.
+- Sale creation timestamp, overall state, and progress timeline.
+- The fields/documents explicitly marked customer-visible in the task specification, subject to secure authorization.
 
-For state changes, consider recording:
+### Six customer-facing milestones
 
-- Previous state.
-- New state.
-- User.
-- Date/time.
-- Reason/comment where applicable.
+1. **Cotización y Documentación** — Groups Tasks 1 and 2. Establishes the official quotation and validates the signer's identity documentation.
+2. **Asignación y Pago** — Groups Tasks 3, 4, and 5. Confirms physical vehicle assignment by series number, consolidates the Sales Summary, and enables the customer payment to Grupo Pana.
+3. **Facturación Oficial** — Groups Tasks 6 and 7. Confirms Toyota payment processing and issuance of the official invoices for the vehicle/accessories and related concepts.
+4. **Trámites Aduaneros** — Groups Tasks 8 and 9. Indicates that endorsed documents have been processed and the vehicle is in the customs/nationalization process.
+5. **Liberación y Placas** — Groups Tasks 10 and 11. Communicates the release period and progress toward registration and definitive license-plate assignment.
+6. **Preparación y Entrega** — Groups Tasks 12, 13, and 14. Covers the move to pre-delivery inspection, equipment/accessory installation, and final delivery coordination.
 
-Analyze whether a proper audit/history architecture is needed instead of storing only the latest state.
+Use these six milestones as the customer's main progress experience. Keep the internal 14-task workflow as the employee-facing operational model. If internal progress and customer milestone state need different rules, design an explicit mapping rather than conflating them.
 
----
-
-# 18. Employee experience
-
-The employee application should probably include areas such as:
-
-### Authentication
-
-Secure employee login.
-
-### Operations
-
-A primary operations workspace containing:
-
-- Search.
-- Filters.
-- Sorting.
-- Pagination.
-- Status.
-- Customer.
-- Vehicles models.
-- Advisor.
-- Temperature.
-- Dates.
-- Progress.
-- Current task.
-
-### Customers
-
-Customer management and associated sales.
-
-### Vehicle catalog
-
-Vehicle model/color management.
-
-### Employees
-
-Employee and role management.
-
-### Operation detail
-
-Complete sale overview.
-
-### Task detail
-
-Task-specific information and state management.
-
-### BI
-
-Operational and management analytics.
-
-These are candidate areas, not final UI requirements.
+Customer-visible fields/documents must be enforced server-side, not only hidden in the frontend. Flag privacy concerns about any marked item without silently changing its visibility.
 
 ---
 
-# 20. Operation detail page
+## 11. Customer email notifications
 
-The operation detail page should provide a strong overview of:
+The notification strategy should keep customers informed without sending an email for every internal task transition. Notifications are tied to high-value events, required actions, and meaningful milestones.
 
-- Customer.
-- Vehicle.
-- Assigned advisor.
-- Temperature.
-- Sale state.
-- Dates.
-- Progress.
-- 14 tasks.
-- Task statuses.
-- Task timing.
-- Documents.
-- Notes.
+### Notification 1 — Account creation (once per customer)
 
-The interface should immediately communicate:
+- **Trigger:** A Sales Advisor registers the customer for the first time.
+- **Subject:** `Bienvenido a Grupo Pana - Acceso a tu portal de seguimiento`
+- **Content:** Welcome message, customer portal link, login identifier (document type/number), and temporary credential or secure activation instructions. Require password setup/change at first access.
 
-- Where the operation is.
-- What is completed.
-- What is currently active.
-- What remains.
-- What is delayed.
-- What may be blocked.
+### Notification 2 — Sale register created
 
-Consider timeline, stepper, progress, cards, or another appropriate UX pattern.
+- **Trigger:** A Sales Advisor creates a sale register and assigns the vehicle to the customer.
+- **Subject:** `Hemos registrado tu nueva solicitud de vehículo`
+- **Content:** Confirm that the process has started; include vehicle model/color, assigned advisor's name and WhatsApp/contact number, and a link to view Phase 1 in the portal.
 
----
+### Notification 3 — Official quotation available
 
-# 21. Task detail page
+- **Trigger:** Task 1 is completed.
+- **Subject:** `Tu cotización oficial está lista para revisión`
+- **Content:** Tell the customer the official vehicle quotation is available and link to download the Word and Excel files from the authenticated portal.
 
-Each task can have a different data model.
+### Notification 4 — Sales summary available
 
-For example, "Liquidación de Unidad" currently includes information such as:
+- **Trigger:** Task 4 is completed.
+- **Subject:** `Siguiente paso: Tu resumen de venta ha sido generado`
+- **Content:** Tell the customer that the Sales Summary is available, provide the assigned vehicle series, and communicate the exact amount to deposit to Grupo Pana.
 
-- Número de serie [Textbox - Unique]
-- Monto a pagar a Toyota [Textbox]
-- Liquidación [Document - PDF]
-- Task status.
-- Notes.
+### Notification 5 — Invoices issued
 
-Other tasks may require:
+- **Trigger:** Task 7 is completed.
+- **Subject:** `Tus comprobantes de pago han sido emitidos`
+- **Content:** Confirm that the relevant payment/invoicing steps have been recorded and the customer-visible invoices are available for download through the portal.
 
-- Dates.
-- Text.
-- Numbers.
-- Dropdowns.
-- Boolean values.
-- Multiple related values.
-- Documents.
+### Notification 6 — Customs processing begins
 
-The architecture must accommodate task-specific data without becoming an unmaintainable collection of hard-coded exceptions.
+- **Trigger:** Task 8 is completed.
+- **Subject:** `Iniciamos los trámites aduaneros de tu vehículo`
+- **Content:** Explain that the endorsed documents have been processed and customs/nationalization procedures are underway, setting expectations without promising an unsupported delivery date.
 
-Now that I have provided the full 14-task specification, determine whether task-specific data should be represented through:
+### Notification 7 — License plate assigned
 
-- Dedicated relational structures.
-- A flexible metadata/JSON approach.
-- A hybrid approach.
-- Another model.
+- **Trigger:** Task 11 is completed.
+- **Subject:** `¡Tu vehículo ya cuenta con placa oficial!`
+- **Content:** Provide the definitive license plate number and a secure link to download the customer-visible TIVe PDF.
 
-Explain the trade-offs before choosing.
+### Notification 8 — Final vehicle preparation
+
+- **Trigger:** Task 12 is completed.
+- **Subject:** `Tu vehículo está en fase de preparación final`
+- **Content:** Inform the customer that the vehicle has entered the pre-delivery preparation/equipment phase before final delivery.
+
+### Notification 9 — Delivery completed
+
+- **Trigger:** Task 14 is completed.
+- **Subject:** `¡Felicidades por tu nuevo vehículo! / Gracias por confiar en Grupo Pana`
+- **Content:** Thank the customer, confirm the delivery date, and provide a secure portal link to the signed vehicle delivery record PDF.
+
+Notifications should use reliable event handling: avoid sending duplicate messages if a task transition is retried, a scheduler runs more than once, or an event is replayed. Store delivery attempts and outcomes, and do not attach sensitive documents directly to email when a secure authenticated download link is more appropriate.
 
 ---
 
-# 22. Customer experience
+## 12. Employee task reminders, deadlines, and escalation
 
-The customer should have a much simpler experience than the employee.
+A server-side scheduled process should evaluate tasks with a recommended duration and issue reminders/escalations according to the following intended rules.
 
-The customer should not automatically see every internal field simply because the employee sees it.
+### Due-date calculation
 
-Design a deliberate customer-facing information model.
+- Calculate the task due timestamp when the task transitions from `pending` to `in_progress` by adding the recommended duration to that start timestamp.
+- Use strict elapsed calendar time; weekends and non-business hours do not pause the clock.
+- Example: a three-day task started Friday at 4:00 PM is due Monday at 4:00 PM.
+- Tasks without a recommended duration do not receive these duration-based reminders unless another rule is defined.
 
-General information that the app must show to the customer:
+### Approaching-due warning
 
-- Vehicle data: Model, version, categories, reference price, color, images.
-- Assigned sales advisor: Full name, contact email, and contact number.
-- Sale details: Creation timestamp, state, and progress timeline.
+- Send one `Approaching Due` warning when 80% of the recommended duration has elapsed.
 
-6-Stage Customer Macro-Milestones:
+### Escalation and recipients
 
-- **Phase 1: Cotización y Documentación** _(Groups tasks 1 and 2)_
-  Se establece el estado inicial de la compra, definiendo la cotización oficial del vehículo y validando los documentos de identidad del titular.
-- **Phase 2: Asignación y Pago** _(Groups tasks 3, 4, and 5)_
-  Se confirma la asignación de una unidad física mediante su número de serie y se consolida el Resumen de Venta para proceder con el abono a Grupo Pana.
-- **Phase 3: Facturación Oficial** _(Groups tasks 6 and 7)_
-  Se confirma que los pagos han sido procesados exitosamente y se emiten las facturas oficiales correspondientes al vehículo y accesorios.
-- **Phase 4: Trámites Aduaneros** _(Groups tasks 8 and 9)_
-  El sistema indica que los documentos endosados han sido procesados y el vehículo se encuentra atravesando el proceso de nacionalización y declaración aduanera inicial.
-- **Phase 5: Liberación y Placas** _(Groups task 10 and 11)_
-  Se notifica que el vehículo se encuentra en su periodo de liberación física y avanza hacia su inmatriculación, culminando con la asignación de su número de placa definitivo en el registro público.
-- **Phase 6: Preparación y Entrega** _(Groups tasks 12, 13, and 14)_
-  El vehículo ingresa a la fase de equipamiento para la instalación de accesorios y se coordina su traslado para la entrega final al cliente.
+- **Level 1 — Warning through 24 hours overdue:** Notify the assigned Sales Advisor.
+- **Level 2 — 24 to 48 hours overdue:** Escalate to the Sales Manager.
+- **Level 3 — More than 48 hours overdue:** Escalate to the System Admin and visually highlight the task in the UI.
+- Do not automatically unlock or reassign a task because it is overdue.
 
----
+### Recurring reminders
 
-# 23. Customer notifications
+Reminder frequency should depend on the recommended task duration. Shorter tasks should receive more frequent overdue reminders because their duration is proportionally more critical; longer tasks can use a wider interval. Implement a hard cap on recurring reminders. The exact intervals and cap should be proposed and confirmed before implementation.
 
-The objective of this strategy is to keep the customer informed and engaged throughout the "endoso" purchasing process while strictly avoiding email fatigue. These notifications are decoupled from the 14 internal operational task transitions and are triggered exclusively by high-value events, required actions, or emotional milestones.
+### Deduplication state
 
-### 1. Onboarding and Operation Start
+Track at least:
 
-These notifications ensure the customer can access the portal and confirm that their specific purchasing process has officially begun.
+- `last_reminder_sent_at` — timestamp.
+- `current_reminder_phase` — `approaching`, `overdue`, or `recurring`.
+- `recurring_reminder_count` — integer.
 
-- **Notification 1: Account Creation (One per customer)**
-  - **Trigger:** The Sales Advisor registers the customer in the database for the first time.
-  - **Subject:** Bienvenido a Grupo Pana - Acceso a tu portal de seguimiento
-  - **Content:** Un mensaje de bienvenida que incluye el enlace al portal de clientes, el usuario (correo) y una contraseña temporal autogenerada, junto con las instrucciones obligatorias para restablecerla por seguridad al primer ingreso.
-- **Notification 2: Sale Register Creation**
-  - **Trigger:** The Sales Advisor creates a new sale register, assigning a vehicle to the customer.
-  - **Subject:** Hemos registrado tu nueva solicitud de vehículo
-  - **Content:** Confirmación de que el proceso de compra ha iniciado. Incluye los datos referenciales del vehículo (modelo, color), el nombre y número de WhatsApp de su Asesor Comercial asignado, y un botón para visualizar la Fase 1 en el portal.
+Record every dispatched reminder in an append-only `Notification_Log` (or equivalent audit table) for accountability and analytics.
 
-### 2. Reviews and Financials (Phases 1, 2, and 3)
+### UI and analytics
 
-These notifications drive customer action and deliver critical financial documentation.
-
-- **Notification 3: Quote Available**
-  - **Trigger:** Completion of Task 1 (Cotización del Vehículo).
-  - **Subject:** Tu cotización oficial está lista para revisión
-  - **Content:** Informa al cliente que los precios finales han sido estructurados. Le invita a ingresar al portal para descargar la Cotización del Vehículo (archivos Word y Excel).
-- **Notification 4: Sale Summary and Physical Unit Assignment**
-  - **Trigger:** Completion of Task 4 (Resumen de Venta).
-  - **Subject:** Siguiente paso: Tu resumen de venta ha sido generado
-  - **Content:** Notifica al cliente que ya se le ha asignado un número de serie físico a su unidad y que el Resumen de Venta está listo. Indica el monto exacto a depositar a Grupo Pana para continuar con el proceso.
-- **Notification 5: Invoice Issuance**
-  - **Trigger:** Completion of Task 7 (Facturación).
-  - **Subject:** Tus comprobantes de pago han sido emitidos
-  - **Content:** Notificación de baja urgencia que confirma que sus abonos han sido procesados y las facturas oficiales (Vehículo, Accesorios, etc.) ya están disponibles para descarga en el portal.
-
-### 3. Logistics and Legal Procedures (Phases 4 and 5)
-
-These communications proactively manage buyer anxiety during the longest waiting periods of the operation (customs and public registry).
-
-- **Notification 6: Start of Customs Procedures**
-  - **Trigger:** Completion of Task 8 (Documentos Endosados).
-  - **Subject:** Iniciamos los trámites aduaneros de tu vehículo
-  - **Content:** Un mensaje estratégico para setear expectativas. Explica que el vehículo acaba de ingresar al proceso estándar de nacionalización y declaración aduanera (el periodo de espera más largo).
-- **Notification 7: License Plate Assignment**
-  - **Trigger:** Completion of Task 11 (Inmatriculación y Placas).
-  - **Subject:** ¡Tu vehículo ya cuenta con placa oficial!
-  - **Content:** Una notificación de alta emoción. Le proporciona al cliente su número de placa definitivo y le permite descargar su Tarjeta de Identificación Vehicular Electrónica (TIVe) en PDF.
-
-### 4. Preparation and Closing (Phase 6)
-
-The final communications announcing the imminent delivery of the vehicle and closing the transaction loop.
-
-- **Notification 8: Workshop Preparation**
-  - **Trigger:** Completion of Task 12 (Traslado a PDS).
-  - **Subject:** Tu vehículo está en fase de preparación final
-  - **Content:** Avisa al cliente que los trámites legales terminaron y el vehículo ha ingresado a los talleres de Grupo Pana para la instalación de su equipamiento y accesorios finales antes de la entrega.
-- **Notification 9: Operation Completed (Delivery)**
-  - **Trigger:** Completion of Task 14 (Entrega de Vehículo).
-  - **Subject:** ¡Felicidades por tu nuevo vehículo! / Gracias por confiar en Grupo Pana
-  - **Content:** Mensaje de agradecimiento y cierre formal del ciclo de venta. Confirma la fecha de entrega realizada y pone a disposición la descarga del Acta de Entrega del Vehículo firmada en formato PDF.
+- Show visible indicators for `Approaching`, `Overdue`, and `Escalated/Recurring` tasks.
+- Provide quick filters for urgent tasks.
+- Store `completion_phase` when a task is completed so reporting preserves whether completion was `early`, `in_approaching`, `overdue`, or `recurring_overdue`.
 
 ---
 
-# 24. Employee reminders and automation
+## 13. File and document management
 
-The current concept includes automated reminders when a task approaches or exceeds its recommended completion period.
+Tasks can require Word, Excel, and PDF files. Design a secure file-management flow that supports:
 
-Potential implementation:
+- File upload, validation, and secure storage.
+- File type/MIME type and size in bytes for every upload.
+- Original file name, upload timestamp, uploader, and task/sale association, as appropriate.
+- Replacement behavior and version history where needed.
+- Deletion/deactivation rules and audit history.
+- Maximum file size and allowed file formats.
+- Role-based upload, update, and download permissions.
+- Explicit customer visibility per field/document.
+- Authenticated or time-limited access to private files.
+- Safe behavior if a stored file is missing or unavailable.
 
-A server-side scheduled process periodically evaluates operations and sends reminders.
+Do not expose private documents simply because someone knows the URL. Evaluate how signed URLs, private assets, and backend authorization work with the selected provider. The database should normally store file metadata and storage references rather than binary file contents, but justify the final design.
 
-- **Overdue Calculation:** Calculate the exact due date the moment the task status changes from `not_started` to `in_progress` by adding the recommended duration (3 to 30 days) to that timestamp. Use strict calendar days—do not pause for weekends or non-business hours. (e.g., A 3-day task starting Friday at 4:00 PM is due exactly Monday at 4:00 PM).
-- **Warning Threshold:** Trigger a single "Approaching Due" warning when 80% of the recommended business hours have elapsed.
-- **Escalation & Recipients:**
-  - _Level 1 (Warning up to 24h overdue):_ Notify only the assigned Sales Advisor.
-  - _Level 2 (24h to 48h overdue):_ Escalate to the Sales Manager.
-  - _Level 3 (48h+ overdue):_ Escalate to the System Admin and visually highlight the task in the UI. Do not auto-unlock or reassign.
-- **Reminder Frequency:** Scale post-due recurring reminders based on the 3 to 30 day duration. Shorter tasks (e.g., 3 days) should trigger more frequent post-due reminders since the overdue time is proportionally more critical, whereas a 30-day task can have a wider reminder interval. Implement a hard cap on total recurring reminders.
-- **State Tracking (Deduplication):** To prevent duplicate pings and track caps, the system must read and update three fields upon sending a notification: `last_reminder_sent_at` (Timestamp), `current_reminder_phase` ('approaching', 'overdue', 'recurring'), and `recurring_reminder_count` (Integer).
-- **Audit Logging:** Record every dispatched reminder in an immutable `Notification_Log` table for accountability and analytics.
-- **UI Visuals & Filtering:** In the main sale records view, add visual indicators (e.g., color-coded badges) to show if a task is 'Approaching', 'Overdue', or 'Escalated/Recurring'. Add these states as quick-filters so users can easily find urgent tasks.
-- **Completion Phase Tracking:** Add a `completion_phase` field to the task data that permanently records the state of the task at the exact moment it was completed (e.g., `early`, `in_approaching`, `overdue`, or `recurring_overdue`). This locks in the performance data for future analytics.
-
----
-
-# 25. File and document management
-
-Some tasks require document uploads.
-
-Determine:
-
-- Maximum size.
-- Replacement.
-- Deletion.
-- Audit history.
-- Access permissions.
-- Customer visibility.
-- Secure download/access mechanisms.
-- Storage architecture.
-
-The database should generally store document metadata/references rather than large binary content, but evaluate the architecture based on the actual deployment environment.
-
-Security is essential.
-
-A user should not gain access to a private document merely by obtaining its URL.
+Cloudinary is one candidate because it is part of my initial stack preference, not a fixed decision. Evaluate its suitability for confidential identity, due-diligence, financial, and legal documents. If it is unsuitable for some document classes, recommend an appropriate alternative or a separated storage policy.
 
 ---
 
-# 26. BI and analytics
+## 14. BI dashboard and analytics
 
-The current BI dashboard is an important reference.
+Create a polished, useful BI dashboard inside the employee application. Do not add charts merely to make the dashboard look impressive. Start from the decisions that each role must make and select metrics that help with those decisions.
 
-It currently contains concepts such as:
+Potential questions and analytics include:
 
-- Overall operational KPIs.
-- 14-task state distribution.
-- Current/last active task.
-- Task ideal duration.
-- Vehicle/model distribution.
-- Summary tables.
-- Billing-related information.
-- Projection-related information.
-- Monthly trends.
-- Filtering dimensions.
+- How many active, completed, and cancelled operations exist?
+- Which tasks are approaching their due dates, overdue, or escalated?
+- Where are the biggest bottlenecks?
+- How much time is spent in each task and across the complete operation?
+- How do operations and completions trend by month?
+- How many operations are in each of the six customer-facing macro-milestones?
+- Which vehicle models, versions, colors, and customer categories are most common?
+- How many active operations are assigned to each advisor?
+- What does each advisor's active pipeline and workload look like?
+- What are task completion performance and operation completion times?
+- How many operations are cancelled and why?
+- What is the progression/conversion rate, and how is it defined?
+- Which operations need attention today?
+- What useful, authorized billing/commission indicators can be derived from fields recorded in the system?
 
-Use this as a starting point for discovering reporting needs, not as a dashboard specification.
+Potential filters include date period, sale state, customer type, entity/customer, vehicle model/version, color, assigned advisor, sale temperature, and urgency/overdue state. Define each KPI precisely, including numerator, denominator, time period, and inclusion/exclusion rules. Avoid presenting a metric unless the underlying data supports it. Clearly differentiate amounts recorded in the system from recognized revenue or accounting facts that the application may not be able to verify.
 
-The new BI experience should be based on actual questions and decisions.
+Dashboard visibility must follow roles:
 
-For example:
+- System Admin: global operational/system views.
+- Sales Manager: global business and operational views.
+- Sales Advisor: individual view of their own pipeline and permitted metrics.
 
-- How many active operations exist?
-- How many are delayed?
-- Where are the bottlenecks?
-- How long does each operation take?
-- How long does each task take?
-- Which advisors manage the most operations?
-- Which advisors have the highest workload?
-- Which models are most common?
-- Which customer types are most common?
-- How many operations are completed?
-- How many are cancelled?
-- What is the conversion/progression rate?
-- How are operations changing over time?
-- Which tasks generate the largest delays?
-- Which operations require attention today?
-
-These are examples, not final requirements.
-
-Do not add metrics merely because they look impressive.
-
-Every KPI should ideally answer a real business question.
+Recommend the simplest maintainable BI implementation that satisfies the product's needs. It need not be a separate analytics platform unless justified.
 
 ---
 
-# 27. Roles and authorization
+## 15. Roles and role-based access control (RBAC)
 
-Employees roles:
+Use the following three employee roles as the initial role model. Preserve the intended permissions, but point out any security or operational concern and propose a controlled resolution if necessary.
 
-- System Admin
-- Sales Manager
-- Sales Advisor
+| Module / feature             | System Admin                                                                                            | Sales Manager                                                                                    | Sales Advisor                                                                                |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| Staff user management        | Full CRUD: create staff, assign roles, reset passwords, and permanently delete when genuinely necessary | View active staff, limited to Sales Advisors, for reassignment purposes                          | No access                                                                                    |
+| Vehicle catalog              | Full CRUD                                                                                               | Create/edit models, upload photos, archive old models/versions                                   | View only; browse/select vehicles for a sale                                                 |
+| Customer database            | Full CRUD, including exceptional permanent deletion                                                     | View/edit/create any customer; no hard delete                                                    | Create customers; edit/view only customers associated with their own sales                   |
+| Sale registers               | Full CRUD; permanently delete corrupted/test records under controlled conditions                        | View all, reassign advisors, cancel any sale, undo cancellations                                 | Create/update/cancel own sales with a required cancellation reason; cannot undo cancellation |
+| Tasks and documents          | Full access for exceptional administrative/technical intervention                                       | Override tasks across all sales, including editing/replacing files and reopening completed tasks | Update own active tasks; completed tasks are read-only                                       |
+| BI dashboard                 | Global view                                                                                             | Global business/operational view                                                                 | Individual view of own pipeline and permitted performance metrics                            |
+| Raw data exports (CSV/Excel) | Full-system export where needed, including audit/access logs                                            | Business exports: global customer list, sales registers, task audit logs, cancellation logs      | No raw data exports                                                                          |
 
-Here is the standard Role-Based Access Control (RBAC) matrix:
+### Permission design requirements
 
-| **Module / Feature**               | **System Admin (IT/Infrastructure)**                                                         | **Sales Manager (Business Oversight)**                                                                         | **Sales Advisor (Daily Operations)**                                                             |
-| ---------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Staff User Management**          | **Full CRUD:** Create new staff, assign roles, reset passwords, hard delete.                 | **View Only:** Can see active staff (sale advisors only) to reassign sales.                                    | **No Access.**                                                                                   |
-| **Car Models Catalog**             | **Full CRUD:** Can manage the catalog database.                                              | **Full CRU:** Add/Edit models, upload photos, archive old models.                                              | **View Only:** Can browse models to select for a sale.                                           |
-| **Customer Database**              | **Full CRUD:** Can permanently wipe a customer profile.                                      | **CRU All:** Can view, edit, and create _any_ customer profile. No hard delete.                                | **CRU Own:** Create new customers; edit/view only customers tied to their own sales.             |
-| **Sales Registers**                | **Full CRUD:** Can permanently delete corrupted or test sales.                               | **CRU All:** View all sales, reassign advisors, cancel any sale, undo cancellations.                           | **CRU Own:** Create, update, and cancel _own_ sales (requires reason). Cannot undo cancellation. |
-| **14 Tasks & Documents**           | **Full Access:** Technical overrides if the database locks up.                               | **Full Override:** Can update/edit files on _any_ task, including unlocking/reverting completed tasks.         | **Update Own:** Update active tasks. Becomes Read-Only once marked Completed.                    |
-| **BI Dashboard**                   | **Global View:** Sees all data (often used to verify system health).                         | **Global View:** Tracks overall company revenue, conversion rates, and drop-offs.                              | **Individual View:** Tracks own commissions, task speeds, and active pipeline.                   |
-| **Raw Data Exports (CSV / Excel)** | **Full System Dumps:** Can export raw database tables, audit logs, and security/access logs. | **Business Dumps:** Can export global Customer lists, Sales Registers, Task Audit logs, and Cancellation logs. | **NO RAW EXPORTS:** Blocked from exporting CSV/Excel files to prevent CRM database theft.        |
-
----
-
-# 28. Security
-
-Security is a first-class requirement.
-
-Analyze:
-
-- Authentication.
-- Authorization.
-- Role-based access control.
-- Customer data isolation.
-- Document access.
-- Session management.
-- Password handling.
-- Audit logging.
-- Sensitive data exposure.
-- Input validation.
-- API authorization.
-- File authorization.
-- Common web vulnerabilities.
-
-Especially ensure that customer A can never access customer B's operations or documents by guessing identifiers or URLs.
+- Enforce authorization on the backend/API, not only in the frontend.
+- Use least privilege by default.
+- Separate the ability to view a record from the ability to modify it, cancel it, reopen it, export it, or delete it.
+- Log security-sensitive actions, overrides, cancellations, role changes, and exceptional deletions.
+- Treat a Sales Advisor's access as limited to their own assigned/created sales as specified above; define whether reassignment changes access immediately.
+- Clarify and safeguard the System Admin's powerful destructive permissions. Prefer soft deletion/archive for ordinary operations and require audit trails/confirmation for permanent removal.
+- Customers are an additional access class and must only access their own records and customer-visible content. They are not included in the employee RBAC table.
 
 ---
 
-# 29. Recommended architecture
+## 16. Authentication and session management
 
-Do not decide the technology stack yet.
+### Separate login interfaces
 
-First understand:
+Provide two distinct login interfaces and routes, for example:
 
-- Business process.
-- Requirements.
-- Data model.
-- Authorization.
-- File management.
-- Notifications.
-- BI.
+- Employee login: `/admin` or another appropriate employee-facing route.
+- Customer login: `/portal`.
 
-Only then recommend an architecture.
+These interfaces are separated for user experience and routing. Do not assume that separate login pages alone provide security; enforce identity, role, user type, and resource authorization in the backend.
 
-The architecture may include:
+### Login fields
 
-- Frontend.
+Email is **not** the login identifier. Both login pages require:
+
+1. Document type dropdown.
+2. Document number text field.
+3. Password field.
+4. `Olvidé mi contraseña` link.
+5. `Mantener sesión iniciada` checkbox.
+
+Customer document-type options: DNI, CE, RUC, PAS, CDI.
+
+Employee document-type options: DNI, CE, PAS.
+
+Validate document format dynamically based on the selected type (for example, DNI is typically eight digits and RUC eleven digits), but keep these validation rules configurable and validate on the server as well as the client.
+
+### Identity uniqueness
+
+- Enforce a composite unique constraint on `(document_type, document_number)` in the `Customers` table.
+- Enforce a composite unique constraint on `(document_type, document_number)` in the `Employees` table.
+- Normalize document type and document number consistently before uniqueness checks while preserving meaningful leading zeros.
+- A document identifier may theoretically appear in both tables if a person is both a customer and an employee; define how the authentication system distinguishes account types and prevent cross-portal authorization leaks.
+
+### Sessions and tokens
+
+The initial authentication preference is:
+
+- Short-lived JWT access tokens.
+- Long-lived refresh tokens stored in HTTP-only cookies.
+- A `Remember Me` option.
+
+Assess the full implementation for security, including `Secure` and `SameSite` cookie flags, refresh-token rotation/revocation, CSRF protection where applicable, logout invalidation, session expiration, and safe storage of access tokens. Do not treat JWT alone as a complete authentication/session strategy.
+
+### Access logs
+
+Create an append-only `AccessLogs` table for authentication events. Log:
+
+- `user_type` (`Employee` or `Customer`).
+- Attempted `document_type` and `document_number`.
+- `user_id` when authentication succeeds and an account is identified.
+- `action_type`: `LOGIN_SUCCESS`, `LOGIN_FAILED`, or `LOGOUT`.
+- `ip_address`, where available and reliably obtained.
+- Timestamp.
+
+Log successful login, failed login attempts (including incorrect credentials or unknown document identifiers), and explicit logouts. Protect the logs from ordinary user modification/deletion and define retention/access policies. Avoid unnecessarily storing secrets or passwords in logs.
+
+---
+
+## 17. Security and privacy
+
+Security is a first-class requirement. Evaluate at least:
+
+- Authentication and secure password hashing.
+- Backend authorization and role-based access control.
+- Customer record isolation and prevention of insecure direct-object references.
+- Document and download authorization.
+- Session and token management.
+- File upload validation and storage privacy.
+- Server-side input validation.
+- Rate limiting and protection against brute-force login attempts.
+- Sensitive data exposure in logs, API responses, and analytics.
+- Audit trail integrity.
+- Protection against common web vulnerabilities.
+- Backup, recovery, and appropriate data retention.
+- Access restrictions for personally identifiable information and due-diligence/financial/legal documents.
+
+A customer must never gain access to another customer's sale or document by guessing a URL, record identifier, or file reference. A frontend visibility flag is not an authorization mechanism. Avoid storing plain-text passwords or secrets. Evaluate applicable Peruvian privacy/legal considerations where relevant, and clearly distinguish technical advice from legal advice that requires professional validation.
+
+---
+
+## 18. Initial technology-stack preference (not a final decision)
+
+I have experience with the JavaScript version of this stack and suspect TypeScript may be a good choice for a project of this size. Treat the following as an initial preference to evaluate, not as a fixed requirement:
+
+- **Frontend:** React with TypeScript.
+- **Backend:** Node.js with Express and TypeScript.
+- **Database:** PostgreSQL.
+- **Authentication:** JWT access tokens with refresh-token handling as described above.
+- **File storage:** Cloudinary, subject to the security/privacy suitability analysis.
+
+Compare realistic alternatives only where comparison would help make a decision. Base recommendations on maintainability, developer experience, development speed, cost, hosting, free-tier limitations, security, ecosystem maturity, PostgreSQL support, background jobs, private document storage, deployment, and future evolution. Do not choose technologies simply because they are popular. Verify current hosting/provider limits and pricing when that information affects the recommendation.
+
+---
+
+## 19. Architecture and database design
+
+Do not finalize architecture or schema until the business rules, entities, status transitions, permissions, file flows, and reporting requirements are sufficiently understood.
+
+### Architecture topics
+
+Evaluate the need for:
+
+- React frontend.
 - Backend/API.
-- Database.
-- Authentication layer.
-- Authorization layer.
-- File storage.
-- Background jobs/scheduler.
-- Notification service.
-- Analytics layer.
-- Deployment environment.
+- PostgreSQL database.
+- Authentication and authorization components.
+- Private file storage.
+- Email service.
+- Background scheduler/job runner.
+- Notification delivery/audit mechanism.
+- Analytics and dashboard queries.
+- Logging, monitoring, backups, and deployment.
 
-Explain why each component exists.
+Prefer the simplest architecture that meets the requirements and can be maintained by the project team. Avoid unnecessary microservices or infrastructure unless there is a concrete reason.
 
----
+### Database design topics
 
-# 30. Technology-stack selection
+Consider entities/structures for:
 
-Only after the architecture is understood, recommend technologies.
-
-Evaluate options based on:
-
-- Development speed.
-- Maintainability.
-- Cost.
-- Hosting.
-- Free-tier feasibility.
-- Security.
-- Ecosystem.
-- Developer experience.
-- Database support.
-- File storage.
-- Background jobs.
-- Future scalability.
-- Ease of deployment.
-- Long-term maintainability.
-
-Do not select a technology simply because it is popular.
-
-Compare realistic alternatives where appropriate.
-
-Here's a recommendation of a tech stack I have worked with before, well actually I have experience with the JavaScript version of it, but because of the dimension of this project it probably is a great idea to upgrade to Typescript, but again this is a recommendation only.
-
-- Frontend: React (TypeScript)
-- Backend: Node with Express (TypeScript)
-- Database: PostgreSQL
-- Authentication: JWT
-- File storage: Cloudinary
-
----
-
-# 31. Database design
-
-Only after the business model is sufficiently clear, design the database.
-
-Identify:
-
-- Users.
-- Roles.
-- Permissions.
 - Customers.
 - Employees.
-- Vehicle models.
-- Vehicle colors.
-- Sale registers.
-- Tasks.
-- Task states.
+- Credentials/accounts/session or refresh-token records.
+- Roles/permissions if required beyond a fixed role enum.
+- Vehicle models, versions, categories, colors, and images.
+- Sale registers and customer/vehicle snapshots.
+- Task definitions and per-sale task instances.
+- Task dependencies and status history.
 - Task-specific data.
-- Documents.
+- Documents, metadata, versions, and visibility.
 - Notes.
-- Notifications.
-- Audit/history.
-- Other required entities.
+- Notifications and notification logs.
+- Reminder tracking and completion phase.
+- Access logs.
+- Sale cancellation/reopening history.
+- Other justified domain entities.
 
-Then define:
-
-- Primary keys.
-- Foreign keys.
-- Unique constraints.
-- Indexes.
-- Relationships.
-- Cardinalities.
-- Important validation rules.
-
-Produce an ERD and explain the important design decisions.
-
-Do not create tables merely because they sound conceptually nice.
+Provide primary keys, foreign keys, uniqueness constraints, indexes, relationships/cardinalities, integrity rules, and an ERD. Explain key modeling decisions. Do not create a table merely because a concept has a name; justify the need for each entity. Preserve the historical snapshot rules for customer and vehicle price information.
 
 ---
 
-# 32. Functional requirements
+## 20. Requirements specification
 
-Convert the final business requirements into formally structured requirements.
+Create a structured requirements catalog after the business domain has been analyzed.
 
-Use IDs such as:
+### Functional requirements
 
-- FR-001
-- FR-002
-- FR-003
+Assign stable IDs such as `FR-001`, `FR-002`, etc. Group them by:
 
-Group them into areas such as:
-
-- Authentication.
-- Authorization.
+- Authentication and sessions.
+- Authorization and user administration.
 - Customer management.
 - Employee management.
-- Vehicle management.
-- Sale management.
-- Task management.
-- Documents.
-- Notifications.
+- Vehicle catalog.
+- Sale-register management.
+- Task and dependency management.
+- Notes and history.
+- Document management.
 - Customer portal.
-- BI.
-- Administration.
-- Audit.
+- Email notifications.
+- Reminders/escalations.
+- BI/analytics.
+- Exports.
+- Audit/access logging.
 
----
+Each requirement should be testable and include relevant permissions and acceptance criteria.
 
-# 33. Non-functional requirements
+### Non-functional requirements
 
-Define requirements for:
+Define realistic requirements for:
 
-- Security.
+- Security and privacy.
 - Performance.
-- Availability.
-- Reliability.
+- Availability/reliability.
 - Maintainability.
-- Scalability.
+- Scalability appropriate to expected usage.
 - Auditability.
 - Accessibility.
 - Responsive design.
 - Data integrity.
 - Backup/recovery.
 - Observability.
+- Usability.
 
-Do not invent unrealistic enterprise-level requirements for the project's actual scale.
-
----
-
-# 34. UX/UI design
-
-Create a complete information architecture before detailed implementation.
-
-Define:
-
-- Main navigation.
-- Employee navigation.
-- Customer navigation.
-- Page hierarchy.
-- Main user journeys.
-- Important workflows.
-- Empty states.
-- Loading states.
-- Error states.
-- Confirmation states.
-- Permission-denied states.
-
-The design should feel professional and modern while preserving recognizable Grupo Pana branding.
-
-Do not allow branding requirements to compromise usability.
+Avoid vague requirements such as “must be fast” without a way to evaluate them. Identify performance targets as proposed targets until the expected workload is known.
 
 ---
 
-# 35. API design
+## 21. UX/UI and navigation
 
-Once the domain model is sufficiently clear, define:
+Design a professional, modern, responsive interface that feels appropriate for Grupo Pana's brand while prioritizing clarity and usability.
 
-- Resources.
-- Endpoints.
-- Request/response structures.
-- Authentication.
-- Authorization.
-- Validation.
+Determine the information architecture, navigation, user journeys, and screen specifications for the appropriate areas. Candidate employee areas include:
+
+- Login and password recovery.
+- Sales operations workspace.
+- Sale register creation and details.
+- Task detail/editing.
+- Customer management.
+- Vehicle catalog and image management.
+- Employee/role administration.
+- BI dashboard.
+- Notifications/reminders and audit/history views as appropriate.
+
+Candidate customer areas include:
+
+- Login and password recovery.
+- Customer home/list of their sales.
+- Sale details and six-milestone timeline.
+- Customer-visible document access.
+- Advisor contact information.
+- Account/onboarding states.
+
+For every screen, describe its purpose, key content, primary actions, role access, validation, loading/empty/error states, and responsive behavior. Use UX patterns that make the current task, task progress, delays, next steps, and required actions easy to understand. Do not begin detailed visual implementation before the information architecture and user journeys are agreed.
+
+---
+
+## 22. API design
+
+After the domain model and permissions are stable, define the API resources and endpoints. Document:
+
+- Endpoint and HTTP method.
+- Purpose.
+- Authentication requirements.
+- Authorization rules.
+- Request/response structure.
+- Validation and business rules.
 - Error handling.
-- Pagination.
-- Filtering.
-- Sorting.
-- File-upload flow.
-- State transitions.
-- Audit mechanisms.
+- Filtering, sorting, and pagination.
+- Task status transitions and prerequisite enforcement.
+- Document upload/download flow.
+- Notification and scheduler interactions.
+- Audit events.
+
+Make sure backend logic—not only UI controls—enforces task requirements, task dependencies, uniqueness, sale lifecycle, roles, and document visibility.
 
 ---
 
-# 36. Implementation strategy
+## 23. Testing strategy
 
-Finally, divide the project into:
+Define a testing strategy before implementation becomes large. Consider:
 
-## MVP
+- Unit tests for validations and business rules.
+- Integration tests for database-backed flows and APIs.
+- Authorization tests for each role and customer data isolation.
+- Task dependency and status-transition tests.
+- Document access and upload-validation tests.
+- Notification deduplication/retry tests.
+- Reminder/escalation boundary tests.
+- Authentication, token expiry, refresh, logout, and password-recovery tests.
+- UI/component and end-to-end tests for critical user journeys.
+- Regression tests for sale completion/reopening and immutable snapshots.
 
-Minimum functionality required to demonstrate a complete and genuinely useful solution.
-
-## V1
-
-The first complete production-oriented version.
-
-## Future enhancements
-
-Features that are useful but should not complicate the initial implementation unnecessarily.
-
-For every implementation milestone, define:
-
-- Objective.
-- Features.
-- Database work.
-- Backend work.
-- Frontend work.
-- Testing.
-- Dependencies.
-
-Phased Development Recommended Sequence
-
-- Phase 1: Employee Side (Core Logic & Data Production)
-- Phase 2: Customer Side (Data Consumption & Visualization)
-- Phase 3: Background Scheduler & Notifications (Automation)
+Every major functional requirement should be traceable to one or more acceptance tests.
 
 ---
 
-# 39. Project documentation
+## 24. Implementation roadmap
 
-Eventually, help me create a professional documentation structure.
+Plan development in increments with working software at each milestone. The initial preferred high-level sequence is:
 
-Potential documents include:
+1. **Phase 1 — Employee side: core logic and data production.** Implement authentication/authorization, reference data, customers, employees as appropriate, vehicle catalog, sale registers, the 14 tasks, dependencies, documents, status history, and essential operational views.
+2. **Phase 2 — Customer side: data consumption and visualization.** Implement the customer portal, customer access isolation, six-milestone progress experience, customer-visible information/documents, and milestone emails.
+3. **Phase 3 — Scheduler and notifications: automation.** Implement reminders, escalation, deduplication, notification logs, and analytics for task timing.
 
-- README.
-- Product overview.
-- Requirements specification.
-- Business-process documentation.
-- Architecture documentation.
-- Database documentation.
+Treat this sequence as a starting point. Recommend changes if dependencies or risk indicate a better order, and explain why. For each milestone, identify its goal, scope, prerequisites, database/backend/frontend tasks, tests, and definition of done.
+
+Separate:
+
+- **MVP:** Minimum useful end-to-end product.
+- **V1:** First complete production-oriented release.
+- **Future enhancements:** Features that can wait without undermining the core workflow.
+
+---
+
+## 25. Documentation and decision log
+
+Recommend a useful, maintainable documentation structure rather than documenting everything for its own sake. Candidate documents include:
+
+- README and local development setup.
+- Product overview and scope.
+- Business-process and task specification.
+- Functional/non-functional requirements.
+- Role-permission matrix.
+- UX information architecture and screen flows.
+- Architecture decisions and diagrams.
+- Database model and ERD.
 - API documentation.
-- Deployment documentation.
-- User documentation.
-- Security documentation.
-- Decision log.
+- Security and document-access model.
+- Testing strategy.
+- Deployment/operations instructions.
+- User/admin guide.
 - Changelog.
 
-Recommend which documents are actually worth maintaining.
-
-Avoid documentation for documentation's sake.
+Maintain an explicit decision log for major decisions. Record each decision's status, rationale, alternatives, consequences, and date/version where useful. Examples include authentication/session design, storage provider, task data modeling, notification strategy, task timing rules, and architecture choices.
 
 ---
 
-# 40. Decision log
+## 26. Project and GitHub repository naming
 
-Maintain an explicit decision log throughout the project.
+Recommend names for the product and source-code repository. Keep these as separate decisions; they do not have to match.
 
-For each major decision, record:
+### Product/project name
 
-- Decision.
-- Status.
-- Reason.
-- Alternatives considered.
-- Consequences.
-- Date/version if relevant.
+Suggest a range of names that are professional, easy to pronounce and remember, appropriate for an automotive-business platform, and potentially suitable if the project grows beyond a university prototype. Include a mix of descriptive names, brand-oriented names, and modern product/SaaS-style names. Names may relate to endoso, operations, workflow, visibility, vehicle delivery, or tracking. Explain the reasoning and possible drawbacks of each. Do not assume the product name must include “Grupo Pana.”
 
-Examples:
+### GitHub repository name
 
-- File-storage strategy.
-- User/role architecture.
-- Database approach.
-- Notification strategy.
-- Customer visibility model.
-- Technology stack.
+Suggest concise names in lowercase kebab-case that are easy to type and remain appropriate if the product name changes. Avoid unnecessarily long names. Consider whether the repository should be a monorepo or eventually split into repositories, but do not overcomplicate the initial structure without a reason.
 
-This should prevent the architecture from becoming inconsistent as the project evolves.
+### Internal codename
+
+Optionally suggest one or two short internal codenames if they help during development.
+
+At the first stage, provide a shortlist and a recommendation for both the product name and repository name. Do not claim that a domain name, GitHub repository name, trademark, or brand is available unless you verify it.
 
 ---
 
-# 41. How I want you to collaborate with me
+## 27. Initial analysis deliverables
 
-Do NOT simply produce one giant final design and assume every detail is settled.
+Before implementation, help create a coherent project specification containing, as appropriate:
 
-Work iteratively.
+1. Project overview and problem statement.
+2. Business/product objectives and proposed success metrics.
+3. Scope, non-goals, and assumptions.
+4. Actors and role-permission matrix.
+5. Sale lifecycle and business rules.
+6. The complete 14-task specification and dependency graph.
+7. Customer-facing six-milestone model.
+8. Functional and non-functional requirements.
+9. Use cases and important user journeys.
+10. Document/storage/access strategy.
+11. Customer and employee notification rules.
+12. Reminder and escalation rules.
+13. UX information architecture and screen specifications.
+14. Database model and ERD.
+15. API design.
+16. System architecture and technology-stack decision.
+17. Security and privacy model.
+18. BI/analytics specification and KPI definitions.
+19. Testing strategy.
+20. MVP/V1/future roadmap.
+21. Deployment strategy.
+22. Documentation structure and decision log.
+23. Recommended product and repository names.
 
-At each major stage:
-
-1. Summarize what we know.
-2. Separate confirmed facts from assumptions.
-3. Identify unresolved decisions.
-4. Explain important trade-offs.
-5. Identify missing information.
-6. Update previous decisions when new information changes them.
-
-Maintain consistency across:
-
-business process
-→ requirements
-→ UX
-→ permissions
-→ database
-→ API
-→ architecture
-→ implementation.
-
-Whenever a decision affects multiple layers, explicitly tell me.
-
----
-
-# 42. Final deliverables
-
-By the end of the analysis/design phase, I want a coherent project specification containing approximately:
-
-1. Project overview.
-2. Problem statement.
-3. Objectives.
-4. Actors.
-5. Business process.
-6. 14-task specification.
-7. Business rules.
-8. Functional requirements.
-9. Non-functional requirements.
-10. Use cases.
-11. Role-permission matrix.
-12. Customer visibility model.
-13. Notification strategy.
-14. Document strategy.
-15. UX information architecture.
-16. Screen specification.
-17. Database model.
-18. ERD.
-19. API design.
-20. System architecture.
-21. Technology-stack decision.
-22. Security model.
-23. BI/analytics specification.
-24. MVP definition.
-25. Implementation roadmap.
-26. Testing strategy.
-27. Deployment strategy.
-28. Documentation structure.
+Treat the list as a target for the design process, not a requirement to generate all documents in the first response.
 
 ---
 
-# 43. Authentication & System Access
+## 28. First task — begin the project
 
-**1. Separate Login Portals**
+**Do not write code yet. Do not ask me to provide screenshots of the existing tools; this prompt is the starting point for the product design.**
 
-- The application must implement two physically separate login interfaces and routes (e.g., `/admin` for Employees and `/portal` for Customers) to ensure secure, isolated routing to their respective database tables.
+Start by analyzing the information in this prompt and provide:
 
-**2. Login Credentials & UI Structure**
+1. A concise but complete summary of the product and its intended users.
+2. A classification of the stated information into confirmed requirements, proposals, assumptions, and open questions.
+3. The core business entities and main lifecycle concepts you infer, without designing the final database yet.
+4. A review of the 14 tasks and dependency graph, identifying contradictions, missing rules, or risky assumptions. Pay particular attention to the reminder timing definition, task visibility/privacy, the amount cross-checks, task completion/reopening, notification triggers, account onboarding/security, the login-identifier mismatch in the onboarding email, and the relationship between task dependencies and customer-milestone progression.
+5. The most important unresolved decisions that must be made before detailed architecture/database work, ranked by impact.
+6. A recommendation for the first concrete artifact to create with me and why it should come first.
+7. A shortlist of product names and GitHub repository names, with one recommendation for each.
+8. A practical next-step plan for continuing iteratively.
 
-- **No Email Login:** The primary identifier for authentication is the user's official identification document, NOT their email address.
-- Both login pages must require the following three inputs:
-  - **Tipo de Documento (Dropdown):**
-    - _Customer options:_ DNI, CE, RUC, PAS, CDI.
-    - _Employee options:_ DNI, CE, PAS.
-  - **Número de Documento (Text Field):** Must include dynamic length/format validation based on the selected document type (e.g., exactly 8 digits for DNI, 11 digits for RUC).
-  - **Contraseña (Password Field):** Both the customer and employee portal must include a prominent "Olvidé mi contraseña" (Forgot password) link.
+Do not attempt to solve every open question by guessing. Where a decision is needed, explain the alternatives and recommend a direction when enough information exists. Ask only the most important next question, if a question is necessary to proceed; otherwise, make the best supported start using this specification.
 
-**3. Database Authentication Constraints**
-
-- **Composite Unique Key:** Both the `Employees` and `Customers` tables must enforce a composite unique constraint on `(document_type, document_number)` to guarantee identity uniqueness for both individuals and legal entities.
-
-**4. Session Management & Auditing**
-
-- **Remember Me Functionality:** Both login portals must include a "Mantener sesión iniciada" checkbox. Implement secure authentication using short-lived JWT Access Tokens and long-lived Refresh Tokens (stored in HTTP-only cookies) to reduce login friction for returning users.
-- **Access Tracking:** Create an append-only `AccessLogs` database table strictly for monitoring system entry and exit. The system must log every authentication event: successful logins, failed login attempts (e.g., invalid password, non-existent document number), and explicit logouts. Logs must capture the `user_type` (Employee/Customer), the `document_type` and `document_number` attempted, `user_id` (if the login was successful), `action_type` (LOGIN_SUCCESS, LOGIN_FAILED, LOGOUT), `ip_address`, and `timestamp`.
-
----
-
-# 44. First task
-
-Do NOT write code.
-
-Start by analyzing everything I have provided.
-
-I want you to:
-
-1. Reconstruct a clear understanding of the current business process.
-2. Separate confirmed information from assumptions and open questions.
-3. Compare the current Power Apps workflow with the current BI/reporting structure.
-4. Identify the most important business concepts represented by both systems.
-5. Identify contradictions, ambiguities, and potentially problematic assumptions.
-6. Identify requirements that are already strongly implied by the current system.
-7. Identify information that still needs to be obtained from Grupo Pana.
-8. Propose the first concrete artifact we should create together.
-9. Give me candidate project names and GitHub repository names.
-10. Then guide me through the project step by step.
-
-Remember:
-
-The existing system is evidence of the current business process.
-
-It is NOT the blueprint for the new system.
-
-The goal is to understand the business deeply enough that we can design something significantly better.
+The goal is to design a secure, maintainable, professional product that supports Grupo Pana's endoso operations and gives customers meaningful visibility into their purchase—not to create a generic CRUD app or to replicate an existing tool.
