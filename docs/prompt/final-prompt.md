@@ -788,7 +788,7 @@ Enforce composite uniqueness on `(document_type, document_number)` within both `
 
 ### 14.3 Custom token strategy
 
-Use custom authentication with password hashing, short-lived JWT access tokens and long-lived refresh tokens:
+Use custom authentication with `bcrypt` password hashing, short-lived JWT access tokens and long-lived refresh tokens:
 
 - **Access token:** stateless signed JWT, 15-minute lifetime, returned to frontend memory rather than browser persistent storage. Validate it cryptographically. Include account type, user ID, role, and appropriate claims; ensure role changes/deactivation do not leave stale privileges effective longer than the chosen policy permits.
 - **Refresh token:** secure opaque random token, 30-day lifetime, stored as a hash in `Refresh_Tokens` and delivered only using an `HttpOnly` cookie to prevent XSS theft.
