@@ -1,21 +1,19 @@
 # Phase 0 — Decisions
 
-Reference to the final-prompt.md file.
+These are the decisions made based on the open questions and edge-cases detected by the LLM during the project's Phase 0.
 
-Each question has a **Rec** (recommendation).
+### A. Contradictions and inconsistencies
 
-#### A. Contradictions and inconsistencies
+1. **Password hashing.** Use Argon2id with parameters tuned to the free Render instance's memory.
+2. **Refresh-token design.** Keep two tables for `refresh_tokens` with real FKs. The cleanup job must clean both of them. Add rotation and reuse-detection fields (token family, revoked/replaced timestamps, remember-me flag).
+3. **Managers and sale creation/editing.** Managers and admins can create sales and assign an advisor to them at creation. When an advisor creates a sale, they get automatically assigned to it.
+4. **Editing completed tasks vs derived money.** Block edits to financial source fields while any dependent task is completed. Require downstream tasks to be rolled back in reverse order before editing. Allow other edits with a Reason for Edit.
+5. **Reopen vs “one `in_progress`”.** Allow reopening only when no task is `in_progress`. After a task gets reverted to `pending` its data and files entered stay (read-only) rather than being cleared.
+6. **SLA state on reopen, restart and cancel.** Reset reminder counters and SLA phases on task restart. Preserve them on reopen so the reminder cap isn’t re-armed. When reopening a cancelled sale, resume SLA clocks with the remaining time rather than counting cancelled time as delay.
+7. **PDF generation** Treat PDF generation as a future enhancement, not part of the current scope. All PDFs in the initial release are uploaded documents.
+8. **Notification scope.** Limit notifications to email for MVP/V1. Trigger Notification 1 whenever an account is created, regardless of whether the actor is a Sales Advisor, Manager, or Admin.
 
-1. **Password hashing.** §14.3 says bcrypt, §15 says Argon2id. **Rec:** Argon2id, with parameters tuned to the free Render instance’s memory.
-2. **Refresh-token design.** §14.3 and §15 name one `Refresh_Tokens` table, but §16.8–16.9 define two. The cleanup job names only the first. Neither version has rotation or reuse-detection fields (token family, revoked/replaced timestamps, remember-me flag), though §20 tests reuse. **Rec:** keep two tables with real FKs, clean up both, and add those fields.
-3. **Managers and sale creation/editing.** The matrix gives Managers view, reassign, cancel and undo-cancel, but not create or edit. Can Managers or Admins create sales, and for which advisor? Which sale fields can an advisor edit after creation?
-4. **Editing completed tasks vs derived money.** §5.2 lets Managers and Admins edit a completed task without reverting it. But Task 3’s commission derives from Task 1 amounts, and Tasks 4–6 are checked against Tasks 1 and 3. Editing Task 1 amounts after Task 3 completes would silently break those values. **Rec:** block edits to financial source fields while any downstream task is completed (roll back in reverse order). Allow other edits with a Reason for Edit.
-5. **Reopen vs “one `in_progress`”.** Reopening task N while N+1 is `in_progress` creates two active tasks. **Rec:** allow reopening only when no task is `in_progress`. Also, §5.2’s sentence about reverting to `pending` is garbled. Confirm that data and files entered stay (read-only) rather than being cleared.
-6. **SLA state on reopen, restart and cancel.** Do reminder counters and phase reset on restart? **Rec:** yes. On reopen? **Rec:** no, so the cap isn’t re-armed. When a cancelled sale is reopened, do SLA clocks resume with remaining time (**Rec**) or keep the original `due_date`, so cancelled time counts as delay?
-7. **“Generated PDFs” (§4.7).** Nothing in the spec generates PDFs, since all PDFs are uploads. Is this a leftover, or are reports and receipts planned?
-8. **Notification scope.** §3.2 promises “account and milestone notifications” but §10 defines email only. Confirm email-only for MVP/V1. Notification 1 is triggered by “a Sales Advisor”, yet Managers and Admins can also create customers. **Rec:** trigger on account creation by any actor.
-
-#### B. Business rules and workflow
+### B. Business rules and workflow
 
 9. **Who starts tasks?** §5.1 implies a manual start with confirmation. That makes waiting time between tasks invisible to SLAs and bottleneck analytics. **Rec:** keep manual start, but record when each task became eligible.
 10. **Cancellation.** Is it allowed at any stage, including after money moved (Tasks 4–5)? Is it blocked from `completed`? Should reasons be a controlled category plus text, given the BI wants “for what reasons”? Is a reason required to reopen? Do customers see cancelled sales or get notified? **Rec:** category plus text stored as first-class sale fields, not only in the audit log. Require a reopen reason. Keep the reason internal.
@@ -34,13 +32,13 @@ Each question has a **Rec** (recommendation).
 23. **Audit visibility and permanent deletion.** Who sees which history? Should exports be audit-logged? They are missing from §16.11’s enum. **Rec:** yes. For “controlled conditions” on hard delete, **Rec:** only test or corrupted sales that never reached delivery, with second-Admin confirmation, and audit rows must survive. Records with history are deactivated, not deleted.
 24. **Retention and privacy law.** What retention periods apply to identity documents, invoices and logs? How do data-subject requests under Peru’s data-protection law interact with the delete restrictions? This needs legal input. The 500 MB tier also forces log-retention limits.
 
-#### C. Security and authentication
+### C. Security and authentication
 
 25. **Temporary password by email (§6.4, Notification 1).** Emailing a plaintext password is weak. **Rec:** use a single-use, short-lived activation link. If you keep the temp password, define its expiry (e.g. 72 h) and a resend policy.
 26. **Auth policy gaps.** Login throttling and lockout are unspecified, as are generic error messages. Rotation resets 30 days each time, so there is no absolute session limit. The server-side lifetime for non-“remember me” sessions is undefined. Two tabs refreshing at once can cause a false reuse detection. Role and deactivation changes could stay stale for up to the 15-minute JWT lifetime. **Rec:** lockout after repeated failures, and an absolute maximum session (your call on the length). Also check active status and role in the DB on every request, and revoke refresh tokens on deactivation or password reset.
 27. **Codart API.** I need its documentation, auth method, quota, terms and sample responses. It is a third-party source of personal data, so is it approved by Grupo Pana and legal? Lookups cover DNI and RUC only, so CE, PAS and CDI are always manual. Does it also prefill Task 2 signer names? **Rec:** log lookups, rate-limit per user, and mark names “looked up” vs “manually entered”.
 
-#### D. Platform and free-tier risks (items marked “verify” are from memory and I’ll confirm them in a spike)
+### D. Platform and free-tier risks (items marked “verify” are from memory and I’ll confirm them in a spike)
 
 28. **Cross-site refresh cookie (potential blocker).** The static site and API will sit on different `onrender.com` subdomains. I believe browsers treat those as cross-site (verify), so the HttpOnly cookie would need `SameSite=None`, which browsers increasingly block. It would also need CSRF defense. The options are:
 
@@ -63,5 +61,3 @@ Each question has a **Rec** (recommendation).
     - (b) Connection mode: pooler vs direct, IPv6, and prepared statements with pgx behind a transaction pooler.
     - (c) There is no managed point-in-time recovery on the free tier (verify), but the NFRs need backup and recovery. **Rec:** a scheduled `pg_dump` to R2 from a free GitHub Actions job.
     - (d) The 500 MB cap against audit, access and notification log growth.
-
-Two minor items: the Chi import should be `go-chi/chi/v5`, and the Codart and Resend URLs in §6.3 and §15 have broken Markdown formatting, so please confirm the real base URLs.
