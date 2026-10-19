@@ -1,3 +1,5 @@
+# Future improvements
+
 - Analyze a more robust task dependencies and exceptional progression model involving: soft/hard dependencies, exceptional overrides, override permissions, audit trail, and warings.
 - When uploading the Receipt in PDF (factura), the date and amount in USD fields could be automatically filled.
 - What if the system admin wants to modify the recommended duration of a task? Then the system should allow the system admin to do it, and to preserve historical data, the recommended duration time of the previous tasks must stay the same, so the system should save screenshots of them.
