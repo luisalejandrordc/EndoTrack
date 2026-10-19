@@ -659,7 +659,7 @@ A scheduled server-side process evaluates tasks with a recommended duration and 
 - When a task transitions from `pending` to `in_progress`, calculate `due_date = started_at + recommended_duration`.
 - Use elapsed calendar time; weekends and non-business hours do not pause the clock. Example: a 3-day task started Friday at 4:00 PM is due Monday at 4:00 PM.
 - Tasks with no recommended duration do not receive duration-based reminders.
-- If a task is reverted to `pending`, its SLA process pauses. Before implementation, specify whether restarting it preserves remaining time or starts a new SLA interval; do not leave this undefined in code.
+- If a task is reverted to `pending`, its SLA process pauses.
 
 The behavior of the task's `due_date` depends strictly on the state transition:
 
@@ -802,7 +802,7 @@ JWT alone is not a complete session-management strategy. Do not store plaintext 
 
 Create an append-only `Access_Logs` table. Log:
 
-- `user_type`: `Employee` or `Customer`.
+- `portal_type`: `employee_portal` or `customer_portal`.
 - Attempted `document_type` and `document_number`.
 - `user_id` if the account is identified (nullable for unknown identifiers/failed logins).
 - `action_type`: `LOGIN_SUCCESS`, `LOGIN_FAILED`, or `LOGOUT`.
@@ -820,7 +820,7 @@ The current intent is to keep prototyping, development, testing, and stakeholder
 
 - **Frontend:** React with Vite and TypeScript, hosted in Render (Free Static Site), Recharts for BI/Analytics.
 
-* **Backend:** Go (Golang) using the **Chi** router (`github.com/go-chi/chi`). Chi is chosen for its strict adherence to Go's standard `net/http` library, zero-allocation routing, and lightweight middleware execution—ideal for enforcing strict Role-Based Access Control (RBAC) and cross-portal auth isolation. Hosted in Render (Free Web Service tier), running as a single compiled Go executable.
+* **Backend:** Go (Golang) using the **Chi** router (`github.com/go-chi/chi/v5`). Chi is chosen for its strict adherence to Go's standard `net/http` library, zero-allocation routing, and lightweight middleware execution—ideal for enforcing strict Role-Based Access Control (RBAC) and cross-portal auth isolation. Hosted in Render (Free Web Service tier), running as a single compiled Go executable.
 * **Database:** Supabase PostgreSQL, using `pgx` (`github.com/jackc/pgx/v5`) for high-performance connectivity and query execution. Consider integrating `sqlc` to generate type-safe Go code from SQL queries. The 500 MB free tier limit provides sufficient prototyping space, and our automated background jobs will prevent the database from pausing due to the one-week inactivity rule.
 * **File storage:** Cloudflare R2 (S3-compatible API). Use public buckets for catalog/profile images and private buckets for confidential documents. Private documents accessed via temporary signed URLs created by the backend. AWS SDK for Go (`aws-sdk-go-v2`) configured for S3-compatible endpoints to handle direct streaming to Cloudflare R2.
 * **Request validation:** `go-playground/validator` integrated into Chi HTTP handlers to enforce strict schema boundaries on incoming JSON payloads prior to database execution.
