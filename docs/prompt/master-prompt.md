@@ -8,7 +8,7 @@ Act as my collaborative partner across product discovery, business analysis, UX/
 
 The goal is to design a professional web platform for managing vehicle sales through Grupo Pana's **endoso** sales channel. The platform will have two connected experiences:
 
-1. **An employee application** for managing customers, vehicles, sale registers, the 14-task process, documents, assignments, reminders, and operational analytics.
+1. **An employee application** for managing customers, vehicles, sale registers, the 13-task process, documents, assignments, reminders, and operational analytics.
 2. **A customer portal** where customers can securely access their sale registers, follow the process through customer-friendly milestones, and view the information and documents explicitly made available to them.
 
 Do **not** start coding immediately. First, establish a coherent understanding of the product, process, requirements, data, roles, and business rules. Then guide me through UX, data modeling, architecture, technology selection, API design, implementation, testing, and deployment.
@@ -80,7 +80,7 @@ Authorized employees should be able to:
 - Manage the vehicle catalog, versions, colors, and images.
 - Create and manage sale registers, each representing one vehicle sale.
 - Assign a sales advisor to each sale register.
-- Track the sale through 14 tasks with dependencies and required data.
+- Track the sale through 13 tasks with dependencies and required data.
 - Enter task-specific fields and upload required documents.
 - Add notes to tasks and sale registers.
 - Cancel or reopen sale registers according to permissions.
@@ -139,7 +139,7 @@ The exact final relational structure should be justified during data modeling; t
 
 ### Sale completion and cancellation
 
-- A sale becomes `completed` automatically when all 14 tasks have been completed.
+- A sale becomes `completed` automatically when all 13 tasks have been completed.
 - Employees may cancel a sale or reopen it according to their role and permissions.
 - Sales advisors may cancel their own sales, providing a reason, but may not undo a cancellation.
 - Sales managers may cancel any sale and undo cancellations.
@@ -150,9 +150,9 @@ If reopening a sale conflicts with the rule that completion is automatic, explai
 
 ---
 
-## 6. The 14-task process
+## 6. The 13-task process
 
-The customer may first contact a sales advisor through WhatsApp or telephone and receive an initial, non-final quotation outside this tracked operation. If the customer decides to proceed, the advisor creates the sale register and the formal 14-task process starts with **Task 1: Cotización del Vehículo**, which is the official quotation. Do not add the initial informal quotation as a fifteenth task unless the business requirements later change.
+The customer may first contact a sales advisor through WhatsApp or telephone and receive an initial, non-final quotation outside this tracked operation. If the customer decides to proceed, the advisor creates the sale register and the formal 13-task process starts with **Task 1: Cotización del Vehículo**, which is the official quotation. Do not add the initial informal quotation as a fifteenth task unless the business requirements later change.
 
 Each task has three statuses:
 
@@ -170,22 +170,21 @@ Before a task status is changed, show a confirmation message. This is especially
 
 ### Task 1 — Cotización del Vehículo
 
-**Purpose:** Prepare the official vehicle quotation in Word and Excel, defining the base price, Grupo Pana commission in percentage and USD, and final vehicle price.
+**Purpose:** Prepare the official vehicle quotation in Word and Excel, defining the initial cost breakdown—including the amount payable to Toyota, Grupo Pana commission, accessory amount, and vehicle release processing amount—to establish the final vehicle price.
 
 **Fields:**
 
-- Vehicle price before commission, USD — textbox.
-- Grupo Pana commission, USD — textbox; automatically recalculated when commission percentage is manually changed.
-- Grupo Pana commission, percentage — textbox; automatically recalculated when commission in USD is manually changed.
-- Final vehicle price, USD — textbox; calculated as vehicle price before commission plus commission. **Customer-visible.**
-- Official vehicle quotation — Word document. **Customer-visible.**
-- Official vehicle quotation — Excel document. **Customer-visible.**
+- Amount payable to Toyota, USD — numeric field. **Customer-visible.**
+- Grupo Pana commission, USD — numeric field. **Customer-visible.**
+- Accessory amount, USD — numeric field. **Customer-visible.**
+- Vehicle release processing amount, USD — numeric field. **Customer-visible.**
+- Final vehicle price, USD — textbox; calculated as the sum of amount payable to Toyota, Grupo Pana commission, accessory amount, and vehicle release processing amount. **Customer-visible.**
+- Official vehicle quotation — PDF document. **Customer-visible.**
+- Official vehicle quotation — Excel document.
 
 **Recommended duration:** None.
 
 **Dependencies:** None.
-
-**Implementation note:** Define reliable handling of decimal precision, currency formatting, rounding, and which field is the source of truth when either commission value is edited. The two commission inputs must not become inconsistent.
 
 ### Task 2 — Debida Diligencia del Cliente
 
@@ -196,7 +195,8 @@ Before a task status is changed, show a confirmation message. This is especially
 - Signer's identity information. For a Diplomatic customer, the signer is the customer; for an Embassy, Religious Entity, or International Organization, the signer is the representative/executing person:
   - Document type — dropdown: DNI, CE, PAS, CDI. **Customer-visible.**
   - Document number — textbox. **Customer-visible.**
-  - Full name — textbox. **Customer-visible.**
+  - First name — textbox. **Customer-visible.**
+  - Last name — textbox. **Customer-visible.**
   - Scanned identity document — PDF. **Customer-visible.**
 - Customer Knowledge Affidavit — PDF. **Customer-visible.**
 - Power of Attorney validity document (`Vigencia de Poder`) — PDF, required if `customer.type` is not `Diplomático`. **Customer-visible.**
@@ -207,38 +207,23 @@ Before a task status is changed, show a confirmation message. This is especially
 
 **Dependencies:** Task 1.
 
-**Security note:** The prompt marks some due-diligence files as customer-visible. Evaluate the privacy and business implications of exposing identity documents and due-diligence material, and flag any concern for explicit review; do not silently change the specified visibility.
-
 ### Task 3 — Liquidación de Unidad
 
-**Purpose:** Assign the vehicle's unique series/VIN identifier, calculate the amount payable to Toyota, and upload the settlement PDF.
+**Purpose:** Assign the vehicle's unique series and VIN identifiers, calculate the updated amount payable to Toyota and Grupo Pana commission, and upload the unit settlement PDF.
 
 **Fields:**
 
 - Vehicle series number — textbox, unique. **Customer-visible.**
-- Amount payable to Toyota — numeric field.
+- Vehicle Identification Number (VIN) — textbox, unique. **Customer-visible.**
+- Amount payable to Toyota, USD — numeric field. **Customer-visible.
+- Grupo Pana commission, USD — numeric field; calculated based on amount payable to Toyota so the final car price stays the same. **Customer-visible.
 - Settlement document — PDF.
 
 **Recommended duration:** 12 days.
 
 **Dependencies:** Task 2.
 
-### Task 4 — Resumen de Venta
-
-**Purpose:** Consolidate associated costs, including accessory cost, updated commission, and vehicle release processing costs.
-
-**Fields:**
-
-- Accessory amount, USD — numeric field.
-- Commission amount, USD — numeric field. It may differ from the commission established in Task 1 due to updated prices in the endoso settlement.
-- Vehicle release processing amount, USD — numeric field.
-- Sales summary — PDF. **Customer-visible.**
-
-**Recommended duration:** None.
-
-**Dependencies:** Task 3.
-
-### Task 5 — Pago a Grupo Pana
+### Task 4 — Pago a Grupo Pana
 
 **Purpose:** Verify the customer's payment, recording the bank, transaction date, unique transaction number, amount, and payment voucher.
 
@@ -247,14 +232,14 @@ Before a task status is changed, show a confirmation message. This is especially
 - Transaction bank — dropdown, including BCP, BBVA, Scotiabank, Interbank, and other supported banks. **Customer-visible.**
 - Transaction date — date. **Customer-visible.**
 - Transaction number — textbox, unique. **Customer-visible.**
-- Deposited amount, USD — numeric field; expected to match the final vehicle price from Task 1 unless the business defines an exception. **Customer-visible.**
+- Deposited amount, USD — numeric field; expected to match the final vehicle price from Task 1. **Customer-visible.**
 - Payment voucher — PDF. **Customer-visible.**
 
 **Recommended duration:** None.
 
-**Dependencies:** Task 1.
+**Dependencies:** Task 3.
 
-### Task 6 — Pago a Toyota
+### Task 5 — Pago a Toyota
 
 **Purpose:** Record the internal payment to Toyota, including banking details, proof of payment, and official payment confirmation.
 
@@ -263,30 +248,30 @@ Before a task status is changed, show a confirmation message. This is especially
 - Transaction bank — dropdown, including BCP, BBVA, Scotiabank, Interbank, and other supported banks.
 - Transaction date — date.
 - Transaction number — textbox, unique.
-- Deposited amount, USD — numeric field; expected to match the price established in Task 3 unless the business defines an exception.
+- Deposited amount, USD — numeric field; expected to match the amount payable to Toyota established in Task 3 unless the business defines an exception.
 - Payment voucher — PDF.
 - Payment confirmation — PDF.
 
 **Recommended duration:** None.
 
-**Dependencies:** Tasks 3 and 5.
+**Dependencies:** Task 4.
 
-### Task 7 — Facturación
+### Task 6 — Facturación
 
 **Purpose:** Record the official invoices for the vehicle, accessories, commission, and vehicle release processing. Each invoice includes its number, date, amount, and PDF file.
 
 **Fields:**
 
-- **Toyota invoice:** number (textbox), date, amount in USD (expected to match the price established in Task 3), PDF file.
-- **Accessories invoice:** number (textbox), date, amount in USD (expected to match the amount established in Task 4), PDF file. All four fields are **Customer-visible**.
-- **Commission invoice:** number, date, amount in USD (expected to match the amount established in Task 4), PDF file.
-- **Vehicle release processing invoice:** number, date, amount in USD (expected to match the amount established in Task 4), PDF file.
+- **Toyota invoice:** number (textbox, unique), date, amount in USD (expected to match the price established in Task 3), PDF file. All four fields are **Customer-visible**.
+- **Commission invoice:** number (textbox, unique), date, amount in USD (expected to match the amount established in Task 3), PDF file. All four fields are **Customer-visible**.
+- **Accessories invoice:** number (textbox, unique), date, amount in USD (expected to match the amount established in Task 1), PDF file. All four fields are **Customer-visible**.
+- **Vehicle release processing invoice:** number (textbox, unique), date, amount in USD (expected to match the amount established in Task 1), PDF file. All four fields are **Customer-visible**.
 
 **Recommended duration:** None.
 
-**Dependencies:** Tasks 5 and 6.
+**Dependencies:** Tasks 5.
 
-### Task 8 — Documentos Endosados
+### Task 7 — Documentos Endosados
 
 **Purpose:** Receive and upload the official endorsed documents needed to continue with customs processing.
 
@@ -296,9 +281,9 @@ Before a task status is changed, show a confirmation message. This is especially
 
 **Recommended duration:** 10 days.
 
-**Dependencies:** Task 7.
+**Dependencies:** Task 6.
 
-### Task 9 — Trámite Aduanero
+### Task 8 — Trámite Aduanero
 
 **Purpose:** Manage vehicle nationalization/customs processing, recording the deposit order, DAM number, customs office, control channel, and customs certificate.
 
@@ -312,9 +297,9 @@ Before a task status is changed, show a confirmation message. This is especially
 
 **Recommended duration:** 12 days.
 
-**Dependencies:** Task 8.
+**Dependencies:** Task 7.
 
-### Task 10 — Trámite de Liberación
+### Task 9 — Trámite de Liberación
 
 **Purpose:** Assign an internal person in charge and track the vehicle's release period.
 
@@ -324,9 +309,9 @@ Before a task status is changed, show a confirmation message. This is especially
 
 **Recommended duration:** 30 days.
 
-**Dependencies:** Task 9.
+**Dependencies:** Task 8.
 
-### Task 11 — Inmatriculación y Placas
+### Task 10 — Inmatriculación y Placas
 
 **Purpose:** Register the vehicle legally, assign the definitive license plate number, and upload the Electronic Vehicle Identification Card (`TIVe`).
 
@@ -338,9 +323,9 @@ Before a task status is changed, show a confirmation message. This is especially
 
 **Recommended duration:** 15 days.
 
-**Dependencies:** Task 10.
+**Dependencies:** Task 9.
 
-### Task 12 — Traslado a PDS
+### Task 11 — Traslado a PDS
 
 **Purpose:** Record the date when the vehicle is transferred to the pre-delivery inspection center.
 
@@ -350,9 +335,9 @@ Before a task status is changed, show a confirmation message. This is especially
 
 **Recommended duration:** None.
 
-**Dependencies:** Task 11.
+**Dependencies:** Task 10.
 
-### Task 13 — Equipamiento
+### Task 12 — Equipamiento
 
 **Purpose:** Record accessory installation, the service-order number, service-order document, and completion date.
 
@@ -364,9 +349,9 @@ Before a task status is changed, show a confirmation message. This is especially
 
 **Recommended duration:** None.
 
-**Dependencies:** Task 12.
+**Dependencies:** Task 11.
 
-### Task 14 — Entrega de Vehículo
+### Task 13 — Entrega de Vehículo
 
 **Purpose:** Coordinate final delivery, recording the optional transfer date to Surquillo, official delivery date, and signed delivery record.
 
@@ -378,7 +363,7 @@ Before a task status is changed, show a confirmation message. This is especially
 
 **Recommended duration:** None.
 
-**Dependencies:** Task 13.
+**Dependencies:** Task 12.
 
 ### Task data rules and modeling instructions
 
@@ -390,7 +375,7 @@ Before a task status is changed, show a confirmation message. This is especially
 - Define validations for amounts, dates, identifiers, and required documents.
 - Define exactly when task-specific data is editable and how it is protected after completion.
 - When reopening a completed task, preserve history and ensure that the sale's automatic completion state is recalculated consistently.
-- The Task 1/Task 3/Task 4/Task 5/Task 6/Task 7 amount relationships are stated as expected matches in several places. Do not enforce these as hard financial invariants until exceptions and rounding rules are confirmed; identify them as cross-field business validations to review.
+- The Task 1/Task 3/Task 4/Task 5/Task 6 amount relationships are stated as expected matches in several places. Do not enforce these as hard financial invariants until exceptions and rounding rules are confirmed; identify them as cross-field business validations to review.
 - Recommend a maintainable approach to task-specific data (relational tables, JSON/metadata, or hybrid). Compare the trade-offs before deciding; do not force all task fields into one unstructured JSON field without analysis.
 
 ---
@@ -523,13 +508,13 @@ The customer must be able to view:
 ### Six customer-facing milestones
 
 1. **Cotización y Documentación** — Groups Tasks 1 and 2. Establishes the official quotation and validates the signer's identity documentation.
-2. **Asignación y Pago** — Groups Tasks 3, 4, and 5. Confirms physical vehicle assignment by series number, consolidates the Sales Summary, and enables the customer payment to Grupo Pana.
-3. **Facturación Oficial** — Groups Tasks 6 and 7. Confirms Toyota payment processing and issuance of the official invoices for the vehicle/accessories and related concepts.
-4. **Trámites Aduaneros** — Groups Tasks 8 and 9. Indicates that endorsed documents have been processed and the vehicle is in the customs/nationalization process.
-5. **Liberación y Placas** — Groups Tasks 10 and 11. Communicates the release period and progress toward registration and definitive license-plate assignment.
-6. **Preparación y Entrega** — Groups Tasks 12, 13, and 14. Covers the move to pre-delivery inspection, equipment/accessory installation, and final delivery coordination.
+2. **Asignación y Pago** — Groups Tasks 3 and 4. Confirms physical vehicle assignment by series number and enables the customer payment to Grupo Pana.
+3. **Facturación Oficial** — Groups Tasks 5 and 6. Confirms Toyota payment processing and issuance of the official invoices for the vehicle/accessories and related concepts.
+4. **Trámites Aduaneros** — Groups Tasks 7 and 8. Indicates that endorsed documents have been processed and the vehicle is in the customs/nationalization process.
+5. **Liberación y Placas** — Groups Tasks 9 and 10. Communicates the release period and progress toward registration and definitive license-plate assignment.
+6. **Preparación y Entrega** — Groups Tasks 11, 12, and 13. Covers the move to pre-delivery inspection, equipment/accessory installation, and final delivery coordination.
 
-Use these six milestones as the customer's main progress experience. Keep the internal 14-task workflow as the employee-facing operational model. If internal progress and customer milestone state need different rules, design an explicit mapping rather than conflating them.
+Use these six milestones as the customer's main progress experience. Keep the internal 13-task workflow as the employee-facing operational model. If internal progress and customer milestone state need different rules, design an explicit mapping rather than conflating them.
 
 Customer-visible fields/documents must be enforced server-side, not only hidden in the frontend. Flag privacy concerns about any marked item without silently changing its visibility.
 
@@ -559,37 +544,37 @@ The notification strategy should keep customers informed without sending an emai
 
 ### Notification 4 — Sales summary available
 
-- **Trigger:** Task 4 is completed.
-- **Subject:** `Siguiente paso: Tu resumen de venta ha sido generado`
-- **Content:** Tell the customer that the Sales Summary is available, provide the assigned vehicle series, and communicate the exact amount to deposit to Grupo Pana.
+- **Trigger:** Task 3 is completed.
+- **Subject:** `Siguiente paso: Tu vehículo ha sido asignado`
+- **Content:** Tell the customer that their vehicle has been officially assigned with its unique series number and VIN, and direct them to the portal to proceed with the payment to Grupo Pana in the next step.
 
 ### Notification 5 — Invoices issued
 
-- **Trigger:** Task 7 is completed.
+- **Trigger:** Task 6 is completed.
 - **Subject:** `Tus comprobantes de pago han sido emitidos`
 - **Content:** Confirm that the relevant payment/invoicing steps have been recorded and the customer-visible invoices are available for download through the portal.
 
 ### Notification 6 — Customs processing begins
 
-- **Trigger:** Task 8 is completed.
+- **Trigger:** Task 7 is completed.
 - **Subject:** `Iniciamos los trámites aduaneros de tu vehículo`
 - **Content:** Explain that the endorsed documents have been processed and customs/nationalization procedures are underway, setting expectations without promising an unsupported delivery date.
 
 ### Notification 7 — License plate assigned
 
-- **Trigger:** Task 11 is completed.
+- **Trigger:** Task 10 is completed.
 - **Subject:** `¡Tu vehículo ya cuenta con placa oficial!`
 - **Content:** Provide the definitive license plate number and a secure link to download the customer-visible TIVe PDF.
 
 ### Notification 8 — Final vehicle preparation
 
-- **Trigger:** Task 12 is completed.
+- **Trigger:** Task 11 is completed.
 - **Subject:** `Tu vehículo está en fase de preparación final`
 - **Content:** Inform the customer that the vehicle has entered the pre-delivery preparation/equipment phase before final delivery.
 
 ### Notification 9 — Delivery completed
 
-- **Trigger:** Task 14 is completed.
+- **Trigger:** Task 13 is completed.
 - **Subject:** `¡Felicidades por tu nuevo vehículo! / Gracias por confiar en Grupo Pana`
 - **Content:** Thank the customer, confirm the delivery date, and provide a secure portal link to the signed vehicle delivery record PDF.
 
@@ -795,24 +780,25 @@ Security is a first-class requirement. Evaluate at least:
 - Sensitive data exposure in logs, API responses, and analytics.
 - Audit trail integrity.
 - Protection against common web vulnerabilities.
-- Backup, recovery, and appropriate data retention.
-- Access restrictions for personally identifiable information and due-diligence/financial/legal documents.
 
-A customer must never gain access to another customer's sale or document by guessing a URL, record identifier, or file reference. A frontend visibility flag is not an authorization mechanism. Avoid storing plain-text passwords or secrets. Evaluate applicable Peruvian privacy/legal considerations where relevant, and clearly distinguish technical advice from legal advice that requires professional validation.
+A customer must never gain access to another customer's sale or document by guessing a URL, record identifier, or file reference. A frontend visibility flag is not an authorization mechanism. Avoid storing plain-text passwords or secrets.
 
 ---
 
 ## 18. Initial technology-stack preference (not a final decision)
 
-I have experience with the JavaScript version of this stack and suspect TypeScript may be a good choice for a project of this size. Treat the following as an initial preference to evaluate, not as a fixed requirement:
+I have experience with the JavaScript version of this stack and suspect TypeScript may be a good choice for a project of this size. **Because the project is currently in a prototyping phase, a mandatory evaluation criterion for every component is that it must offer a robust, clear, and functional free tier/plan** to ensure zero cost during early development, testing, and initial stakeholder reviews.
+
+Treat the following as an initial preference to evaluate under this strict cost constraint:
 
 - **Frontend:** React with TypeScript.
 - **Backend:** Node.js with Express and TypeScript.
 - **Database:** PostgreSQL.
+- **Deployment:** Render for the Frontend, Backend, and Database.
 - **Authentication:** JWT access tokens with refresh-token handling as described above.
-- **File storage:** Cloudinary, subject to the security/privacy suitability analysis.
+- **File storage:** Cloudinary (evaluating its permanent free tier—offering 25 monthly credits and 1 GB of storage—against security, PDF handling, and private asset visibility requirements).
 
-Compare realistic alternatives only where comparison would help make a decision. Base recommendations on maintainability, developer experience, development speed, cost, hosting, free-tier limitations, security, ecosystem maturity, PostgreSQL support, background jobs, private document storage, deployment, and future evolution. Do not choose technologies simply because they are popular. Verify current hosting/provider limits and pricing when that information affects the recommendation.
+Compare realistic alternatives only where comparison would help make a decision. Base recommendations on maintainability, developer experience, development speed, free-tier limits and zero-cost prototyping viability, security, ecosystem maturity, background jobs, private document storage, deployment, and future evolution. Do not choose technologies simply because they are popular, and always verify current provider quotas to ensure free tiers do not restrict core functionality (such as database connections or private document access) during testing.
 
 ---
 
@@ -826,7 +812,7 @@ Evaluate the need for:
 
 - React frontend.
 - Backend/API.
-- PostgreSQL database.
+- Database.
 - Authentication and authorization components.
 - Private file storage.
 - Email service.
@@ -982,7 +968,7 @@ Every major functional requirement should be traceable to one or more acceptance
 
 Plan development in increments with working software at each milestone. The initial preferred high-level sequence is:
 
-1. **Phase 1 — Employee side: core logic and data production.** Implement authentication/authorization, reference data, customers, employees as appropriate, vehicle catalog, sale registers, the 14 tasks, dependencies, documents, status history, and essential operational views.
+1. **Phase 1 — Employee side: core logic and data production.** Implement authentication/authorization, reference data, customers, employees as appropriate, vehicle catalog, sale registers, the 13 tasks, dependencies, documents, status history, and essential operational views.
 2. **Phase 2 — Customer side: data consumption and visualization.** Implement the customer portal, customer access isolation, six-milestone progress experience, customer-visible information/documents, and milestone emails.
 3. **Phase 3 — Scheduler and notifications: automation.** Implement reminders, escalation, deduplication, notification logs, and analytics for task timing.
 
@@ -996,7 +982,7 @@ Separate:
 
 ---
 
-## 25. Documentation and decision log
+## 25. Documentation
 
 Recommend a useful, maintainable documentation structure rather than documenting everything for its own sake. Candidate documents include:
 
@@ -1031,11 +1017,7 @@ Suggest a range of names that are professional, easy to pronounce and remember, 
 
 Suggest concise names in lowercase kebab-case that are easy to type and remain appropriate if the product name changes. Avoid unnecessarily long names. Consider whether the repository should be a monorepo or eventually split into repositories, but do not overcomplicate the initial structure without a reason.
 
-### Internal codename
-
-Optionally suggest one or two short internal codenames if they help during development.
-
-At the first stage, provide a shortlist and a recommendation for both the product name and repository name. Do not claim that a domain name, GitHub repository name, trademark, or brand is available unless you verify it.
+At the first stage, provide a shortlist and a recommendation for both the product name and repository name.
 
 ---
 
@@ -1048,7 +1030,7 @@ Before implementation, help create a coherent project specification containing, 
 3. Scope, non-goals, and assumptions.
 4. Actors and role-permission matrix.
 5. Sale lifecycle and business rules.
-6. The complete 14-task specification and dependency graph.
+6. The complete 13-task specification and dependency graph.
 7. Customer-facing six-milestone model.
 8. Functional and non-functional requirements.
 9. Use cases and important user journeys.
@@ -1062,7 +1044,7 @@ Before implementation, help create a coherent project specification containing, 
 17. Security and privacy model.
 18. BI/analytics specification and KPI definitions.
 19. Testing strategy.
-20. MVP/V1/future roadmap.
+20. Development roadmap.
 21. Deployment strategy.
 22. Documentation structure and decision log.
 23. Recommended product and repository names.
@@ -1080,7 +1062,7 @@ Start by analyzing the information in this prompt and provide:
 1. A concise but complete summary of the product and its intended users.
 2. A classification of the stated information into confirmed requirements, proposals, assumptions, and open questions.
 3. The core business entities and main lifecycle concepts you infer, without designing the final database yet.
-4. A review of the 14 tasks and dependency graph, identifying contradictions, missing rules, or risky assumptions. Pay particular attention to the reminder timing definition, task visibility/privacy, the amount cross-checks, task completion/reopening, notification triggers, account onboarding/security, the login-identifier mismatch in the onboarding email, and the relationship between task dependencies and customer-milestone progression.
+4. A review of the 13 tasks and dependency graph, identifying contradictions, missing rules, or risky assumptions. Pay particular attention to the reminder timing definition, task visibility/privacy, the amount cross-checks, task completion/reopening, notification triggers, account onboarding/security, the login-identifier mismatch in the onboarding email, and the relationship between task dependencies and customer-milestone progression.
 5. The most important unresolved decisions that must be made before detailed architecture/database work, ranked by impact.
 6. A recommendation for the first concrete artifact to create with me and why it should come first.
 7. A shortlist of product names and GitHub repository names, with one recommendation for each.
