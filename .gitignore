@@ -39,3 +39,8 @@ Thumbs.db
 # DATABASE
 database/run_query.py
 database/list_tables.py
+
+# Latex
+build/
+*.synctex.gz
+*indent.log
