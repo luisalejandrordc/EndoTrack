@@ -62,7 +62,7 @@ These are the decisions made based on the open questions and edge-cases detected
 
 1. **Reverting `in_progress` → `pending`:** After a task gets reverted to `pending` its data and files entered stay (read-only) rather than being cleared.
 2. **Cancel and reopen rules:** Define the current task as the task in `in_progress`; if none exists, use the next eligible task immediately following the most recently completed task. Only an Admin may reopen a sale that was cancelled after Task 6 was completed.
-3. **Vehicle correction:** Vehicle model, version, and color cannot be edited after sale creation. Corrections require cancelling the sale and creating a new one; Manager-only corrections are not permitted.
+3. **Vehicle correction:** Vehicle model, version, and color cannot be edited after sale creation. A wrong vehicle means cancel and recreate, which fits the advisor-cancel window (Tasks 1–3). Manager-only corrections are not permitted.
 4. **Onboarding:** Use single-use, time-limited activation links for both customers and employees instead of emailing provisional passwords. Send employee activation links to their business email addresses. Require users to set their password during activation before accessing the application.
 5. **Reference lists:** Initialize the customs-office list with exactly two entries: Marítima del Callao and Chancay. Initialize the bank list with the four previously specified banks. Both lists are maintained exclusively by the developer; Admins cannot modify them. Updates are expected to be infrequent.
 6. **Email account:** Use a personal Gmail account through Google Apps Script to send application notifications. Accept the limited delivery feedback, including the lack of reliable bounce reporting, for the prototype.
