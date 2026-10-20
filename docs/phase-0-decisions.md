@@ -2,18 +2,22 @@
 
 These are the decisions made based on the open questions and edge-cases detected by the LLM during the project's Phase 0.
 
-### A. Contradictions and inconsistencies
+## First response
+
+0. **Task definitions:** a separate reference table, so durations aren’t repeated on every sale.
+
+#### A. Contradictions and inconsistencies
 
 1. **Password hashing.** Use Argon2id with parameters tuned to the free Render instance's memory.
 2. **Refresh-token design.** Keep two tables for `refresh_tokens` with real FKs. The cleanup job must clean both of them. Add rotation and reuse-detection fields (token family, revoked/replaced timestamps, remember-me flag).
 3. **Managers and sale creation/editing.** Managers and admins can create sales and assign an advisor to them at creation. When an advisor creates a sale, they get automatically assigned to it.
 4. **Editing completed tasks vs derived money.** Block edits to financial source fields while any dependent task is completed. Require downstream tasks to be rolled back in reverse order before editing. Allow other edits with a Reason for Edit.
-5. **Reopen vs “one `in_progress`”.** Allow reopening only when no task is `in_progress`. After a task gets reverted to `pending` its data and files entered stay (read-only) rather than being cleared.
+5. **Reopen vs “one `in_progress`”.** Allow reopening only when no task is `in_progress`.
 6. **SLA state on reopen, restart and cancel.** Reset reminder counters and SLA phases on task restart. Preserve them on reopen so the reminder cap isn’t re-armed. When reopening a cancelled sale, resume SLA clocks with the remaining time rather than counting cancelled time as delay.
 7. **PDF generation** Treat PDF generation as a future enhancement, not part of the current scope. All PDFs in the initial release are uploaded documents.
 8. **Notification scope.** Limit notifications to email for MVP/V1. Trigger Notification 1 whenever an account is created, regardless of whether the actor is a Sales Advisor, Manager, or Admin.
 
-### B. Business rules and workflow
+#### B. Business rules and workflow
 
 9. **Who starts tasks?** Keep task initiation manual while recording when each task becomes eligible. A task becomes eligible as soon as the previous task is completed, following the strict linear sequence. Eligibility does not automatically start the task.
 10. **Sale cancellation and reopening.** Allow cancellation based on role and task stage: Advisors may cancel while the active task is between 1 and 3, Managers until Task 6, and only Admins after Task 6 is completed. Completed sales cannot be cancelled. Store a required cancellation category and free-text reason as first-class sale fields, not only in the audit log, to support BI reporting. Require a reason when reopening a cancelled sale. Keep cancellation and reopening reasons internal; do not expose them to customers.
@@ -32,16 +36,16 @@ These are the decisions made based on the open questions and edge-cases detected
 23. **Audit visibility and permanent deletion.** Log all data exports in the audit trail. Restrict history visibility by role: Advisors can view the timelines of their assigned sales; Managers can view all sales history and customer and catalog changes; Admins can view all history, including employee and security events. Restrict access logs to Admins only. Allow hard deletion only for test or corrupted sales that have never reached delivery, while preserving all associated audit records. Records with existing history must be deactivated rather than permanently deleted.
 24. **Retention and privacy law.** Defer retention periods for identity documents, invoices, and logs, as well as data-subject requests under Peru’s data-protection law, to a future legal review.
 
-### C. Security and authentication
+#### C. Security and authentication
 
-25. **Temporary password by email (§6.4, Notification 1).** Replace emailed plaintext provisional passwords with a single-use activation link sent to the user's registered email address. The link must expire after a defined period and allow the user to set their own password during initial account activation. Require successful activation before granting access to the application.
+25. **Temporary password by email.** Replace emailed plaintext provisional passwords with a single-use activation link sent to the user's registered email address. The link must expire after a defined period and allow the user to set their own password during initial account activation. Require successful activation before granting access to the application.
 26. **Auth policy gaps.** Enforce a lockout after 5 failed login attempts within 15 minutes, tracked independently per account identifier and per IP address. “Remember me” sessions use a sliding 30-day refresh-token lifetime, subject to a 90-day absolute session limit. Sessions without “Remember me” expire after 12 hours, enforced server-side. Validate the employee’s active status and current role against the database on every authenticated request, rather than relying solely on JWT claims. Revoke all refresh tokens when an account is deactivated or its password is reset.
 27. **Codart API.** Integrate the Codart API for DNI and RUC lookups only, with a monthly quota of 110 requests. Send requests from the backend using `Content-Type: application/json` and `Authorization: Bearer <token>`. The API token must be stored securely in environment variables and never exposed to the frontend. Use the following endpoints:
     - DNI: `GET https://api-codart.cgrt.org/api/v1/consultas/reniec/dni/{dni}` — accept an 8-digit DNI string and read `result.first_name`, `result.first_last_name`, and `result.second_last_name`.
     - RUC: `GET https://api-codart.cgrt.org/api/v1/consultas/sunat/ruc/{ruc}` — accept an 11-digit RUC string and read `result.razon_social`.
       Use the returned data to prefill customer identity fields and Task 2 signer names. Mark each populated name as either looked up or manually entered, preserving its source. CE, PAS, and CDI lookups are not supported and must always be entered manually. Log every lookup, enforce rate limits per user, and track API usage against the monthly quota.
 
-### D. Platform and free-tier risks
+#### D. Platform and free-tier risks
 
 28. **Cross-site refresh cookie.** Use proxy `/api/*` through the frontend’s Render static-site rewrite rules to the backend API, allowing the frontend to call the API through its own origin. Render supports rewrites to publicly accessible URLs, including external destinations, but this must be tested with the API service before adoption.
 29. **Render free tier.** Free services sleep when idle which affects demos, first logins and cron-job.org’s request timeout. That is fine for development.
@@ -53,3 +57,13 @@ These are the decisions made based on the open questions and edge-cases detected
     - Validate file types, sizes, and permissions.
     - Malware scanning is not required for this phase.
 33. **Supabase.** Disable Supabase’s auto-generated Data API and apply deny-all RLS policies to every table, since database access must go exclusively through the Go backend. Use the session-mode pooler with IPv4 compatibility and a single, small `pgxpool`, supporting pgx prepared statements. Defer point-in-time recovery, backup and recovery requirements, and log-storage limits to a future phase; they are not prototype priorities.
+
+## Second response
+
+1. **Reverting `in_progress` → `pending`:** After a task gets reverted to `pending` its data and files entered stay (read-only) rather than being cleared.
+2. **Cancel and reopen rules:** Define the current task as the task in `in_progress`; if none exists, use the next eligible task immediately following the most recently completed task. Only an Admin may reopen a sale that was cancelled after Task 6 was completed.
+3. **Vehicle correction:** Vehicle model, version, and color cannot be edited after sale creation. Corrections require cancelling the sale and creating a new one; Manager-only corrections are not permitted.
+4. **Onboarding:** Use single-use, time-limited activation links for both customers and employees instead of emailing provisional passwords. Send employee activation links to their business email addresses. Require users to set their password during activation before accessing the application.
+5. **Reference lists:** Initialize the customs-office list with exactly two entries: Marítima del Callao and Chancay. Initialize the bank list with the four previously specified banks. Both lists are maintained exclusively by the developer; Admins cannot modify them. Updates are expected to be infrequent.
+6. **Email account:** Use a personal Gmail account through Google Apps Script to send application notifications. Accept the limited delivery feedback, including the lack of reliable bounce reporting, for the prototype.
+7. **IGV:** No tax logic or IGV calculations are required. Compare expected and recorded monetary amounts exactly, without tax adjustments.

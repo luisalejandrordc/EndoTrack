@@ -4,8 +4,6 @@
 
 - Should Series, VIN, and plate be unique across ALL sales (active, completed, or cancelled)?
 
-- Add periodic database backups (**Rec:** a scheduled `pg_dump` to R2 from a free GitHub Actions job.).
-
 Should the Task 1 include this?
 
 - Will customer be in charge of the vehicle release processing? — yes/no checkbox; **Customer-visible.**
