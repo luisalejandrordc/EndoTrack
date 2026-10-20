@@ -52,21 +52,21 @@ These fields feed calculations or checks in later tasks. Once any later task is 
 - Task 1: the four amounts and the quoted final price.
 - Task 3: the final Toyota amount and the final commission.
 
-All other fields of a completed task (including documents) can be edited with a Reason for Edit.
+All other fields of a completed task (including documents) can be edited with a Reason for Edit. Task 4 and Task 5 deposited amounts are also locked once Task 6 is completed.
 
 ## 3. Sale state machine
 
 States: `active`, `completed`, `cancelled`. Sale-level data is immutable after creation except notes and the assigned advisor.
 
-| #   | Transition             | Who                                                                  | Preconditions                                                                                                                        | Effects                                                                                                                                                                                                                                     | Reason               |
-| --- | ---------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| S1  | create → `active`      | Advisor (auto-assigned to self), Manager, Admin (choose the advisor) | Active customer; active model / version / color, and the color belongs to the version's model                                        | Customer and vehicle snapshots, `customer_type` snapshot, reference-price snapshot; sale temperature set by the creator (immutable); 13 task instances created `pending`; Task 1 `eligible_at` = `created_at`; Notification 2 queued; audit | No                   |
-| S2  | `active` → `completed` | Automatic                                                            | Task 13 completed                                                                                                                    | Audit event marked as automatic, actor = whoever completed Task 13; Notification 9 queued                                                                                                                                                   | No                   |
-| S3  | `completed` → `active` | Manager, Admin                                                       | Reopening Task 13 (T3)                                                                                                               | Done in the same transaction as T3; mandatory audit                                                                                                                                                                                         | Yes                  |
-| S4  | `active` → `cancelled` | See cancellation rule below                                          | Sale is `active` (completed sales cannot be cancelled; revert Task 13 first)                                                         | Tasks frozen and read-only; reminders stop; `cancelled_at`, `cancelled_by`, reason category and text stored as first-class sale fields; series, VIN and plate become reusable; transaction and invoice numbers stay reserved; audit         | Yes: category + text |
-| S5  | `cancelled` → `active` | See reopen rule below                                                | Identifier conflict check (series, VIN, plate) against `active` and `completed` sales; the partial unique indexes are the real guard | SLA resumes with remaining time (section 5.4); audit                                                                                                                                                                                        | Yes                  |
-| S6  | Reassign advisor       | Manager, Admin                                                       | Sale is `active`; target is an active Sales Advisor                                                                                  | Previous advisor loses access and the new one gains it immediately after commit; Notification 10 queued (new advisor's business contact); audit                                                                                             | No                   |
-| S7  | Permanent delete       | Admin                                                                | Test or corrupted sale that never reached delivery (Task 13 never completed); typed confirmation                                     | Related files removed from storage; audit rows survive; audit event written                                                                                                                                                                 | Yes                  |
+| #   | Transition             | Who                                                                  | Preconditions                                                                                                                                   | Effects                                                                                                                                                                                                                                     | Reason               |
+| --- | ---------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| S1  | create → `active`      | Advisor (auto-assigned to self), Manager, Admin (choose the advisor) | Active customer; active model / version / color, and the color belongs to the version's model                                                   | Customer and vehicle snapshots, `customer_type` snapshot, reference-price snapshot; sale temperature set by the creator (immutable); 13 task instances created `pending`; Task 1 `eligible_at` = `created_at`; Notification 2 queued; audit | No                   |
+| S2  | `active` → `completed` | Automatic                                                            | Task 13 completed                                                                                                                               | Audit event marked as automatic, actor = whoever completed Task 13; Notification 9 queued                                                                                                                                                   | No                   |
+| S3  | `completed` → `active` | Manager, Admin                                                       | Reopening Task 13 (T3)                                                                                                                          | Done in the same transaction as T3; mandatory audit                                                                                                                                                                                         | Yes                  |
+| S4  | `active` → `cancelled` | See cancellation rule below                                          | Sale is `active` (completed sales cannot be cancelled; revert Task 13 first)                                                                    | Tasks frozen and read-only; reminders stop; `cancelled_at`, `cancelled_by`, reason category and text stored as first-class sale fields; series, VIN and plate become reusable; transaction and invoice numbers stay reserved; audit         | Yes: category + text |
+| S5  | `cancelled` → `active` | See reopen rule below                                                | Identifier conflict check (series, VIN, plate) against `active` and `completed` sales; the partial unique indexes are the real guard            | SLA resumes with remaining time (section 5.4); audit                                                                                                                                                                                        | Yes                  |
+| S6  | Reassign advisor       | Manager, Admin                                                       | Sale is `active`; target is an active Sales Advisor (only active sales can be reassigned; `completed` and `cancelled` sales are not reassigned) | Previous advisor loses access and the new one gains it immediately after commit; Notification 10 queued (new advisor's business contact); audit                                                                                             | No                   |
+| S7  | Permanent delete       | Admin                                                                | Test or corrupted sale that never reached delivery (Task 13 never completed); typed confirmation                                                | Related files removed from storage; audit rows survive; audit event written                                                                                                                                                                 | Yes                  |
 
 **Cancellation rule.** Let _c_ be the number of the current task.
 
@@ -75,6 +75,8 @@ States: `active`, `completed`, `cancelled`. Sale-level data is immutable after c
 - Admin may cancel any `active` sale, and is the only one who can cancel once Task 6 is completed.
 
 **Reopen rule.** Manager or Admin may reopen a sale that was cancelled while _c_ was 1 to 6. Only an Admin may reopen a sale that was cancelled after Task 6 was completed. Advisors can never reopen.
+
+**Customer view of cancellation.** The customer sees the sale as _Cancelada_ without the reason, and no email is sent in MVP/V1.
 
 ## 4. Milestones (derived, never stored)
 
@@ -134,7 +136,7 @@ If a level has no active recipient, the attempt is logged as failed with that re
 | Sale cancelled               | Reminders stop immediately                                                               | Frozen                      |
 | Cancelled sale reopened (S5) | Shifted forward by the time spent cancelled (equivalent to resuming with remaining time) | Kept                        |
 
-### 5.5 `completion_phase`
+### 5.5 `completion_phase` (computed from timestamps, never from reminders actually sent)
 
 Let D = duration and _elapsed_ = `completed_at` − `started_at`.
 
@@ -152,6 +154,8 @@ It is recalculated every time the task is completed, using the preserved `due_da
 - Evaluation is stateless and idempotent: it claims a task's reminder in the database before sending, so overlapping runs never double-send.
 - A reminder is due when `last_reminder_sent_at` + interval is reached, with a few minutes of tolerance so scheduler jitter cannot skip a cycle.
 - Reminders to deactivated employees are skipped.
+
+**Quiet hours.** SLA reminder and escalation emails are sent only between 08:00 and 20:00 America/Lima. A reminder that falls due outside that window is sent at the first run inside it. Customer notifications are not restricted by this window.
 
 ## 6. Customer notifications (idempotent per sale + event)
 
@@ -227,13 +231,3 @@ A successfully sent milestone notification is never re-sent when a task is rever
 | Scheduler endpoints             | Secret-authenticated only                    | No                                                      | No                           | No       |
 
 Every export, permanent deletion, role change, reassignment, cancellation, reopening and document change writes an audit event. Access logs stay separate from the business audit log.
-
-## 8. Items to confirm
-
-1. Customer sees cancelled sales as _Cancelada_ without reason and without an email (Proposal in section 3).
-2. Only `active` sales can be reassigned (Proposal in S6).
-3. Task 4 and Task 5 deposited amounts also lock once Task 6 is completed (Proposal in 2.4).
-4. The `completion_phase` boundaries in 5.5.
-5. Reminder emails run around the clock; should there be quiet hours (Lima time)?
-6. Advisors can edit only sale notes after creation; everything else on the sale is immutable or Manager/Admin-only.
-7. Vehicle model, version and color are strictly immutable after creation, with cancel-and-recreate as the correction path (my choice, as you delegated); the advisor-cancel window (Task 1 to 3) fits this.
