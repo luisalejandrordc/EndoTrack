@@ -41,26 +41,15 @@ These are the decisions made based on the open questions and edge-cases detected
     - RUC: `GET https://api-codart.cgrt.org/api/v1/consultas/sunat/ruc/{ruc}` — accept an 11-digit RUC string and read `result.razon_social`.
       Use the returned data to prefill customer identity fields and Task 2 signer names. Mark each populated name as either looked up or manually entered, preserving its source. CE, PAS, and CDI lookups are not supported and must always be entered manually. Log every lookup, enforce rate limits per user, and track API usage against the monthly quota.
 
-### D. Platform and free-tier risks (items marked “verify” are from memory and I’ll confirm them in a spike)
+### D. Platform and free-tier risks
 
-28. **Cross-site refresh cookie (potential blocker).** The static site and API will sit on different `onrender.com` subdomains. I believe browsers treat those as cross-site (verify), so the HttpOnly cookie would need `SameSite=None`, which browsers increasingly block. It would also need CSRF defense. The options are:
-
-    - (a) proxy `/api` through the static site’s rewrite rules to make it same-origin;
-    - (b) a shared custom domain;
-    - (c) a different token strategy.
-
-    **Rec:** test (a) first. Either way this touches §14.3, so I need your approval. Do you have a Grupo Pana domain we could use?
-
-29. **Render free tier and production plan.** Free services sleep when idle (verify), which affects demos, first logins and cron-job.org’s request timeout. That is fine for development. When does zero-cost end, and what is the production budget? Please share the expected workload (employees, concurrent users, sales per month, documents per sale, file sizes) so I don’t guess the NFR targets.
-30. **Scheduler and reminders.**
-    - (a) Twice-daily cron against a 12-hour cadence and a 57.6 h warning on Task 2 means reminders can arrive up to a run late. **Rec:** an hourly trigger with idempotent evaluation.
-    - (b) Is there a first “overdue” notice at `due_date`, and does “first overdue recurring reminder” mean count 1? What happens after the cap of 6: silence, or UI highlight only?
-    - (c) Do Level 2 and 3 go to all active Managers and Admins? Is the advisor copied? What if none exist?
-    - (d) What are the `completion_phase` boundaries? **Rec:** compute them from timestamps, not from reminders actually sent.
-31. **Email.** Resend needs a verified sending domain. Who controls DNS for Grupo Pana’s domain? Without it we can only send tests to the account owner. The free tier may also have a daily cap (I recall about 100/day; verify), which matters for reminder volume. **Rec:** non-production environments must never email real addresses.
-32. **R2.** It may require a payment method on file even for the free allowance (verify). Is that compatible with “zero cost”? Public `r2.dev` URLs are meant for development, so production public images need a custom domain. §15 treats profile images as public, which would expose employee photos. **Rec:** public only for catalog images, with employee photos private and signed. Do uploads stream through Go or use presigned URLs? What are the maximum size and allowed formats, and is malware scanning needed?
-33. **Supabase.**
-    - (a) Tables are exposed through its auto-generated API by default. Only Go touches the DB, so **Rec:** disable that API and apply deny-all RLS on every table.
-    - (b) Connection mode: pooler vs direct, IPv6, and prepared statements with pgx behind a transaction pooler.
-    - (c) There is no managed point-in-time recovery on the free tier (verify), but the NFRs need backup and recovery. **Rec:** a scheduled `pg_dump` to R2 from a free GitHub Actions job.
-    - (d) The 500 MB cap against audit, access and notification log growth.
+28. **Cross-site refresh cookie.** Use proxy `/api/*` through the frontend’s Render static-site rewrite rules to the backend API, allowing the frontend to call the API through its own origin. Render supports rewrites to publicly accessible URLs, including external destinations, but this must be tested with the API service before adoption.
+29. **Render free tier.** Free services sleep when idle which affects demos, first logins and cron-job.org’s request timeout. That is fine for development.
+30. **Scheduler, reminders, and escalation.** Run the SLA scheduler hourly with idempotent evaluation to prevent duplicate reminders. Send the first overdue reminder at the first hourly run after `due_date`, counting it as reminder 1. Repeat reminders at the defined 12-hour, 24-hour, and 48-hour intervals, up to a maximum of 6 reminders; after the cap, stop sending reminders and retain a UI highlight only. Route reminders by escalation level: reminders 1–3 go to the Advisor and Managers as specified, while reminders 4–6 go to Admins. Copy the assigned Advisor on every reminder, and copy Managers on Level 3 escalations. Derive `completion_phase` boundaries from timestamps rather than reminders actually sent, ensuring that missed or delayed scheduler runs do not affect SLA phase calculations.
+31. **Email.** Use a Google Apps Script web app as the prototype email-sending service. The Go backend sends authenticated JSON requests containing notification data; Apps Script sends the emails through `MailApp`. Store credentials securely, validate and rate-limit requests, log notification attempts, prevent duplicate sends, and handle quota exhaustion with deferred retries. Treat daily recipient quotas as a prototype constraint and reassess the provider before production deployment.
+32. **R2.** Use Cloudflare R2, subject to confirming payment requirements for the zero-cost prototype. Catalog images are public; employee photos and documents remain private and require signed URLs. All uploads stream through the Go backend.
+    - Documents: PDF, XLS, XLSX; maximum 10 MB.
+    - Catalog images: JPEG, PNG, WebP; maximum 5 MB.
+    - Validate file types, sizes, and permissions.
+    - Malware scanning is not required for this phase.
+33. **Supabase.** Disable Supabase’s auto-generated Data API and apply deny-all RLS policies to every table, since database access must go exclusively through the Go backend. Use the session-mode pooler with IPv4 compatibility and a single, small `pgxpool`, supporting pgx prepared statements. Defer point-in-time recovery, backup and recovery requirements, and log-storage limits to a future phase; they are not prototype priorities.
