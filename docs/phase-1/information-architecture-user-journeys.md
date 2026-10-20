@@ -139,14 +139,14 @@ Field-level behavior:
 
 ### J6. Manager corrects an earlier task (financial source field)
 
-**Scenario:** the accessory amount in Task 1 is wrong, Task 3 is completed and Task 4 is in progress.
+**Scenario:** the accessory amount in Task 1 is wrong, Tasks 2 and 3 are completed and Task 4 is in progress.
 
 1. The manager opens Task 1 and tries _Editar_; the amount fields are locked and the tooltip explains the rollback.
-2. They restart Task 4 (reason), then reopen Task 3 (reason). Task 3 is now in progress.
+2. They restart Task 4 (reason), then reopen Task 3 and Task 2 in reverse order (reason each time). Task 2 is now in progress and no later task is completed.
 3. Task 1’s amount is editable again; they edit it with a Reason for Edit.
-4. They complete Task 3 again (the final commission is recalculated and must stay positive) and then start Task 4 again, which receives a new due date.
+4. They complete Task 2 and Task 3 again, in order (the final commission is recalculated and must stay positive), and then start Task 4 again, which receives a new due date. Reopened tasks keep their original due dates.
 
-The lock applies when a later task that uses the field is completed (see section 8, item 4).
+The lock applies from the moment any later task is completed, so a correction is always a linear rollback.
 
 ### J7. Admin onboards and deactivates staff
 
@@ -179,12 +179,3 @@ The lock applies when a later task that uses the field is completed (see section
 - **Lists:** default page size 20 with remembered filters during the session.
 - **Phase 3 placeholders:** SLA badges, urgency filters and the dashboards stay hidden until Phase 3.
 - **Accessibility:** keyboard-operable dialogs, visible focus, labelled fields and non-color status cues.
-
-## 8. Items to confirm
-
-1. A global search box in the header (sales and customers within scope).
-2. _Nueva venta_ as a four-step wizard instead of one page.
-3. The list of cancellation categories in section 7.
-4. **Financial lock refinement (affects spec 2.4 and FR-061).** Today the rule says a financial source field is locked while any later task is completed, which would lock Task 1’s amounts as soon as Task 2 completes even though Task 2 never uses them. I propose locking by use: Task 1 amounts lock once Task 3 is completed; the Task 3 final Toyota amount locks once Task 5 is completed; the Task 3 final commission locks once Task 6 is completed; Task 4 and Task 5 deposits lock once Task 6 is completed (already confirmed).
-5. The session-expired login modal that preserves unsaved data.
-6. A default page size of 20.
