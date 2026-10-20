@@ -1,5 +1,7 @@
 # Open questions
 
+Should the 'task_instances' table record the eligible_at timestamp? Cause it will always be the same as the completed_at timestamp of the inmediate previous task.
+
 Should the Task 1 include this?
 
 - Will customer be in charge of the vehicle release processing? — yes/no checkbox; **Customer-visible.**
