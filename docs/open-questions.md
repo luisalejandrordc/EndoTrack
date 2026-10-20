@@ -1,6 +1,8 @@
 # Open questions
 
-Should the 'task_instances' table record the eligible_at timestamp? Cause it will always be the same as the completed_at timestamp of the inmediate previous task.
+- Should the 'task_instances' table record the eligible_at timestamp? Cause it will always be the same as the completed_at timestamp of the immediate previous task.
+
+- Should Series, VIN, and plate be unique across ALL sales (active, completed, or cancelled)?
 
 Should the Task 1 include this?
 
