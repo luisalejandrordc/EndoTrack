@@ -159,18 +159,20 @@ It is recalculated every time the task is completed, using the preserved `due_da
 
 ## 6. Customer notifications (idempotent per sale + event)
 
-| #   | Trigger                                                                    | Recipient |
-| --- | -------------------------------------------------------------------------- | --------- |
-| 1   | Customer account created (by any actor), with a single-use activation link | Customer  |
-| 2   | Sale created                                                               | Customer  |
-| 3   | Task 1 completed                                                           | Customer  |
-| 4   | Task 3 completed                                                           | Customer  |
-| 5   | Task 6 completed                                                           | Customer  |
-| 6   | Task 7 completed                                                           | Customer  |
-| 7   | Task 10 completed                                                          | Customer  |
-| 8   | Task 11 completed                                                          | Customer  |
-| 9   | Task 13 completed                                                          | Customer  |
-| 10  | Advisor reassigned (new idempotency key per reassignment)                  | Customer  |
+| #   | Trigger                                                                                                                                                                    | Recipient |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| 1   | Customer account created (by any actor), with a single-use activation link                                                                                                 | Customer  |
+| 2   | Sale created                                                                                                                                                               | Customer  |
+| 3   | Task 1 completed                                                                                                                                                           | Customer  |
+| 4   | Task 3 completed                                                                                                                                                           | Customer  |
+| 5   | Task 6 completed                                                                                                                                                           | Customer  |
+| 6   | Task 7 completed                                                                                                                                                           | Customer  |
+| 7   | Task 10 completed                                                                                                                                                          | Customer  |
+| 8   | Task 11 completed                                                                                                                                                          | Customer  |
+| 9   | Task 13 completed                                                                                                                                                          | Customer  |
+| 10  | Advisor reassigned (new idempotency key per reassignment)                                                                                                                  | Customer  |
+| 11  | Advisor becomes assigned to a sale by a Manager or Admin, either when the sale is created or through reassignment. Not sent when an advisor creates a sale for themselves. | Advisor   |
+| 12  | Advisor unassigned from a sale due to reassignment. Sent to the previously assigned advisor.                                                                               | Advisor   |
 
 A successfully sent milestone notification is never re-sent when a task is reverted and completed again. Failed attempts may be retried under a defined policy. Employees get activation links by email at their business address.
 
