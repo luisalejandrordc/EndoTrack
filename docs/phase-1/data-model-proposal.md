@@ -19,7 +19,7 @@ This is the proposed relational model, built from the master prompt’s section 
 | 9   | Refresh-token tables gain `family_id`, `parent_token_id`, `remember_me`, `absolute_expires_at`, `rotated_at`, `revoked_at` and `revoked_reason`                                                                                      | Rotation, reuse detection, the 90-day cap and the 10-second grace window need state.                                                                                                                                                                      |
 | 10  | Model categories use a join table (`vehicle_model_categories`) holding a `vehicle_category` enum                                                                                                                                     | A real many-to-many with enforced values and no extra reference table; filterable and good for BI.                                                                                                                                                        |
 | 11  | `documents` holds only the current file of each slot: `slot_code`, `checksum_sha256`, a composite foreign key to the task and sale, and a unique index on `(task_instance_id, slot_code)`. No archived rows and no replacement chain | Simpler, and sensitive files that are no longer needed are not kept. Customer visibility is derived from the slot definition, never stored per file, so it cannot drift.                                                                                  |
-| 12  | `audit_logs`: nullable actor plus a system flag, a denormalized `sale_id`, no foreign keys to business tables, a reason CHECK, more event types                                                                                      | Advisors may only see history of their own sales, which needs a fast sale filter. Audit rows must survive deletions, and with no document history the audit log is the record of who changed a file.                                                      |
+| 12  | `audit_logs`: nullable actor plus a system flag, a denormalized `sale_id`, no foreign keys to business tables, a reason CHECK, short event verbs (CREATED, COMPLETED, REMOVED, …) checked against the entity type                    | Advisors may only see history of their own sales, which needs a fast sale filter. Audit rows must survive deletions, and with no document history the audit log is the record of who changed a file.                                                      |
 | 13  | `notification_logs` becomes a transactional outbox: `pending` status, unique `dedupe_key`, recipient ids, attempt count and last error                                                                                               | No lost emails if the process dies, and no duplicates when runs overlap.                                                                                                                                                                                  |
 | 14  | New `lookup_logs` table                                                                                                                                                                                                              | Codart quota counting (110 per month) and the logging of existing-customer lookups.                                                                                                                                                                       |
 | 15  | A system actor row in `employees`                                                                                                                                                                                                    | Seeded records need an explicit actor, and the first Admin needs a creator.                                                                                                                                                                               |
@@ -44,34 +44,34 @@ This is the proposed relational model, built from the master prompt’s section 
 
 ### 4.0 Enumerations
 
-| Enum                     | Values                                                                                                                     |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `employee_role`          | system\_admin, sales\_manager, sales\_advisor                                                                              |
-| `employee_document_type` | DNI, CE, PAS                                                                                                               |
-| `customer_document_type` | DNI, CE, PAS, CDI, RUC                                                                                                     |
-| `customer_type`          | diplomatico, embajada, entidad\_religiosa\_catolica, entidad\_religiosa\_no\_catolica, organismo\_internacional            |
-| `gender`                 | M, F                                                                                                                       |
-| `sale_temperature`       | hot, warm, cold                                                                                                            |
-| `sale_state`             | active, completed, cancelled                                                                                               |
-| `task_status`            | pending, in\_progress, completed                                                                                           |
-| `completion_phase`       | early, in\_approaching, overdue, recurring\_overdue, not\_applicable                                                       |
-| `cancellation_category`  | customer\_withdrew, payment\_or\_financing\_failed, unit\_unavailable, due\_diligence\_finding, registration\_error, other |
-| `pep_status`             | no\_pep, pep, related\_to\_pep                                                                                             |
-| `ddc regime`             | general, reinforced                                                                                                        |
-| `control_channel`        | green, orange, red                                                                                                         |
-| `payment_kind`           | pana, toyota                                                                                                               |
-| `invoice_kind`           | toyota, commission, accessories, release\_processing                                                                       |
-| `bank`                   | bcp, bbva, interbank, scotiabank, banco_de_la_nacion, banbif, banco_pichincha, mi_banco                                    |
-| `customs_office`         | maritima_del_callao, aerea_del_callao, chancay, paita                                                                      |
-| `vehicle_category`       | camioneta, comercial, familiar, hatchback, sedan                                                                           |
-| `viewpoint`              | main\_view, exterior\_front, exterior\_left, exterior\_right, exterior\_rear, interior                                     |
-| `name_source`            | looked\_up, manual                                                                                                         |
-| `token_purpose`          | activation, password\_reset                                                                                                |
-| `portal_type`            | employee\_portal, customer\_portal                                                                                         |
-| `access_action`          | login\_success, login\_failed, logout                                                                                      |
-| `notification_status`    | pending, sent, failed, skipped                                                                                             |
-| `lookup_kind`            | codart\_dni, codart\_ruc, customer\_existence                                                                              |
-| `lookup_outcome`         | success, not\_found, error, quota\_blocked, rate\_limited                                                                  |
+| Enum                     | Values                                                                                                                       |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| `employee_role`          | system\_admin, sales\_manager, sales\_advisor                                                                                |
+| `employee_document_type` | DNI, CE, PAS                                                                                                                 |
+| `customer_document_type` | DNI, CE, PAS, CDI, RUC                                                                                                       |
+| `customer_type`          | diplomatico, embajada, entidad\_religiosa\_catolica, entidad\_religiosa\_no\_catolica, organismo\_internacional              |
+| `gender`                 | M, F                                                                                                                         |
+| `sale_temperature`       | hot, warm, cold                                                                                                              |
+| `sale_state`             | active, completed, cancelled                                                                                                 |
+| `task_status`            | pending, in\_progress, completed                                                                                             |
+| `completion_phase`       | early, in\_approaching, overdue, recurring\_overdue, not\_applicable                                                         |
+| `cancellation_category`  | customer\_withdrew, payment\_or\_financing\_failed, unit\_unavailable, due\_diligence\_finding, registration\_error, other   |
+| `pep_status`             | no\_pep, pep, related\_to\_pep                                                                                               |
+| `ddc regime`             | general, reinforced                                                                                                          |
+| `control_channel`        | green, orange, red                                                                                                           |
+| `payment_kind`           | pana, toyota                                                                                                                 |
+| `invoice_kind`           | toyota, commission, accessories, release\_processing                                                                         |
+| `bank`                   | bcp, bbva, interbank, scotiabank, banco_de_la_nacion, banbif, banco_pichincha, mi_banco                                      |
+| `customs_office`         | maritima_del_callao, aerea_del_callao, chancay, paita                                                                        |
+| `vehicle_category`       | camioneta, comercial, familiar, hatchback, sedan                                                                             |
+| `viewpoint`              | main\_view, exterior\_front, exterior\_left, exterior\_right, exterior\_rear, interior                                       |
+| `name_source`            | looked\_up, manual                                                                                                           |
+| `token_purpose`          | activation, password\_reset                                                                                                  |
+| `portal_type`            | employee\_portal, customer\_portal                                                                                           |
+| `access_action`          | login_success, login_failed, logout, account_activated, password_reset_requested, password_reset_completed, password_changed |
+| `notification_status`    | pending, sent, failed, skipped                                                                                               |
+| `lookup_kind`            | codart\_dni, codart\_ruc, customer\_existence                                                                                |
+| `lookup_outcome`         | success, not\_found, error, quota\_blocked, rate\_limited                                                                    |
 
 ### 4.1 Reference tables (developer-managed)
 
@@ -117,13 +117,13 @@ This is the proposed relational model, built from the master prompt’s section 
 - Columns: `id`, `vehicle_color_id` (FK), `viewpoint`, `mime_type` (CHECK in jpeg, png, webp), `size_bytes` (CHECK up to 5 MB), `storage_key` (unique), `uploaded_by`, `uploaded_at`, `updated_by`, `updated_at`.
 - Constraints: unique on `(vehicle_color_id, viewpoint)`. A replacement overwrites the row and removes the old storage object, so there is never more than one image per viewpoint.
 
-A model is available for new sales only when the model, the chosen version and the chosen color are all active. This is derived in a view, so archiving a model never rewrites its children and unarchiving restores them.
+A model is available for new sales only when the model, the chosen version and the chosen color are all active. Archiving a model never rewrites its versions and colors, and every color keeps its Main view image whether it is active or archived, because existing sales still show it. This is derived in a view, so archiving a model never rewrites its children and unarchiving restores them.
 
 ### 4.3 People
 
 **`employees`**
 
-- Columns: `id`, `document_type`, `document_number`, `first_name`, `last_name`, `nationality`, `gender`, `birthdate`, `hire_date`, `personal_phone`, `personal_email`, `business_phone`, `business_email`, profile picture key, MIME type and size, `role`, `password_hash` (nullable until activation), `activated_at`, `failed_login_count`, `locked_until`, `is_system`, lifecycle, `row_version`, provenance.
+- Columns: `id`, `document_type`, `document_number`, `first_name`, `last_name`, `name_source`, `nationality`, `gender`, `birthdate`, `hire_date`, `personal_phone`, `personal_email`, `business_phone`, `business_email`, profile picture key, MIME type and size, `role`, `password_hash` (nullable until activation), `activated_at`, `failed_login_count`, `locked_until`, `is_system`, lifecycle, `row_version`, provenance.
 - Constraints: unique on `(document_type, document_number)`; unique on `lower(business_email)`, which is required; document-number format CHECKs by type; `is_system` rows have no credentials and cannot log in; the picture columns are all present or all null.
 - Indexes: `(role, is_active)`.
 
@@ -214,7 +214,7 @@ A model is available for new sales only when the model, the chosen version and t
 
 **`storage_deletions`** — outbox for removing stored files (P)
 
-- Columns: `id`, `storage_key`, `reason` (document\_replaced, document\_removed, catalog\_image\_replaced, employee\_photo\_replaced, sale\_deleted), `attempt_count`, `last_error`, `created_at`, `completed_at`.
+- Columns: `id`, `storage_key`, `reason` (document_replaced, document_removed, catalog_image_replaced, catalog_image_removed, employee_photo_replaced, employee_photo_removed, sale_deleted), `attempt_count`, `last_error`, `created_at`, `completed_at`.
 - Flow: a row is inserted in the same transaction as the change that orphans the file. After the commit the backend deletes the object and sets `completed_at`; the hourly job retries rows that are still open and cleans up old completed rows. The controlled sale-deletion function writes the keys of all its files here.
 - Index: `(completed_at)` partial, where it is null.
 
@@ -223,25 +223,15 @@ A model is available for new sales only when the model, the chosen version and t
 **`audit_logs`** — append-only
 
 - Columns: `id`, `actor_employee_id` (nullable), `actor_kind` (employee or system), `sale_id` (nullable, no foreign key), `entity_type` (sale\_register, task\_instance, document, customer, employee, vehicle\_model, vehicle\_version, vehicle\_color, catalog\_image, export), `entity_id`, `action`, `changes_summary` (JSONB), `reason`, `created_at`.
-- Actions are grouped by entity type:
-  - sale_register: SALE\_CREATED, SALE\_COMPLETED, SALE\_CANCELLED, SALE\_REOPENED, SALE\_DELETED, ADVISOR\_REASSIGNED, SALE\_NOTES\_UPDATED
-  - task_instance: TASK\_STARTED, TASK\_COMPLETED, TASK\_RESTARTED, TASK\_REOPENED, TASK\_EDITED
-  - document: DOCUMENT\_UPLOADED, DOCUMENT\_REPLACED, DOCUMENT\_REMOVED
-  - customer: CUSTOMER\_CREATED, CUSTOMER\_UPDATED, CUSTOMER\_ACTIVATED, CUSTOMER\_DEACTIVATED
-  - employee: EMPLOYEE\_CREATED, EMPLOYEE\_UPDATED, EMPLOYEE\_ROLE\_CHANGED, EMPLOYEE\_DEACTIVATED, EMPLOYEE\_REACTIVATED
-  - vehicle_model: VEHICLE\_MODEL\_CREATED, VEHICLE\_MODEL\_UPDATED, VEHICLE\_MODEL\_ARCHIVED, VEHICLE\_MODEL\_RESTORED
-  - vehicle_version: VEHICLE\_VERSION\_CREATED, VEHICLE\_VERSION\_UPDATED, VEHICLE\_VERSION\_ARCHIVED, VEHICLE\_VERSION\_RESTORED
-  - vehicle_color: VEHICLE\_COLOR\_CREATED, VEHICLE\_COLOR\_UPDATED, VEHICLE\_COLOR\_ARCHIVED, VEHICLE\_COLOR\_RESTORED
-  - catalog_image: IMAGE\_UPLOADED, IMAGE\_REPLACED, IMAGE\_REMOVED
-  - export: EXPORT\_GENERATED
-  - PERMANENT\_DELETION.
+- Actions are short verbs; the entity type says what was acted on. CREATED, UPDATED, DEACTIVATED, REACTIVATED and DELETED (permanent deletion) apply to customers, employees and catalog entries; sales use CREATED, UPDATED (notes), COMPLETED, CANCELLED, REOPENED, REASSIGNED and DELETED; tasks use STARTED, COMPLETED, RESTARTED, REOPENED and CORRECTED (an edit made after the task was completed); documents and catalog images use UPLOADED, REPLACED and REMOVED; employees also have ROLE_CHANGED; exports use EXPORTED. Saves made while a task is in progress are drafts and are not audited one by one: the COMPLETED event stores the final values, and every later change is a CORRECTED event with before and after. Employee photo changes are recorded as UPDATED on the employee.
 - CHECKs: a system actor has no employee id; a non-blank `reason` is required for SALE\_CANCELLED, SALE\_REOPENED, SALE\_DELETED, TASK\_RESTARTED, TASK\_REOPENED, TASK\_EDITED and PERMANENT\_DELETION (reasons for replacing a document on a completed task are enforced by the service).
+- CHECKs: a system actor has no employee id; a non-blank `reason` is required for CANCELLED, REOPENED, RESTARTED, CORRECTED and DELETED (reasons for replacing a document on a completed task are enforced by the service); a second CHECK allows only valid entity and verb pairs, so for example a document can never be CANCELLED.
 - Indexes: `(sale_id, created_at)`, `(entity_type, entity_id, created_at)`, `(actor_employee_id, created_at)`, `(action, created_at)`.
 
 **`notification_logs`** — transactional outbox
 
 - Columns: `id`, `notification_type`, `sale_id` and `task_instance_id` (nullable, `SET NULL`), `recipient_employee_id` or `recipient_customer_id` (at most one), `recipient_email`, `dedupe_key` (unique), `status`, `attempt_count`, `last_error`, `created_at`, `dispatched_at`.
-- Types: customer\_account\_created, sale\_created, one milestone type for each of Tasks 1, 3, 6, 7, 10, 11 and 13, advisor\_reassigned, employee\_activation, password\_reset, sla\_warning, sla\_overdue\_reminder.
+- Types: customer_account_created, sale_created, one milestone type for each of Tasks 1, 3, 6, 7, 10, 11 and 13, customer_advisor_changed (to the customer), sale_assigned (to the advisor who receives a sale, whether it is created for them or reassigned) and sale_unassigned (to the previous advisor),
 - Dedupe keys: sale plus event for customer notices; reassignment adds the new advisor and a sequence number; reminders add the task and the reminder number.
 - Flow: the row is inserted as `pending` in the same transaction as the business change, the sender claims it, sends, and marks it `sent` or `failed`; the hourly job retries failed rows.
 - Indexes: unique `dedupe_key`, `(status, created_at)`, `(sale_id)`.
