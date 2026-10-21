@@ -70,7 +70,7 @@ grupo-pana-endoso/
 │       └── tests/               unit and end-to-end tests
 ├── docs/                        decision log and exported specs
 ├── .github/workflows/           CI
-├── docker-compose.yml           local Postgres
+├── Makefile                     local setup commands
 └── README.md
 ```
 
@@ -95,7 +95,7 @@ Inside each backend module the same small set of files repeats, so any module is
 | IDs                  | `google/uuid` generating UUIDv7                                                                                              | Time-ordered keys.                                                                                                                                                     |
 | Logging              | The standard `log/slog` in JSON with a request id                                                                            | No extra dependency; no secrets or personal data in logs.                                                                                                              |
 | Configuration        | Environment variables read into one typed struct at startup, failing fast when something is missing                          | Predictable on Render.                                                                                                                                                 |
-| Backend tests        | Go `testing`, table-driven tests for the domain, real PostgreSQL in a container for integration tests                        | Constraints, triggers and partial indexes must be tested against a real database.                                                                                      |
+| Backend tests        | Go `testing`, table-driven tests for the domain, a real local PostgreSQL (a separate test database) for integration tests    | Constraints, triggers and partial indexes must be tested against a real database.                                                                                      |
 | Frontend             | React 18, Vite, TypeScript, React Router, TanStack Query for server data, React Hook Form with Zod for forms, Recharts later | Standard, well supported, and a good fit for form-heavy screens.                                                                                                       |
 | UI kit               | Tailwind CSS with shadcn/ui components                                                                                       | Accessible building blocks you own and can restyle.                                                                                                                    |
 | Spanish text         | One typed dictionary and a tiny `t()` helper                                                                                 | A full i18n library is unnecessary for one language, and keys keep a later switch possible.                                                                            |
@@ -210,6 +210,6 @@ Phase 3 adds the scheduler endpoints (authenticated with a secret, not a user), 
 - API: the authorization matrix, one test per role and action, plus the error shapes.
 - End to end (Playwright): the journeys J1 to J9 from the IA document.
 
-**Environments.** Local (Docker Postgres), then one deployed environment on the free tiers. A separate production environment is created when you decide to leave the free tier. Non-production environments send emails only to an allow-list.
+**Environments.** Local (PostgreSQL installed locally with Homebrew on Mac or with the apt package manager on Ubuntu), then one deployed environment on the free tiers. A separate production environment is created when you decide to leave the free tier. Non-production environments send emails only to an allow-list.
 
-**Delivery.** Short-lived branches into `main`; every pull request runs lint, tests, build, a migration check and an OpenAPI compatibility check; merging to `main` deploys automatically. Migrations are forward-only SQL; a bad migration is fixed with a new one.
+**Delivery.** Short-lived branches into `main`; every pull request runs lint, tests (the CI runner provides its own temporary PostgreSQL), build, a migration check and an OpenAPI compatibility check; merging to `main` deploys automatically. Migrations are forward-only SQL; a bad migration is fixed with a new one.
