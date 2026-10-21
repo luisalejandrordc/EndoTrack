@@ -2,7 +2,7 @@
 
 ## 1. Description of this document
 
-This is the proposed relational model, built from the master prompt’s section 16 after a critical review against everything decided so far (State Machines & Permissions Spec, Requirements Catalog, IA & Journeys). It describes tables, columns, constraints, indexes and relationships in prose and tables.
+This is the application relational data model, built from the master prompt’s section 16 after a critical review against everything decided so far (State Machines & Permissions Spec, Requirements Catalog, IA & User Journeys). It describes tables, columns, constraints, indexes and relationships in prose and tables.
 
 ## 2. What changes from the section 16 proposal
 
