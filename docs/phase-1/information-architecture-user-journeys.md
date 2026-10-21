@@ -57,7 +57,7 @@ Everyone lands on _Ventas_ after login. Record history timelines live inside eac
 **Tabs.**
 
 - _Tareas_: the 13 tasks as an accordion with the current task expanded. Each row shows status and dates; the actions follow section 5.
-- _Documentos_: every document slot grouped by task, with status (missing, uploaded, archived), upload, replace and download, plus a badge: _Visible para el cliente_ or _Interno_.
+- _Documentos_: every document slot grouped by task, with status (missing or uploaded), upload, replace, remove while the task is in progress, and download, plus a badge: Visible para el cliente or Interno.
 - _Notas_: sale notes and task notes, internal only.
 - _Historial_: filterable timeline of audit events within the user’s visibility.
 

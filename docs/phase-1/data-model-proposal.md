@@ -300,7 +300,7 @@ A model is available for new sales only when the model, the chosen version and t
 
 Everything about a sale hangs off one register
 
-![[sale_register_relationships.png]]
+![Sale register relationships](sale-register-relationships.png)
 
 _Arrows run from a parent table to the tables that reference it; dashed means logs kept apart from business tables._
 
