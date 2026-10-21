@@ -157,7 +157,7 @@ It is recalculated every time the task is completed, using the preserved `due_da
 
 **Quiet hours.** SLA reminder and escalation emails are sent only between 08:00 and 20:00 America/Lima. A reminder that falls due outside that window is sent at the first run inside it. Customer notifications are not restricted by this window.
 
-## 6. Customer notifications (idempotent per sale + event)
+## 6. System automatic notifications (idempotent per sale + event)
 
 | #   | Trigger                                                                                                                                                                    | Recipient |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
@@ -170,7 +170,7 @@ It is recalculated every time the task is completed, using the preserved `due_da
 | 7   | Task 10 completed                                                                                                                                                          | Customer  |
 | 8   | Task 11 completed                                                                                                                                                          | Customer  |
 | 9   | Task 13 completed                                                                                                                                                          | Customer  |
-| 10  | Advisor reassigned (new idempotency key per reassignment)                                                                                                                  | Customer  |
+| 10  | Advisor on the sale changed (new idempotency key per change)                                                                                                               | Customer  |
 | 11  | Advisor becomes assigned to a sale by a Manager or Admin, either when the sale is created or through reassignment. Not sent when an advisor creates a sale for themselves. | Advisor   |
 | 12  | Advisor unassigned from a sale due to reassignment. Sent to the previously assigned advisor.                                                                               | Advisor   |
 
