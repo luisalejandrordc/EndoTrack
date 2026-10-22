@@ -21,8 +21,8 @@ The Go backend, CI and authentication come in the next slices.
 
    ```
    make db-create      # creates endosoflow_dev and endosoflow_test
-   make migrate-up     # applies the 11 migrations to the dev database
-   make db-verify      # rebuilds the test database and runs ~65 rule checks
+   make migrate-up     # applies all migrations to the dev database
+   make db-verify      # rebuilds the test database and runs ~70 rule checks
    ```
 
    `make db-verify` ends with `ALL CHECKS PASSED`. Every rule from the Data Model (unique indexes,
@@ -45,6 +45,7 @@ The Go backend, CI and authentication come in the next slices.
 | `0009` | Views: current task, milestones, SLA state, selectable versions and colors                                                        |
 | `0010` | The six triggers (custom SQLSTATE codes EF001 to EF006)                                                                           |
 | `0011` | Row-level security enabled on every table                                                                                         |
+| `0012` | The Main view image rule now applies to every color, active or archived                                                           |
 
 Migrations are forward-only: fix mistakes with a new file, never by editing an applied one.
 
