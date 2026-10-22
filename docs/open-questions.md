@@ -4,6 +4,8 @@
 
 - Should Series, VIN, and plate be unique across ALL sales (active, completed, or cancelled)?
 
+- **Single email path.** Without bounce information, a failed delivery is invisible; the notification log only knows the script accepted the message.
+
 Should the Task 1 include this?
 
 - Will customer be in charge of the vehicle release processing? — yes/no checkbox; **Customer-visible.**

@@ -1,4 +1,4 @@
-# EndosoFlow — Data Model Proposal
+# EndosoFlow — Data Model
 
 ## 1. Description of this document
 
