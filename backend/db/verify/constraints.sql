@@ -140,7 +140,8 @@ INSERT INTO catalog_images (id, vehicle_color_id, viewpoint, mime_type, size_byt
 VALUES ('b3000000-0000-0000-0000-000000000001', 'b2000000-0000-0000-0000-000000000001', 'main_view',
         'image/jpeg', 1000, 'img-1', 'a0000000-0000-0000-0000-000000000001');
 
--- Model 2 is archived (so the completeness rules skip it); it only serves the model-mismatch check.
+-- Model 2 is archived (so the model completeness rules skip it). Its color still needs a Main view image,
+-- because that rule applies to every color. It serves the model-mismatch and selectable-color checks.
 INSERT INTO vehicle_models (id, model_name, is_active, deactivated_at, created_by)
 VALUES ('b0000000-0000-0000-0000-000000000002', 'Yaris', false, now(), 'a0000000-0000-0000-0000-000000000001');
 INSERT INTO vehicle_versions (id, model_id, version_name, reference_price, created_by)
@@ -149,6 +150,9 @@ VALUES ('b1000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-0000000
 INSERT INTO vehicle_colors (id, model_id, color_name, created_by)
 VALUES ('b2000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000002', 'Rojo',
         'a0000000-0000-0000-0000-000000000001');
+INSERT INTO catalog_images (id, vehicle_color_id, viewpoint, mime_type, size_bytes, storage_key, uploaded_by)
+VALUES ('b3000000-0000-0000-0000-000000000002', 'b2000000-0000-0000-0000-000000000002', 'main_view',
+        'image/jpeg', 1000, 'img-2', 'a0000000-0000-0000-0000-000000000001');
 
 SELECT pg_temp.expect_ok('fixtures satisfy the commit-time rules', 'SELECT 1', true);
 
