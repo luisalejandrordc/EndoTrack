@@ -305,7 +305,7 @@ SELECT pg_temp.expect_fail('a file cannot point at another sale''s task',
        storage_key, checksum_sha256, uploaded_by)
      SELECT 'd0000000-0000-0000-0000-000000000002'::uuid, t.id, 'test_slot', 'c.pdf', 'application/pdf', 1000,
             'key-3', repeat('c', 64), 'a0000000-0000-0000-0000-000000000001'
-     FROM task_instances t WHERE t.sale_id = 'd0000000-0000-0000-0000-000000000003' AND t.task_number = 1$q$, '23503');
+     FROM task_instances t WHERE t.sale_id = 'd0000000-0000-0000-0000-000000000003' AND t.task_number = 2$q$, '23503');
 SELECT pg_temp.expect_fail('files over 10 MB are rejected',
   $q$INSERT INTO documents (sale_id, task_instance_id, slot_code, original_file_name, mime_type, size_bytes,
        storage_key, checksum_sha256, uploaded_by)
@@ -320,11 +320,15 @@ SELECT pg_temp.expect_fail('a model without a version and a color is rejected at
        VALUES ('b0000000-0000-0000-0000-000000000003', 'Corolla', 'a0000000-0000-0000-0000-000000000001')
        RETURNING id)
      INSERT INTO vehicle_model_categories (model_id, category) SELECT id, 'sedan' FROM m$q$, 'EF005', true);
-SELECT pg_temp.expect_fail('an active color needs its Main view image',
+SELECT pg_temp.expect_fail('a color needs its Main view image',
   $q$INSERT INTO vehicle_colors (id, model_id, color_name, created_by)
      VALUES ('b2000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'Negro',
              'a0000000-0000-0000-0000-000000000001')$q$, 'EF005', true);
-SELECT pg_temp.expect_fail('the Main view image of an active color cannot be deleted',
+SELECT pg_temp.expect_fail('an archived color still needs its Main view image',
+  $q$INSERT INTO vehicle_colors (id, model_id, color_name, is_active, deactivated_at, created_by)
+     VALUES ('b2000000-0000-0000-0000-000000000004', 'b0000000-0000-0000-0000-000000000001', 'Gris',
+             false, now(), 'a0000000-0000-0000-0000-000000000001')$q$, 'EF005', true);
+SELECT pg_temp.expect_fail('the Main view image of a color cannot be deleted',
   $q$DELETE FROM catalog_images WHERE id = 'b3000000-0000-0000-0000-000000000001'$q$, 'EF005', true);
 SELECT pg_temp.expect_fail('the last active version of an active model cannot be archived',
   $q$UPDATE vehicle_versions SET is_active = false, deactivated_at = now()
