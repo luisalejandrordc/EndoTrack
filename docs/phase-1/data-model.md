@@ -176,6 +176,7 @@ A model is available for new sales only when the model, the chosen version and t
 - Columns: `initial_toyota_amount`, `initial_commission`, `accessory_amount`, `release_processing_amount`, `quoted_final_price` (generated: the sum of those four), `final_toyota_amount`, `final_commission` (generated: quoted price minus final Toyota amount minus accessory amount minus release amount), `row_version`, `updated_by/at`.
 - CHECKs: every entered amount is greater than zero; a calculated final commission must be greater than zero.
 - Lock rule: the service refuses to edit these columns while any later task is completed.
+- Postgres doesn’t allow a generated column to reference another, so final_commission expands the quoted price inline. It gives the same result.
 
 **`sale_due_diligence`** — one row per sale (primary key `sale_id`)
 

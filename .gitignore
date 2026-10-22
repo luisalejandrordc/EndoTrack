@@ -1,23 +1,16 @@
-# Local Files
-_local/
-
 # Dependencies
 node_modules/
-frontend/node_modules/
-backend/node_modules/
 
 # Environment variables
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-backend/.env
-frontend/.env
+.env.*
+!.env.example
 
 # Build outputs
-frontend/build/
-backend/dist/
+backend/bin/
+dist/
+coverage/
+build/
 
 # Logs
 *.log
@@ -36,11 +29,6 @@ Thumbs.db
 *.swo
 *~
 
-# DATABASE
-database/run_query.py
-database/list_tables.py
-
 # Latex
-build/
 *.synctex.gz
 *indent.log
