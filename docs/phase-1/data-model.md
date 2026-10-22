@@ -248,7 +248,8 @@ A model is available for new sales only when the model, the chosen version and t
 - **`v_sale_current_task`:** the current task of each sale (the in-progress task, otherwise the lowest-numbered task that is not completed).
 - **`v_sale_milestones`:** one derived state per sale and milestone, used by the portal, the workspace filters and BI so the logic exists once.
 - **`v_task_sla_state`:** for in-progress tasks with a duration, the elapsed share, the next reminder due and the escalation level.
-- **`v_vehicle_availability`:** whether a model, version and color are selectable (all three active, color has its Main view).
+- **`v_selectable_versions`:** vehicle versions that can be selected in the sale form, requiring both the version and its associated model to be active.
+- **`v_selectable_colors`**: vehicle colors that can be selected in the sale form, requiring both the color and its associated model to be active, and at least one `Main view` catalog image.
 
 ## 6. Rule enforcement map
 
