@@ -1,5 +1,5 @@
 -- +goose Up
--- Reference data. The Spanish texts are listed in the "spanish-descriptions" document.
+-- Reference data. The Spanish texts were approved in the "Descripciones en español" document.
 -- Banks, customs offices and vehicle categories are enum values (see 0001), not rows.
 INSERT INTO
   milestone_definitions (milestone_number, name_es, description_es)

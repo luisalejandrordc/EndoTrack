@@ -402,6 +402,13 @@ VALUES
   );
 
 SELECT
+  pg_temp.expect_equal (
+    'employees default to a manually entered name',
+    $q$SELECT count(*) FROM employees WHERE name_source = 'manual'$q$,
+    3
+  );
+
+SELECT
   pg_temp.expect_ok (
     'fixtures satisfy the commit-time rules',
     'SELECT 1',
@@ -836,7 +843,7 @@ SELECT
     'write an audit row',
     $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, sale_id, entity_type, entity_id, action)
      VALUES ('a0000000-0000-0000-0000-000000000001', 'employee', 'd0000000-0000-0000-0000-000000000001',
-             'sale_register', 'd0000000-0000-0000-0000-000000000001', 'SALE_CREATED')$q$
+             'sale_register', 'd0000000-0000-0000-0000-000000000001', 'CREATED')$q$
   );
 
 SELECT
@@ -858,7 +865,7 @@ SELECT
     'a cancellation audit row needs a reason',
     $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, sale_id, entity_type, entity_id, action)
      VALUES ('a0000000-0000-0000-0000-000000000001', 'employee', 'd0000000-0000-0000-0000-000000000001',
-             'sale_register', 'd0000000-0000-0000-0000-000000000001', 'SALE_CANCELLED')$q$,
+             'sale_register', 'd0000000-0000-0000-0000-000000000001', 'CANCELLED')$q$,
     '23514'
   );
 
@@ -867,8 +874,42 @@ SELECT
     'a system actor has no employee id',
     $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, entity_type, entity_id, action)
      VALUES ('a0000000-0000-0000-0000-000000000001', 'system', 'sale_register',
-             'd0000000-0000-0000-0000-000000000001', 'SALE_COMPLETED')$q$,
+             'd0000000-0000-0000-0000-000000000001', 'COMPLETED')$q$,
     '23514'
+  );
+
+SELECT
+  pg_temp.expect_fail (
+    'an audit action must fit its entity type',
+    $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, entity_type, entity_id, action, reason)
+     VALUES ('a0000000-0000-0000-0000-000000000001', 'employee', 'document',
+             'd0000000-0000-0000-0000-000000000001', 'CANCELLED', 'motivo')$q$,
+    '23514'
+  );
+
+SELECT
+  pg_temp.expect_fail (
+    'a permanent deletion needs a reason',
+    $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, entity_type, entity_id, action)
+     VALUES ('a0000000-0000-0000-0000-000000000001', 'employee', 'customer',
+             'c0000000-0000-0000-0000-000000000001', 'DELETED')$q$,
+    '23514'
+  );
+
+SELECT
+  pg_temp.expect_ok (
+    'a permanent deletion with a reason',
+    $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, entity_type, entity_id, action, reason)
+     VALUES ('a0000000-0000-0000-0000-000000000001', 'employee', 'customer',
+             'c0000000-0000-0000-0000-000000000001', 'DELETED', 'Registro de prueba')$q$
+  );
+
+SELECT
+  pg_temp.expect_ok (
+    'an export is audited',
+    $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, entity_type, entity_id, action)
+     VALUES ('a0000000-0000-0000-0000-000000000001', 'employee', 'export',
+             'd0000000-0000-0000-0000-0000000000aa', 'EXPORTED')$q$
   );
 
 SELECT

@@ -5,6 +5,7 @@ CREATE TABLE employees (
   document_number text NOT NULL,
   first_name text NOT NULL,
   last_name text NOT NULL,
+  name_source name_source NOT NULL DEFAULT 'manual',
   nationality text NOT NULL,
   gender gender NOT NULL,
   birthdate date NOT NULL,

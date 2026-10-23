@@ -14,15 +14,84 @@ CREATE TABLE audit_logs (
   CONSTRAINT audit_logs_actor_matches_kind CHECK (
     (actor_kind = 'system') = (actor_employee_id IS NULL)
   ),
+  CONSTRAINT audit_logs_valid_pair CHECK (
+    (
+      entity_type = 'sale_register'
+      AND action IN (
+        'CREATED',
+        'UPDATED',
+        'COMPLETED',
+        'CANCELLED',
+        'REOPENED',
+        'REASSIGNED',
+        'DELETED'
+      )
+    )
+    OR (
+      entity_type = 'task_instance'
+      AND action IN (
+        'STARTED',
+        'COMPLETED',
+        'RESTARTED',
+        'REOPENED',
+        'CORRECTED'
+      )
+    )
+    OR (
+      entity_type = 'document'
+      AND action IN ('UPLOADED', 'REPLACED', 'REMOVED')
+    )
+    OR (
+      entity_type = 'customer'
+      AND action IN (
+        'CREATED',
+        'UPDATED',
+        'DEACTIVATED',
+        'REACTIVATED',
+        'DELETED'
+      )
+    )
+    OR (
+      entity_type = 'employee'
+      AND action IN (
+        'CREATED',
+        'UPDATED',
+        'ROLE_CHANGED',
+        'DEACTIVATED',
+        'REACTIVATED',
+        'DELETED'
+      )
+    )
+    OR (
+      entity_type IN (
+        'vehicle_model',
+        'vehicle_version',
+        'vehicle_color'
+      )
+      AND action IN (
+        'CREATED',
+        'UPDATED',
+        'DEACTIVATED',
+        'REACTIVATED',
+        'DELETED'
+      )
+    )
+    OR (
+      entity_type = 'catalog_image'
+      AND action IN ('UPLOADED', 'REPLACED', 'REMOVED')
+    )
+    OR (
+      entity_type = 'export'
+      AND action = 'EXPORTED'
+    )
+  ),
   CONSTRAINT audit_logs_reason_required CHECK (
     action NOT IN (
-      'SALE_CANCELLED',
-      'SALE_REOPENED',
-      'SALE_DELETED',
-      'TASK_RESTARTED',
-      'TASK_REOPENED',
-      'TASK_EDITED',
-      'PERMANENT_DELETION'
+      'CANCELLED',
+      'REOPENED',
+      'RESTARTED',
+      'CORRECTED',
+      'DELETED'
     )
     OR length(btrim(coalesce(reason, ''))) > 0
   )

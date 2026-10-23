@@ -23,6 +23,7 @@ func TestFromErrorMapsPostgresErrors(t *testing.T) {
 		{"unknown unique constraint", &pgconn.PgError{Code: "23505", ConstraintName: "something_new"}, "ALREADY_EXISTS", http.StatusConflict},
 		{"missing mismatch reason", &pgconn.PgError{Code: "23514", ConstraintName: "sale_payments_mismatch_reason"}, "MISMATCH_REASON_REQUIRED", http.StatusUnprocessableEntity},
 		{"commission not positive", &pgconn.PgError{Code: "23514", ConstraintName: "sale_financials_commission_positive"}, "COMMISSION_NOT_POSITIVE", http.StatusUnprocessableEntity},
+		{"missing reason", &pgconn.PgError{Code: "23514", ConstraintName: "audit_logs_reason_required"}, "REASON_REQUIRED", http.StatusUnprocessableEntity},
 		{"unknown check constraint", &pgconn.PgError{Code: "23514", ConstraintName: "something_new"}, "CHECK_VIOLATION", http.StatusUnprocessableEntity},
 		{"color from another model", &pgconn.PgError{Code: "23503", ConstraintName: "sale_registers_color_model_fk"}, "VEHICLE_MODEL_MISMATCH", http.StatusUnprocessableEntity},
 		{"generic foreign key", &pgconn.PgError{Code: "23503", ConstraintName: "something_new"}, "REFERENCE_VIOLATION", http.StatusConflict},

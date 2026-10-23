@@ -108,7 +108,9 @@ CREATE TYPE storage_deletion_reason AS ENUM(
   'document_replaced',
   'document_removed',
   'catalog_image_replaced',
+  'catalog_image_removed',
   'employee_photo_replaced',
+  'employee_photo_removed',
   'sale_deleted'
 );
 
@@ -117,7 +119,16 @@ CREATE TYPE token_purpose AS ENUM('activation', 'password_reset');
 
 CREATE TYPE portal_type AS ENUM('employee_portal', 'customer_portal');
 
-CREATE TYPE access_action AS ENUM('login_success', 'login_failed', 'logout');
+-- Security events. Business events live in audit_logs; these record sign-in and credential events.
+CREATE TYPE access_action AS ENUM(
+  'login_success',
+  'login_failed',
+  'logout',
+  'account_activated',
+  'password_reset_requested',
+  'password_reset_completed',
+  'password_changed'
+);
 
 CREATE TYPE access_failure_reason AS ENUM(
   'invalid_credentials',
@@ -146,7 +157,9 @@ CREATE TYPE notification_type AS ENUM(
   'milestone_task_10',
   'milestone_task_11',
   'milestone_task_13',
-  'advisor_reassigned',
+  'customer_advisor_changed', -- to the customer when the advisor on their sale changes
+  'sale_assigned', -- to the advisor who receives a sale (created for them or reassigned)
+  'sale_unassigned', -- to the previous advisor when a sale is reassigned
   'employee_activation',
   'password_reset',
   'sla_warning',
@@ -178,34 +191,24 @@ CREATE TYPE audit_entity_type AS ENUM(
   'export'
 );
 
+-- Short verbs: the entity type (audit_entity_type) says what was acted on, and a CHECK on audit_logs
+-- only allows the valid entity and verb pairs.
 CREATE TYPE audit_action AS ENUM(
-  'SALE_CREATED',
-  'SALE_COMPLETED',
-  'SALE_CANCELLED',
-  'SALE_REOPENED',
-  'SALE_DELETED',
-  'ADVISOR_REASSIGNED',
-  'SALE_NOTES_UPDATED',
-  'TASK_STARTED',
-  'TASK_COMPLETED',
-  'TASK_RESTARTED',
-  'TASK_REOPENED',
-  'TASK_EDITED',
-  'DOCUMENT_UPLOADED',
-  'DOCUMENT_REPLACED',
-  'DOCUMENT_REMOVED',
-  'CATALOG_CREATED',
-  'CATALOG_UPDATED',
-  'CATALOG_ARCHIVED',
-  'CUSTOMER_CREATED',
-  'CUSTOMER_UPDATED',
-  'CUSTOMER_ACTIVATED',
-  'CUSTOMER_DEACTIVATED',
-  'EMPLOYEE_CREATED',
-  'EMPLOYEE_UPDATED',
-  'EMPLOYEE_ROLE_CHANGED',
-  'EMPLOYEE_DEACTIVATED',
-  'EMPLOYEE_REACTIVATED',
-  'EXPORT_GENERATED',
-  'PERMANENT_DELETION'
+  'CREATED',
+  'UPDATED',
+  'DEACTIVATED',
+  'REACTIVATED',
+  'DELETED',
+  'STARTED',
+  'COMPLETED',
+  'RESTARTED',
+  'REOPENED',
+  'CORRECTED',
+  'CANCELLED',
+  'REASSIGNED',
+  'UPLOADED',
+  'REPLACED',
+  'REMOVED',
+  'ROLE_CHANGED',
+  'EXPORTED'
 );

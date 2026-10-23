@@ -130,6 +130,7 @@ var checkRules = map[string]rule{
 	"customers_document_format":          {http.StatusUnprocessableEntity, "DOCUMENT_NUMBER_INVALID", "El número de documento no tiene el formato válido para su tipo."},
 	"employees_document_format":          {http.StatusUnprocessableEntity, "DOCUMENT_NUMBER_INVALID", "El número de documento no tiene el formato válido para su tipo."},
 	"sale_due_diligence_signer_format":   {http.StatusUnprocessableEntity, "DOCUMENT_NUMBER_INVALID", "El número de documento no tiene el formato válido para su tipo."},
+	"audit_logs_reason_required":           {http.StatusUnprocessableEntity, "REASON_REQUIRED", "Debe escribir el motivo de esta acción."},
 	"sale_registers_other_needs_text":    {http.StatusUnprocessableEntity, "CANCELLATION_TEXT_REQUIRED", "Con el motivo \u201cOtro\u201d debe escribir una explicación."},
 }
 
