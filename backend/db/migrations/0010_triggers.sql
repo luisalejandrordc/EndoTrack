@@ -111,7 +111,7 @@ CREATE TRIGGER access_logs_append_only
   FOR EACH ROW EXECUTE FUNCTION trg_append_only();
 
 -- 5. An active model needs a category, an active version and an active color;
---    an active color needs its Main view image (checked at commit).
+--    every color needs its Main view image (checked at commit).
 -- +goose StatementBegin
 CREATE FUNCTION trg_catalog_model_complete() RETURNS trigger
 LANGUAGE plpgsql AS $$
@@ -176,7 +176,6 @@ LANGUAGE plpgsql AS $$
 DECLARE
   v_row jsonb;
   v_color uuid;
-  v_active boolean;
 BEGIN
   IF TG_OP = 'DELETE' THEN
     v_row := to_jsonb(OLD);
@@ -190,11 +189,12 @@ BEGIN
     v_color := (v_row ->> 'vehicle_color_id')::uuid;
   END IF;
 
-  SELECT is_active INTO v_active FROM vehicle_colors WHERE id = v_color;
-  IF NOT FOUND OR NOT v_active THEN
+  IF NOT EXISTS (SELECT 1 FROM vehicle_colors WHERE id = v_color) THEN
     RETURN NULL;
   END IF;
 
+  -- Applies to every color, active or archived, and whatever the state of its model:
+  -- existing sales keep showing the catalog image of their color.
   IF NOT EXISTS (
     SELECT 1 FROM catalog_images WHERE vehicle_color_id = v_color AND viewpoint = 'main_view'
   ) THEN

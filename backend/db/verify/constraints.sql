@@ -88,7 +88,15 @@ BEGIN
   END IF;
 END $$;
 
--- Fixtures (reference data is normally seeded by a later migration; ON CONFLICT keeps this re-runnable)
+-- Seeded reference data (from migration 0012)
+SELECT pg_temp.expect_equal('6 milestones are seeded', 'SELECT count(*) FROM milestone_definitions', 6);
+SELECT pg_temp.expect_equal('13 tasks are seeded', 'SELECT count(*) FROM task_definitions', 13);
+SELECT pg_temp.expect_equal('6 tasks have an SLA', 'SELECT count(*) FROM task_definitions WHERE recommended_duration_hours IS NOT NULL', 6);
+SELECT pg_temp.expect_equal('19 document slots are seeded', 'SELECT count(*) FROM document_slots', 19);
+SELECT pg_temp.expect_equal('11 slots are customer-visible', 'SELECT count(*) FROM document_slots WHERE is_customer_visible', 11);
+SELECT pg_temp.expect_equal('only the power of attorney is conditional', $q$SELECT count(*) FROM document_slots WHERE requirement = 'conditional'$q$, 1);
+
+-- Fixtures (reference rows already exist after migration 0012; ON CONFLICT keeps the insert harmless)
 INSERT INTO milestone_definitions (milestone_number, name_es, description_es)
 SELECT n, 'Hito ' || n, 'Descripcion de prueba' FROM generate_series(1, 6) AS n
 ON CONFLICT DO NOTHING;
