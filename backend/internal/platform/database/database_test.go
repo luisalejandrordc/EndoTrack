@@ -1,0 +1,98 @@
+package database
+
+import (
+	"context"
+	"errors"
+	"os"
+	"testing"
+
+	"github.com/jackc/pgx/v5"
+
+	"endosoflow/internal/platform/ids"
+)
+
+// These tests need a migrated database: run `make db-verify` once, then `make test`.
+func testPool(t *testing.T) (context.Context, TxStarter, func(sql string, args ...any) int) {
+	t.Helper()
+	url := os.Getenv("TEST_DATABASE_URL")
+	if url == "" {
+		t.Skip("TEST_DATABASE_URL is not set")
+	}
+	ctx := context.Background()
+	pool, err := Connect(ctx, url)
+	if err != nil {
+		t.Fatalf("connect: %v", err)
+	}
+	t.Cleanup(pool.Close)
+	count := func(sql string, args ...any) int {
+		var n int
+		if err := pool.QueryRow(ctx, sql, args...).Scan(&n); err != nil {
+			t.Fatalf("count: %v", err)
+		}
+		return n
+	}
+	return ctx, pool, count
+}
+
+const insertAccessLog = `INSERT INTO access_logs (portal_type, action_type, attempted_document_number)
+	VALUES ('employee_portal', 'login_failed', $1)`
+
+const countAccessLog = `SELECT count(*) FROM access_logs WHERE attempted_document_number = $1`
+
+func TestWithTxRollsBackWhenTheFunctionFails(t *testing.T) {
+	ctx, pool, count := testPool(t)
+	marker := ids.NewString()
+	sentinel := errors.New("boom")
+
+	err := WithTx(ctx, pool, func(tx pgx.Tx) error {
+		if _, err := tx.Exec(ctx, insertAccessLog, marker); err != nil {
+			return err
+		}
+		return sentinel
+	})
+	if !errors.Is(err, sentinel) {
+		t.Fatalf("got %v, want the sentinel error", err)
+	}
+	if n := count(countAccessLog, marker); n != 0 {
+		t.Fatalf("row was kept after rollback (%d rows)", n)
+	}
+}
+
+func TestWithTxRollsBackOnPanicAndRepanics(t *testing.T) {
+	ctx, pool, count := testPool(t)
+	marker := ids.NewString()
+
+	func() {
+		defer func() {
+			if recover() == nil {
+				t.Error("expected the panic to propagate")
+			}
+		}()
+		_ = WithTx(ctx, pool, func(tx pgx.Tx) error {
+			if _, err := tx.Exec(ctx, insertAccessLog, marker); err != nil {
+				return err
+			}
+			panic("boom")
+		})
+	}()
+
+	if n := count(countAccessLog, marker); n != 0 {
+		t.Fatalf("row was kept after a panic (%d rows)", n)
+	}
+}
+
+func TestWithTxCommitsWhenTheFunctionSucceeds(t *testing.T) {
+	ctx, pool, count := testPool(t)
+	marker := ids.NewString()
+
+	err := WithTx(ctx, pool, func(tx pgx.Tx) error {
+		_, err := tx.Exec(ctx, insertAccessLog, marker)
+		return err
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if n := count(countAccessLog, marker); n != 1 {
+		t.Fatalf("expected 1 committed row, got %d", n)
+	}
+}

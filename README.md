@@ -1,8 +1,9 @@
 # EndosoFlow — Grupo Pana
 
 Platform for tracking vehicle sales sold through the Grupo Pana _endoso_ channel.
-This is the 1D foundation, first slice: **the database** (migrations plus a SQL rule-check script).
-The Go backend, CI and authentication come in the next slices.
+This is the 1D foundation. Slice 1 is **the database** (migrations plus a SQL rule-check script).
+Slice 2 is the **Go backend foundation** (configuration, logging, database access, error mapping and the
+health endpoint). CI and employee authentication come next.
 
 ## Local setup on macOS
 
@@ -28,7 +29,19 @@ The Go backend, CI and authentication come in the next slices.
    `make db-verify` ends with `ALL CHECKS PASSED`. Every rule from the Data Model (unique indexes,
    partial indexes, CHECKs, generated columns, the six triggers) has at least one check.
 
-3. If anything fails, copy the full terminal output (the first error line matters most) and send it to me.
+## Go backend (slice 2)
+
+```
+brew install go
+cp backend/.env.example backend/.env
+make tidy      # downloads dependencies and creates go.sum (needs internet)
+make vet       # static checks
+make test      # unit tests; the database tests run against endosoflow_test (run make db-verify first)
+make run       # starts the API
+curl http://localhost:8080/api/v1/health
+```
+
+The health call should answer `{"status":"ok","database":"ok"}`.
 
 ## What the migrations contain
 
@@ -43,14 +56,13 @@ The Go backend, CI and authentication come in the next slices.
 | `0007` | `documents` and `storage_deletions`                                                                                               |
 | `0008` | `audit_logs`, `notification_logs`, `lookup_logs`                                                                                  |
 | `0009` | Views: current task, milestones, SLA state, selectable versions and colors                                                        |
-| `0010` | The six triggers (custom SQLSTATE codes EF001 to EF006)                                                                           |
+| `0010` | The six triggers (custom SQLSTATE codes EF001 to EF006); the Main view rule covers every color                                    |
 | `0011` | Row-level security enabled on every table                                                                                         |
-| `0012` | The Main view image rule now applies to every color, active or archived                                                           |
+| `0012` | Seed data: 6 milestones, 13 tasks and 19 document slots with the approved Spanish texts                                           |
 
 Migrations are forward-only: fix mistakes with a new file, never by editing an applied one.
 
 ## Not included yet
 
-- The seed migration for milestone, task and document-slot rows (waiting for the Spanish descriptions to be approved).
 - Database roles for production (`migrator` and `app_backend`) and the controlled sale-deletion function.
-- The Go backend, the frontend and CI.
+- Employee authentication, the business modules, the frontend and CI.

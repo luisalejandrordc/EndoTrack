@@ -1,7 +1,6 @@
 -- EndosoFlow database checks. Run with: make db-verify
 -- Everything happens inside one transaction that is rolled back at the end, so nothing is kept.
 -- Each check prints PASS, or stops the script with FAIL and the reason.
-
 \set ON_ERROR_STOP on
 SET
   client_min_messages = notice;
