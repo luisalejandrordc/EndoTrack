@@ -63,14 +63,3 @@ test:
 
 run:
 	cd backend && set -a && . ./.env && set +a && go run ./cmd/api
-
-db-reset:
-	dropdb --if-exists $(DEV_DB)
-	createdb $(DEV_DB)
-	$(MAKE) migrate-up
-
-db-verify:
-	dropdb --if-exists $(TEST_DB)
-	createdb $(TEST_DB)
-	goose -dir $(MIGRATIONS) postgres "$(TEST_DATABASE_URL)" up
-	psql -v ON_ERROR_STOP=1 "$(TEST_DATABASE_URL)" -f $(VERIFY_SQL)
