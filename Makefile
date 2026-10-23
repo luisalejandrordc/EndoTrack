@@ -14,6 +14,7 @@ VERIFY_SQL  := backend/db/verify/constraints.sql
 
 help:
 	@echo "db-create       create the dev and test databases"
+	@echo "db-drop         drop the dev and test databases"
 	@echo "migrate-up      apply all migrations to the dev database"
 	@echo "migrate-status  show which migrations are applied"
 	@echo "db-reset        drop and recreate the dev database, then migrate"
