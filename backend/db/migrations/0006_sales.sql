@@ -34,46 +34,94 @@ CREATE TABLE sale_registers (
   updated_by uuid REFERENCES employees (id),
   updated_at timestamptz NOT NULL DEFAULT now(),
   -- A version and a color must belong to the sale's model
-  CONSTRAINT sale_registers_version_model_fk
-    FOREIGN KEY (vehicle_version_id, vehicle_model_id) REFERENCES vehicle_versions (id, model_id),
-  CONSTRAINT sale_registers_color_model_fk
-    FOREIGN KEY (vehicle_color_id, vehicle_model_id) REFERENCES vehicle_colors (id, model_id),
+  CONSTRAINT sale_registers_version_model_fk FOREIGN KEY (vehicle_version_id, vehicle_model_id) REFERENCES vehicle_versions (id, model_id),
+  CONSTRAINT sale_registers_color_model_fk FOREIGN KEY (vehicle_color_id, vehicle_model_id) REFERENCES vehicle_colors (id, model_id),
   CONSTRAINT sale_registers_state_coherence CHECK (
-    (overall_state = 'active'
-      AND completed_at IS NULL AND cancelled_at IS NULL AND cancelled_by IS NULL
-      AND cancelled_at_task_number IS NULL AND cancellation_category IS NULL AND cancellation_text IS NULL)
-    OR (overall_state = 'completed'
-      AND completed_at IS NOT NULL AND cancelled_at IS NULL AND cancelled_by IS NULL
-      AND cancelled_at_task_number IS NULL AND cancellation_category IS NULL AND cancellation_text IS NULL)
-    OR (overall_state = 'cancelled'
-      AND completed_at IS NULL AND cancelled_at IS NOT NULL AND cancelled_by IS NOT NULL
-      AND cancelled_at_task_number IS NOT NULL AND cancellation_category IS NOT NULL)),
+    (
+      overall_state = 'active'
+      AND completed_at IS NULL
+      AND cancelled_at IS NULL
+      AND cancelled_by IS NULL
+      AND cancelled_at_task_number IS NULL
+      AND cancellation_category IS NULL
+      AND cancellation_text IS NULL
+    )
+    OR (
+      overall_state = 'completed'
+      AND completed_at IS NOT NULL
+      AND cancelled_at IS NULL
+      AND cancelled_by IS NULL
+      AND cancelled_at_task_number IS NULL
+      AND cancellation_category IS NULL
+      AND cancellation_text IS NULL
+    )
+    OR (
+      overall_state = 'cancelled'
+      AND completed_at IS NULL
+      AND cancelled_at IS NOT NULL
+      AND cancelled_by IS NOT NULL
+      AND cancelled_at_task_number IS NOT NULL
+      AND cancellation_category IS NOT NULL
+    )
+  ),
   CONSTRAINT sale_registers_other_needs_text CHECK (
     cancellation_category IS DISTINCT FROM 'other'
-    OR length(btrim(coalesce(cancellation_text, ''))) > 0),
-  CONSTRAINT sale_registers_vin_format CHECK (vin IS NULL OR vin ~ '^[A-HJ-NPR-Z0-9]{17}$'),
-  CONSTRAINT sale_registers_plate_format CHECK (license_plate IS NULL OR license_plate ~ '^[A-Z0-9]{6}$'),
+    OR length(btrim(coalesce(cancellation_text, ''))) > 0
+  ),
+  CONSTRAINT sale_registers_vin_format CHECK (
+    vin IS NULL
+    OR vin ~ '^[A-HJ-NPR-Z0-9]{17}$'
+  ),
+  CONSTRAINT sale_registers_plate_format CHECK (
+    license_plate IS NULL
+    OR license_plate ~ '^[A-Z0-9]{6}$'
+  ),
   CONSTRAINT sale_registers_series_normalized CHECK (
     vehicle_series IS NULL
-    OR (vehicle_series = upper(btrim(vehicle_series)) AND vehicle_series !~ '\s' AND length(vehicle_series) > 0))
+    OR (
+      vehicle_series = upper(btrim(vehicle_series))
+      AND vehicle_series !~ '\s'
+      AND length(vehicle_series) > 0
+    )
+  )
 );
 
 -- Identifiers are unique only among active and completed sales; cancelled sales release them.
 CREATE UNIQUE INDEX ux_sale_registers_series ON sale_registers (vehicle_series)
-  WHERE vehicle_series IS NOT NULL AND overall_state IN ('active', 'completed');
-CREATE UNIQUE INDEX ux_sale_registers_vin ON sale_registers (vin)
-  WHERE vin IS NOT NULL AND overall_state IN ('active', 'completed');
-CREATE UNIQUE INDEX ux_sale_registers_plate ON sale_registers (license_plate)
-  WHERE license_plate IS NOT NULL AND overall_state IN ('active', 'completed');
+WHERE
+  vehicle_series IS NOT NULL
+  AND overall_state IN ('active', 'completed');
 
-CREATE INDEX ix_sale_registers_advisor ON sale_registers (assigned_advisor_id, overall_state, created_at DESC);
+CREATE UNIQUE INDEX ux_sale_registers_vin ON sale_registers (vin)
+WHERE
+  vin IS NOT NULL
+  AND overall_state IN ('active', 'completed');
+
+CREATE UNIQUE INDEX ux_sale_registers_plate ON sale_registers (license_plate)
+WHERE
+  license_plate IS NOT NULL
+  AND overall_state IN ('active', 'completed');
+
+CREATE INDEX ix_sale_registers_advisor ON sale_registers (
+  assigned_advisor_id,
+  overall_state,
+  created_at DESC
+);
+
 CREATE INDEX ix_sale_registers_customer ON sale_registers (customer_id);
+
 CREATE INDEX ix_sale_registers_state ON sale_registers (overall_state, created_at DESC);
+
 CREATE INDEX ix_sale_registers_model_version ON sale_registers (vehicle_model_id, vehicle_version_id);
-CREATE INDEX ix_sale_registers_search_name ON sale_registers
-  USING gin (f_search_key(customer_legal_name_snapshot) gin_trgm_ops);
+
+CREATE INDEX ix_sale_registers_search_name ON sale_registers USING gin (
+  f_search_key (customer_legal_name_snapshot) gin_trgm_ops
+);
+
 CREATE INDEX ix_sale_registers_search_series ON sale_registers USING gin (vehicle_series gin_trgm_ops);
+
 CREATE INDEX ix_sale_registers_search_vin ON sale_registers USING gin (vin gin_trgm_ops);
+
 CREATE INDEX ix_sale_registers_search_plate ON sale_registers USING gin (license_plate gin_trgm_ops);
 
 CREATE TABLE task_instances (
@@ -98,20 +146,44 @@ CREATE TABLE task_instances (
   CONSTRAINT task_instances_sale_task_unique UNIQUE (sale_id, task_number),
   CONSTRAINT task_instances_id_sale_unique UNIQUE (id, sale_id),
   CONSTRAINT task_instances_status_coherence CHECK (
-    (status = 'pending'
-      AND started_at IS NULL AND completed_at IS NULL AND due_date IS NULL AND completion_phase IS NULL)
-    OR (status = 'in_progress'
-      AND started_at IS NOT NULL AND completed_at IS NULL AND completion_phase IS NULL)
-    OR (status = 'completed'
-      AND started_at IS NOT NULL AND completed_at IS NOT NULL AND completed_at >= started_at
-      AND completion_phase IS NOT NULL)),
-  CONSTRAINT task_instances_reminders_need_due_date CHECK (overdue_reminder_count = 0 OR due_date IS NOT NULL)
+    (
+      status = 'pending'
+      AND started_at IS NULL
+      AND completed_at IS NULL
+      AND due_date IS NULL
+      AND completion_phase IS NULL
+    )
+    OR (
+      status = 'in_progress'
+      AND started_at IS NOT NULL
+      AND completed_at IS NULL
+      AND completion_phase IS NULL
+    )
+    OR (
+      status = 'completed'
+      AND started_at IS NOT NULL
+      AND completed_at IS NOT NULL
+      AND completed_at >= started_at
+      AND completion_phase IS NOT NULL
+    )
+  ),
+  CONSTRAINT task_instances_reminders_need_due_date CHECK (
+    overdue_reminder_count = 0
+    OR due_date IS NOT NULL
+  )
 );
+
 -- At most one task in progress per sale
-CREATE UNIQUE INDEX ux_task_instances_one_in_progress ON task_instances (sale_id) WHERE status = 'in_progress';
+CREATE UNIQUE INDEX ux_task_instances_one_in_progress ON task_instances (sale_id)
+WHERE
+  status = 'in_progress';
+
 -- The scheduler's query
 CREATE INDEX ix_task_instances_sla ON task_instances (status, due_date)
-  WHERE status = 'in_progress' AND due_date IS NOT NULL;
+WHERE
+  status = 'in_progress'
+  AND due_date IS NOT NULL;
+
 CREATE INDEX ix_task_instances_sale_status ON task_instances (sale_id, status);
 
 -- Task 1 and Task 3 amounts
@@ -122,17 +194,23 @@ CREATE TABLE sale_financials (
   accessory_amount numeric(12, 2) CHECK (accessory_amount > 0),
   release_processing_amount numeric(12, 2) CHECK (release_processing_amount > 0),
   quoted_final_price numeric(12, 2) GENERATED ALWAYS AS (
-    initial_toyota_amount + initial_commission + accessory_amount + release_processing_amount) STORED,
+    initial_toyota_amount + initial_commission + accessory_amount + release_processing_amount
+  ) STORED,
   final_toyota_amount numeric(12, 2) CHECK (final_toyota_amount > 0),
   -- Generated columns cannot reference other generated columns, so the quoted price is expanded here.
   final_commission numeric(12, 2) GENERATED ALWAYS AS (
-    (initial_toyota_amount + initial_commission + accessory_amount + release_processing_amount)
-    - final_toyota_amount - accessory_amount - release_processing_amount) STORED,
+    (
+      initial_toyota_amount + initial_commission + accessory_amount + release_processing_amount
+    ) - final_toyota_amount - accessory_amount - release_processing_amount
+  ) STORED,
   row_version integer NOT NULL DEFAULT 1,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_by uuid REFERENCES employees (id),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT sale_financials_commission_positive CHECK (final_commission IS NULL OR final_commission > 0)
+  CONSTRAINT sale_financials_commission_positive CHECK (
+    final_commission IS NULL
+    OR final_commission > 0
+  )
 );
 
 -- Task 2
@@ -149,14 +227,32 @@ CREATE TABLE sale_due_diligence (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_by uuid REFERENCES employees (id),
   updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT sale_due_diligence_signer_pair CHECK ((signer_document_type IS NULL) = (signer_document_number IS NULL)),
-  CONSTRAINT sale_due_diligence_signer_not_ruc CHECK (signer_document_type IS NULL OR signer_document_type <> 'RUC'),
+  CONSTRAINT sale_due_diligence_signer_pair CHECK (
+    (signer_document_type IS NULL) = (signer_document_number IS NULL)
+  ),
+  CONSTRAINT sale_due_diligence_signer_not_ruc CHECK (
+    signer_document_type IS NULL
+    OR signer_document_type <> 'RUC'
+  ),
   CONSTRAINT sale_due_diligence_signer_format CHECK (
     signer_document_number IS NULL
-    OR (signer_document_type = 'DNI' AND signer_document_number ~ '^[0-9]{8}$')
-    OR (signer_document_type = 'CE' AND signer_document_number ~ '^[A-Z0-9]{9}$')
-    OR (signer_document_type = 'PAS' AND signer_document_number ~ '^[A-Z0-9]{6,12}$')
-    OR (signer_document_type = 'CDI' AND signer_document_number ~ '^[A-Z0-9]{8,12}$'))
+    OR (
+      signer_document_type = 'DNI'
+      AND signer_document_number ~ '^[0-9]{8}$'
+    )
+    OR (
+      signer_document_type = 'CE'
+      AND signer_document_number ~ '^[A-Z0-9]{9}$'
+    )
+    OR (
+      signer_document_type = 'PAS'
+      AND signer_document_number ~ '^[A-Z0-9]{6,12}$'
+    )
+    OR (
+      signer_document_type = 'CDI'
+      AND signer_document_number ~ '^[A-Z0-9]{8,12}$'
+    )
+  )
 );
 
 -- Tasks 4 and 5: at most one row per kind per sale
@@ -179,10 +275,18 @@ CREATE TABLE sale_payments (
   CONSTRAINT sale_payments_transaction_unique UNIQUE (payment_kind, bank, transaction_number),
   CONSTRAINT sale_payments_transaction_normalized CHECK (
     transaction_number IS NULL
-    OR (transaction_number = upper(transaction_number) AND transaction_number !~ '\s' AND length(transaction_number) > 0)),
+    OR (
+      transaction_number = upper(transaction_number)
+      AND transaction_number !~ '\s'
+      AND length(transaction_number) > 0
+    )
+  ),
   CONSTRAINT sale_payments_mismatch_reason CHECK (
-    deposited_amount IS NULL OR expected_amount IS NULL OR deposited_amount = expected_amount
-    OR length(btrim(coalesce(mismatch_reason, ''))) > 0)
+    deposited_amount IS NULL
+    OR expected_amount IS NULL
+    OR deposited_amount = expected_amount
+    OR length(btrim(coalesce(mismatch_reason, ''))) > 0
+  )
 );
 
 -- Task 6: at most one row per kind per sale
@@ -200,16 +304,28 @@ CREATE TABLE sale_invoices (
   updated_by uuid REFERENCES employees (id),
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT sale_invoices_sale_kind_unique UNIQUE (sale_id, invoice_kind),
-  CONSTRAINT sale_invoices_number_format CHECK (invoice_number IS NULL OR invoice_number ~ '^[A-Z0-9]{4}-[0-9]{1,8}$'),
+  CONSTRAINT sale_invoices_number_format CHECK (
+    invoice_number IS NULL
+    OR invoice_number ~ '^[A-Z0-9]{4}-[0-9]{1,8}$'
+  ),
   CONSTRAINT sale_invoices_mismatch_reason CHECK (
-    invoice_amount IS NULL OR expected_amount IS NULL OR invoice_amount = expected_amount
-    OR length(btrim(coalesce(mismatch_reason, ''))) > 0)
+    invoice_amount IS NULL
+    OR expected_amount IS NULL
+    OR invoice_amount = expected_amount
+    OR length(btrim(coalesce(mismatch_reason, ''))) > 0
+  )
 );
+
 -- Two uniqueness namespaces, both covering cancelled sales
 CREATE UNIQUE INDEX ux_sale_invoices_number_toyota ON sale_invoices (invoice_number)
-  WHERE invoice_kind = 'toyota' AND invoice_number IS NOT NULL;
+WHERE
+  invoice_kind = 'toyota'
+  AND invoice_number IS NOT NULL;
+
 CREATE UNIQUE INDEX ux_sale_invoices_number_pana ON sale_invoices (invoice_number)
-  WHERE invoice_kind IN ('commission', 'accessories', 'release_processing') AND invoice_number IS NOT NULL;
+WHERE
+  invoice_kind IN ('commission', 'accessories', 'release_processing')
+  AND invoice_number IS NOT NULL;
 
 -- Tasks 7 to 13 (scalar fields)
 CREATE TABLE sale_fulfillment (
@@ -230,7 +346,15 @@ CREATE TABLE sale_fulfillment (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT sale_fulfillment_dam_normalized CHECK (
     dam_number IS NULL
-    OR (dam_number = upper(dam_number) AND dam_number !~ '\s' AND length(dam_number) > 0))
+    OR (
+      dam_number = upper(dam_number)
+      AND dam_number !~ '\s'
+      AND length(dam_number) > 0
+    )
+  )
 );
+
 -- DAM numbers are unique across all sales, cancelled ones included
-CREATE UNIQUE INDEX ux_sale_fulfillment_dam ON sale_fulfillment (dam_number) WHERE dam_number IS NOT NULL;
+CREATE UNIQUE INDEX ux_sale_fulfillment_dam ON sale_fulfillment (dam_number)
+WHERE
+  dam_number IS NOT NULL;

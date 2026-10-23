@@ -13,6 +13,7 @@ CREATE TABLE vehicle_models (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT vehicle_models_lifecycle CHECK (is_active = (deactivated_at IS NULL))
 );
+
 CREATE UNIQUE INDEX ux_vehicle_models_name ON vehicle_models (lower(model_name));
 
 CREATE TABLE vehicle_model_categories (
@@ -37,6 +38,7 @@ CREATE TABLE vehicle_versions (
   CONSTRAINT vehicle_versions_id_model_unique UNIQUE (id, model_id),
   CONSTRAINT vehicle_versions_lifecycle CHECK (is_active = (deactivated_at IS NULL))
 );
+
 CREATE UNIQUE INDEX ux_vehicle_versions_name ON vehicle_versions (model_id, lower(version_name));
 
 CREATE TABLE vehicle_colors (
@@ -54,14 +56,20 @@ CREATE TABLE vehicle_colors (
   CONSTRAINT vehicle_colors_id_model_unique UNIQUE (id, model_id),
   CONSTRAINT vehicle_colors_lifecycle CHECK (is_active = (deactivated_at IS NULL))
 );
+
 CREATE UNIQUE INDEX ux_vehicle_colors_name ON vehicle_colors (model_id, lower(color_name));
 
 CREATE TABLE catalog_images (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   vehicle_color_id uuid NOT NULL REFERENCES vehicle_colors (id),
   viewpoint viewpoint NOT NULL,
-  mime_type text NOT NULL CHECK (mime_type IN ('image/jpeg', 'image/png', 'image/webp')),
-  size_bytes integer NOT NULL CHECK (size_bytes > 0 AND size_bytes <= 5242880),
+  mime_type text NOT NULL CHECK (
+    mime_type IN ('image/jpeg', 'image/png', 'image/webp')
+  ),
+  size_bytes integer NOT NULL CHECK (
+    size_bytes > 0
+    AND size_bytes <= 5242880
+  ),
   storage_key text NOT NULL UNIQUE,
   uploaded_by uuid NOT NULL REFERENCES employees (id),
   uploaded_at timestamptz NOT NULL DEFAULT now(),

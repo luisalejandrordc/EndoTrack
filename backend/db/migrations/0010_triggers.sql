@@ -3,11 +3,9 @@
 -- Custom SQLSTATE codes let the backend map each rule to a stable error:
 --   EF001 immutable columns changed   EF002 task sequence broken   EF003 sale children missing
 --   EF004 append-only table           EF005 catalog incomplete     EF006 last active Admin
-
 -- 1. Snapshots, vehicle, customer and temperature never change after creation.
 -- +goose StatementBegin
-CREATE FUNCTION trg_sale_registers_immutable() RETURNS trigger
-LANGUAGE plpgsql AS $$
+CREATE FUNCTION trg_sale_registers_immutable () RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF NEW.customer_id IS DISTINCT FROM OLD.customer_id
      OR NEW.customer_legal_name_snapshot IS DISTINCT FROM OLD.customer_legal_name_snapshot
@@ -28,16 +26,15 @@ BEGIN
   END IF;
   RETURN NEW;
 END $$;
--- +goose StatementEnd
 
+-- +goose StatementEnd
 CREATE TRIGGER sale_registers_immutable
-  BEFORE UPDATE ON sale_registers
-  FOR EACH ROW EXECUTE FUNCTION trg_sale_registers_immutable();
+BEFORE UPDATE ON sale_registers FOR EACH ROW
+EXECUTE FUNCTION trg_sale_registers_immutable ();
 
 -- 2. A sale always has exactly 13 tasks and its three one-to-one detail rows (checked at commit).
 -- +goose StatementBegin
-CREATE FUNCTION trg_sale_requires_children() RETURNS trigger
-LANGUAGE plpgsql AS $$
+CREATE FUNCTION trg_sale_requires_children () RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
   v_tasks integer;
 BEGIN
@@ -53,17 +50,16 @@ BEGIN
   END IF;
   RETURN NULL;
 END $$;
--- +goose StatementEnd
 
+-- +goose StatementEnd
 CREATE CONSTRAINT TRIGGER sale_registers_requires_children
-  AFTER INSERT ON sale_registers
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION trg_sale_requires_children();
+AFTER INSERT ON sale_registers
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+EXECUTE FUNCTION trg_sale_requires_children ();
 
 -- 3. Completed tasks form a prefix and the in-progress task is the next one (checked at commit).
 -- +goose StatementBegin
-CREATE FUNCTION trg_task_sequence_guard() RETURNS trigger
-LANGUAGE plpgsql AS $$
+CREATE FUNCTION trg_task_sequence_guard () RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
   v_completed integer;
   v_max_completed integer;
@@ -86,35 +82,33 @@ BEGIN
   END IF;
   RETURN NULL;
 END $$;
--- +goose StatementEnd
 
+-- +goose StatementEnd
 CREATE CONSTRAINT TRIGGER task_instances_sequence_guard
-  AFTER INSERT OR UPDATE OF status ON task_instances
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION trg_task_sequence_guard();
+AFTER INSERT OR UPDATE OF status ON task_instances
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+EXECUTE FUNCTION trg_task_sequence_guard ();
 
 -- 4. Audit and access logs are append-only.
 -- +goose StatementBegin
-CREATE FUNCTION trg_append_only() RETURNS trigger
-LANGUAGE plpgsql AS $$
+CREATE FUNCTION trg_append_only () RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   RAISE EXCEPTION '% is append-only', TG_TABLE_NAME USING ERRCODE = 'EF004';
 END $$;
--- +goose StatementEnd
 
+-- +goose StatementEnd
 CREATE TRIGGER audit_logs_append_only
-  BEFORE UPDATE OR DELETE ON audit_logs
-  FOR EACH ROW EXECUTE FUNCTION trg_append_only();
+BEFORE UPDATE OR DELETE ON audit_logs FOR EACH ROW
+EXECUTE FUNCTION trg_append_only ();
 
 CREATE TRIGGER access_logs_append_only
-  BEFORE UPDATE OR DELETE ON access_logs
-  FOR EACH ROW EXECUTE FUNCTION trg_append_only();
+BEFORE UPDATE OR DELETE ON access_logs FOR EACH ROW
+EXECUTE FUNCTION trg_append_only ();
 
 -- 5. An active model needs a category, an active version and an active color;
 --    every color needs its Main view image (checked at commit).
 -- +goose StatementBegin
-CREATE FUNCTION trg_catalog_model_complete() RETURNS trigger
-LANGUAGE plpgsql AS $$
+CREATE FUNCTION trg_catalog_model_complete () RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
   v_row jsonb;
   v_model uuid;
@@ -148,31 +142,30 @@ BEGIN
   END IF;
   RETURN NULL;
 END $$;
--- +goose StatementEnd
 
+-- +goose StatementEnd
 CREATE CONSTRAINT TRIGGER vehicle_models_complete
-  AFTER INSERT OR UPDATE OR DELETE ON vehicle_models
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION trg_catalog_model_complete();
+AFTER INSERT OR UPDATE OR DELETE ON vehicle_models
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+EXECUTE FUNCTION trg_catalog_model_complete ();
 
 CREATE CONSTRAINT TRIGGER vehicle_model_categories_complete
-  AFTER INSERT OR UPDATE OR DELETE ON vehicle_model_categories
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION trg_catalog_model_complete();
+AFTER INSERT OR UPDATE OR DELETE ON vehicle_model_categories
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+EXECUTE FUNCTION trg_catalog_model_complete ();
 
 CREATE CONSTRAINT TRIGGER vehicle_versions_complete
-  AFTER INSERT OR UPDATE OR DELETE ON vehicle_versions
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION trg_catalog_model_complete();
+AFTER INSERT OR UPDATE OR DELETE ON vehicle_versions
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+EXECUTE FUNCTION trg_catalog_model_complete ();
 
 CREATE CONSTRAINT TRIGGER vehicle_colors_complete
-  AFTER INSERT OR UPDATE OR DELETE ON vehicle_colors
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION trg_catalog_model_complete();
+AFTER INSERT OR UPDATE OR DELETE ON vehicle_colors
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+EXECUTE FUNCTION trg_catalog_model_complete ();
 
 -- +goose StatementBegin
-CREATE FUNCTION trg_catalog_color_has_main() RETURNS trigger
-LANGUAGE plpgsql AS $$
+CREATE FUNCTION trg_catalog_color_has_main () RETURNS trigger LANGUAGE plpgsql AS $$
 DECLARE
   v_row jsonb;
   v_color uuid;
@@ -202,22 +195,21 @@ BEGIN
   END IF;
   RETURN NULL;
 END $$;
--- +goose StatementEnd
 
+-- +goose StatementEnd
 CREATE CONSTRAINT TRIGGER vehicle_colors_main_image
-  AFTER INSERT OR UPDATE ON vehicle_colors
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION trg_catalog_color_has_main();
+AFTER INSERT OR UPDATE ON vehicle_colors
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+EXECUTE FUNCTION trg_catalog_color_has_main ();
 
 CREATE CONSTRAINT TRIGGER catalog_images_main_image
-  AFTER UPDATE OR DELETE ON catalog_images
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION trg_catalog_color_has_main();
+AFTER UPDATE OR DELETE ON catalog_images
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+EXECUTE FUNCTION trg_catalog_color_has_main ();
 
 -- 6. The last active System Admin cannot be deactivated, demoted or deleted (checked at commit).
 -- +goose StatementBegin
-CREATE FUNCTION trg_last_admin_guard() RETURNS trigger
-LANGUAGE plpgsql AS $$
+CREATE FUNCTION trg_last_admin_guard () RETURNS trigger LANGUAGE plpgsql AS $$
 BEGIN
   IF TG_OP = 'UPDATE' THEN
     IF NOT (OLD.role = 'system_admin' AND OLD.is_active AND NOT OLD.is_system
@@ -237,9 +229,9 @@ BEGIN
   END IF;
   RETURN NULL;
 END $$;
--- +goose StatementEnd
 
+-- +goose StatementEnd
 CREATE CONSTRAINT TRIGGER employees_last_admin_guard
-  AFTER UPDATE OR DELETE ON employees
-  DEFERRABLE INITIALLY DEFERRED
-  FOR EACH ROW EXECUTE FUNCTION trg_last_admin_guard();
+AFTER UPDATE OR DELETE ON employees
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW
+EXECUTE FUNCTION trg_last_admin_guard ();

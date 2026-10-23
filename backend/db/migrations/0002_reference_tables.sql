@@ -14,12 +14,17 @@ CREATE TABLE task_definitions (
   milestone_number smallint NOT NULL REFERENCES milestone_definitions (milestone_number),
   recommended_duration_hours integer,
   reminder_interval_hours integer,
-  CONSTRAINT task_definitions_sla_pair
-    CHECK ((recommended_duration_hours IS NULL) = (reminder_interval_hours IS NULL)),
-  CONSTRAINT task_definitions_duration_positive
-    CHECK (recommended_duration_hours IS NULL OR recommended_duration_hours > 0),
-  CONSTRAINT task_definitions_interval_positive
-    CHECK (reminder_interval_hours IS NULL OR reminder_interval_hours > 0)
+  CONSTRAINT task_definitions_sla_pair CHECK (
+    (recommended_duration_hours IS NULL) = (reminder_interval_hours IS NULL)
+  ),
+  CONSTRAINT task_definitions_duration_positive CHECK (
+    recommended_duration_hours IS NULL
+    OR recommended_duration_hours > 0
+  ),
+  CONSTRAINT task_definitions_interval_positive CHECK (
+    reminder_interval_hours IS NULL
+    OR reminder_interval_hours > 0
+  )
 );
 
 CREATE TABLE document_slots (

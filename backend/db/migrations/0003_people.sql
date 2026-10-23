@@ -32,28 +32,73 @@ CREATE TABLE employees (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT employees_document_unique UNIQUE (document_type, document_number),
   CONSTRAINT employees_document_format CHECK (
-    (document_type = 'DNI' AND document_number ~ '^[0-9]{8}$')
-    OR (document_type = 'CE' AND document_number ~ '^[A-Z0-9]{9}$')
-    OR (document_type = 'PAS' AND document_number ~ '^[A-Z0-9]{6,12}$')),
+    (
+      document_type = 'DNI'
+      AND document_number ~ '^[0-9]{8}$'
+    )
+    OR (
+      document_type = 'CE'
+      AND document_number ~ '^[A-Z0-9]{9}$'
+    )
+    OR (
+      document_type = 'PAS'
+      AND document_number ~ '^[A-Z0-9]{6,12}$'
+    )
+  ),
   CONSTRAINT employees_business_email_lower CHECK (business_email = lower(business_email)),
   CONSTRAINT employees_picture_all_or_none CHECK (
     (profile_picture_key IS NULL) = (profile_picture_mime IS NULL)
-    AND (profile_picture_key IS NULL) = (profile_picture_size IS NULL)),
-  CONSTRAINT employees_system_has_no_credentials CHECK (NOT is_system OR password_hash IS NULL),
+    AND (profile_picture_key IS NULL) = (profile_picture_size IS NULL)
+  ),
+  CONSTRAINT employees_system_has_no_credentials CHECK (
+    NOT is_system
+    OR password_hash IS NULL
+  ),
   CONSTRAINT employees_lifecycle CHECK (is_active = (deactivated_at IS NULL)),
   CONSTRAINT employees_failed_logins_nonnegative CHECK (failed_login_count >= 0)
 );
+
 CREATE UNIQUE INDEX ux_employees_business_email ON employees (business_email);
+
 CREATE INDEX ix_employees_role_active ON employees (role, is_active);
 
 -- The system actor owns seeded records and cannot log in (no credentials, inactive, flagged as system).
-INSERT INTO employees (
-  id, document_type, document_number, first_name, last_name, nationality, gender,
-  birthdate, hire_date, business_phone, business_email, role, is_system, is_active, deactivated_at)
-VALUES (
-  '00000000-0000-0000-0000-000000000001', 'DNI', '00000000', 'Sistema', 'EndosoFlow', 'Peruana', 'M',
-  DATE '2000-01-01', DATE '2000-01-01', '000000000', 'system@endosoflow.invalid',
-  'system_admin', true, false, now());
+INSERT INTO
+  employees (
+    id,
+    document_type,
+    document_number,
+    first_name,
+    last_name,
+    nationality,
+    gender,
+    birthdate,
+    hire_date,
+    business_phone,
+    business_email,
+    role,
+    is_system,
+    is_active,
+    deactivated_at
+  )
+VALUES
+  (
+    '00000000-0000-0000-0000-000000000001',
+    'DNI',
+    '00000000',
+    'Sistema',
+    'EndosoFlow',
+    'Peruana',
+    'M',
+    DATE '2000-01-01',
+    DATE '2000-01-01',
+    '000000000',
+    'system@endosoflow.invalid',
+    'system_admin',
+    true,
+    false,
+    now()
+  );
 
 CREATE TABLE customers (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -64,7 +109,9 @@ CREATE TABLE customers (
   last_name text,
   gender gender,
   legal_name text,
-  display_name text GENERATED ALWAYS AS (COALESCE(legal_name, first_name || ' ' || last_name)) STORED,
+  display_name text GENERATED ALWAYS AS (
+    COALESCE(legal_name, first_name || ' ' || last_name)
+  ) STORED,
   name_source name_source NOT NULL DEFAULT 'manual',
   nationality text NOT NULL,
   phone text NOT NULL,
@@ -87,27 +134,58 @@ CREATE TABLE customers (
   updated_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT customers_document_unique UNIQUE (document_type, document_number),
   CONSTRAINT customers_document_format CHECK (
-    (document_type = 'DNI' AND document_number ~ '^[0-9]{8}$')
-    OR (document_type = 'RUC' AND document_number ~ '^[0-9]{11}$')
-    OR (document_type = 'CE' AND document_number ~ '^[A-Z0-9]{9}$')
-    OR (document_type = 'PAS' AND document_number ~ '^[A-Z0-9]{6,12}$')
-    OR (document_type = 'CDI' AND document_number ~ '^[A-Z0-9]{8,12}$')),
+    (
+      document_type = 'DNI'
+      AND document_number ~ '^[0-9]{8}$'
+    )
+    OR (
+      document_type = 'RUC'
+      AND document_number ~ '^[0-9]{11}$'
+    )
+    OR (
+      document_type = 'CE'
+      AND document_number ~ '^[A-Z0-9]{9}$'
+    )
+    OR (
+      document_type = 'PAS'
+      AND document_number ~ '^[A-Z0-9]{6,12}$'
+    )
+    OR (
+      document_type = 'CDI'
+      AND document_number ~ '^[A-Z0-9]{8,12}$'
+    )
+  ),
   CONSTRAINT customers_shape CHECK (
-    (customer_type = 'diplomatico'
-      AND first_name IS NOT NULL AND last_name IS NOT NULL AND gender IS NOT NULL
+    (
+      customer_type = 'diplomatico'
+      AND first_name IS NOT NULL
+      AND last_name IS NOT NULL
+      AND gender IS NOT NULL
       AND legal_name IS NULL
-      AND contact_first_name IS NULL AND contact_last_name IS NULL AND contact_job_title IS NULL
-      AND document_type IN ('DNI', 'CE', 'PAS', 'CDI'))
-    OR
-    (customer_type <> 'diplomatico'
+      AND contact_first_name IS NULL
+      AND contact_last_name IS NULL
+      AND contact_job_title IS NULL
+      AND document_type IN ('DNI', 'CE', 'PAS', 'CDI')
+    )
+    OR (
+      customer_type <> 'diplomatico'
       AND legal_name IS NOT NULL
-      AND contact_first_name IS NOT NULL AND contact_last_name IS NOT NULL AND contact_job_title IS NOT NULL
-      AND first_name IS NULL AND last_name IS NULL AND gender IS NULL
-      AND document_type = 'RUC')),
+      AND contact_first_name IS NOT NULL
+      AND contact_last_name IS NOT NULL
+      AND contact_job_title IS NOT NULL
+      AND first_name IS NULL
+      AND last_name IS NULL
+      AND gender IS NULL
+      AND document_type = 'RUC'
+    )
+  ),
   CONSTRAINT customers_email_lower CHECK (email = lower(email)),
   CONSTRAINT customers_lifecycle CHECK (is_active = (deactivated_at IS NULL)),
   CONSTRAINT customers_failed_logins_nonnegative CHECK (failed_login_count >= 0)
 );
+
 CREATE INDEX ix_customers_created_by ON customers (created_by);
+
 CREATE INDEX ix_customers_active ON customers (is_active);
-CREATE INDEX ix_customers_search ON customers USING gin (f_search_key(display_name) gin_trgm_ops);
+
+CREATE INDEX ix_customers_search ON customers USING gin (f_search_key (display_name) gin_trgm_ops);
