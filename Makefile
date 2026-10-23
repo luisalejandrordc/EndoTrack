@@ -63,8 +63,6 @@ test:
 
 run:
 	cd backend && set -a && . ./.env && set +a && go run ./cmd/api
-migrate-status:
-	goose -dir $(MIGRATIONS) postgres "$(DATABASE_URL)" status
 
 db-reset:
 	dropdb --if-exists $(DEV_DB)
