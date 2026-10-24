@@ -33,7 +33,7 @@ type BootstrapAdminInput struct {
 // BootstrapAdmin creates the first System Admin and returns their activation link. It refuses to run
 // when an active System Admin already exists, so it cannot be used as a back door.
 func BootstrapAdmin(ctx context.Context, svc *Service, in BootstrapAdminInput) (string, error) {
-	docType, docNumber, valid := normalizeIdentifier(in.DocumentType, in.DocumentNumber)
+	docType, docNumber, valid := NormalizeIdentifier(in.DocumentType, in.DocumentNumber)
 	if !valid {
 		return "", errors.New("the document type or number is not valid (DNI: 8 digits, CE: 9 alphanumeric, PAS: 6 to 12 alphanumeric)")
 	}

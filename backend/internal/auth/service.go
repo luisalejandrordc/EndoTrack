@@ -135,8 +135,9 @@ var (
 	pasPattern = regexp.MustCompile(`^[A-Z0-9]{6,12}$`)
 )
 
-// normalizeIdentifier trims and upper-cases the document and checks its format for employees.
-func normalizeIdentifier(docType, docNumber string) (string, string, bool) {
+// NormalizeIdentifier trims and upper-cases an employee's document and checks its format
+// (DNI: 8 digits, CE: 9 alphanumeric, PAS: 6 to 12 alphanumeric). The staff module uses it too.
+func NormalizeIdentifier(docType, docNumber string) (string, string, bool) {
 	t := strings.ToUpper(strings.TrimSpace(docType))
 	n := strings.ToUpper(strings.ReplaceAll(strings.TrimSpace(docNumber), " ", ""))
 	var pattern *regexp.Regexp
@@ -196,7 +197,7 @@ func earlier(a, b time.Time) time.Time {
 // Login checks the credentials and starts a session. Every failure looks the same to the caller
 // (unknown account, wrong password, locked, inactive, not yet activated); the reason goes to the log.
 func (s *Service) Login(ctx context.Context, req LoginRequest, client ClientInfo) (*Session, error) {
-	docType, docNumber, valid := normalizeIdentifier(req.DocumentType, req.DocumentNumber)
+	docType, docNumber, valid := NormalizeIdentifier(req.DocumentType, req.DocumentNumber)
 	now := s.now()
 
 	var session *Session
@@ -538,7 +539,7 @@ func (s *Service) Activate(ctx context.Context, plainToken, password string, cli
 // ForgotPassword emails a reset link when the account exists, is active and has a password. It always
 // succeeds from the caller's point of view, so it cannot be used to discover which documents exist.
 func (s *Service) ForgotPassword(ctx context.Context, docType, docNumber string, client ClientInfo) error {
-	docType, docNumber, valid := normalizeIdentifier(docType, docNumber)
+	docType, docNumber, valid := NormalizeIdentifier(docType, docNumber)
 	if !valid {
 		return nil
 	}
@@ -713,4 +714,25 @@ func (s *Service) sendAsync(message mail.Message) {
 			s.logger.Error("sending email failed", "subject", message.Subject, "error", err)
 		}
 	}()
+}
+
+// RevokeAccess ends every session and cancels every open activation or reset link of an employee.
+// Staff management calls it inside its own transaction when an account is deactivated.
+func (s *Service) RevokeAccess(ctx context.Context, tx pgx.Tx, employeeID uuid.UUID, reason string, now time.Time) error {
+	if err := revokeAllRefreshTokens(ctx, tx, employeeID, reason, now); err != nil {
+		return err
+	}
+	if err := revokeOpenAccountTokens(ctx, tx, employeeID, purposeActivation, now); err != nil {
+		return err
+	}
+	return revokeOpenAccountTokens(ctx, tx, employeeID, purposePasswordReset, now)
+}
+
+// PurgeTokens deletes every token of an employee who is about to be deleted.
+func (s *Service) PurgeTokens(ctx context.Context, tx pgx.Tx, employeeID uuid.UUID) error {
+	if _, err := tx.Exec(ctx, `DELETE FROM employee_refresh_tokens WHERE employee_id = $1`, employeeID); err != nil {
+		return err
+	}
+	_, err := tx.Exec(ctx, `DELETE FROM account_tokens WHERE employee_id = $1`, employeeID)
+	return err
 }

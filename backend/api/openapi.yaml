@@ -1,0 +1,680 @@
+openapi: 3.0.3
+info:
+  title: EndosoFlow API
+  version: 0.1.0
+  description: |
+    The contract between the EndosoFlow backend and its frontends. It is the source of truth: a Go test fails
+    when a route exists in the code but not here, or here but not in the code.
+
+    **Conventions.** JSON over HTTPS under `/api/v1`. Fields are camelCase. Identifiers are UUIDs. Timestamps are
+    ISO 8601 in UTC and calendar dates are `YYYY-MM-DD`. Lists use `page` and `pageSize` (default 20, maximum 100).
+    Editable resources carry a `version`; an update must send the version it read.
+
+    **Errors.** Every failure uses the same envelope with a stable English `code` and a Spanish `message` that is
+    safe to show. Codes used so far: INVALID_JSON, INVALID_QUERY, VALIDATION_FAILED, VERSION_REQUIRED,
+    VERSION_CONFLICT, INVALID_CREDENTIALS, SESSION_INVALID, ACCESS_TOKEN_INVALID, CSRF_REJECTED, FORBIDDEN,
+    INVALID_LINK, PASSWORD_TOO_WEAK, INVALID_CURRENT_PASSWORD, RATE_LIMITED, EMPLOYEE_NOT_FOUND,
+    EMPLOYEE_ALREADY_EXISTS, EMPLOYEE_EMAIL_ALREADY_USED, EMPLOYEE_ALREADY_ACTIVATED, EMPLOYEE_ALREADY_ACTIVE,
+    EMPLOYEE_ALREADY_INACTIVE, EMPLOYEE_HAS_HISTORY, CANNOT_DEACTIVATE_SELF, CANNOT_DELETE_SELF,
+    ADVISOR_HAS_ACTIVE_SALES, LAST_ADMIN_PROTECTED, REASON_REQUIRED, ROUTE_NOT_FOUND, METHOD_NOT_ALLOWED,
+    INTERNAL_ERROR.
+
+    **Authentication.** Employees sign in with `POST /auth/employee/login` and send the returned access token as
+    `Authorization: Bearer <token>`. The refresh token lives in an HttpOnly cookie. Refresh and logout also need the
+    header `X-Requested-With: EndosoFlow`.
+servers:
+  - url: /api/v1
+tags:
+  - name: System
+  - name: Authentication
+  - name: Staff
+paths:
+  /health:
+    get:
+      tags: [System]
+      operationId: getHealth
+      summary: Liveness and database check
+      security: []
+      responses:
+        "200":
+          description: The service and its database respond.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+        "503":
+          description: The database does not respond.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Health" }
+  /auth/employee/login:
+    post:
+      tags: [Authentication]
+      operationId: employeeLogin
+      summary: Sign in as an employee
+      description: Every failure (unknown account, wrong password, locked, inactive, not activated) answers INVALID_CREDENTIALS.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LoginRequest" }
+      responses:
+        "200":
+          description: Signed in. The refresh token is set as an HttpOnly cookie.
+          headers:
+            Set-Cookie:
+              description: The refresh cookie (ef_employee_refresh), scoped to /api/v1/auth.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      operationId: refreshSession
+      summary: Rotate the refresh token and get a new access token
+      security:
+        - refreshCookie: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfHeader"
+      responses:
+        "200":
+          description: A new access token. The cookie is rotated, except inside the 10-second grace window.
+          headers:
+            Set-Cookie:
+              description: The rotated refresh cookie.
+              schema: { type: string }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      operationId: logout
+      summary: End the current session
+      security:
+        - refreshCookie: []
+      parameters:
+        - $ref: "#/components/parameters/CsrfHeader"
+      responses:
+        "204":
+          description: Signed out and the cookie cleared.
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /auth/activate:
+    post:
+      tags: [Authentication]
+      operationId: activateAccount
+      summary: Set the first password from an activation link
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TokenPasswordRequest" }
+      responses:
+        "204":
+          description: The password was set. The person can now sign in.
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /auth/forgot-password:
+    post:
+      tags: [Authentication]
+      operationId: forgotPassword
+      summary: Ask for a password reset link
+      description: Always answers 202, whether or not the account exists.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ForgotPasswordRequest" }
+      responses:
+        "202":
+          description: Accepted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Accepted" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /auth/reset-password:
+    post:
+      tags: [Authentication]
+      operationId: resetPassword
+      summary: Set a new password from a reset link
+      description: Every session of the account ends.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TokenPasswordRequest" }
+      responses:
+        "204":
+          description: The password was changed.
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /me:
+    get:
+      tags: [Authentication]
+      operationId: getMe
+      summary: The signed-in employee
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The profile.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Profile" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /me/password:
+    put:
+      tags: [Authentication]
+      operationId: changePassword
+      summary: Change the signed-in employee's password
+      description: Every session of the account ends, including this one.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ChangePasswordRequest" }
+      responses:
+        "204":
+          description: The password was changed and the cookie cleared.
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /employees:
+    get:
+      tags: [Staff]
+      operationId: listEmployees
+      summary: List employees (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Matches names (ignoring accents and case), the start of a document number or of an email.
+          schema: { type: string }
+        - name: role
+          in: query
+          schema: { $ref: "#/components/schemas/Role" }
+        - name: status
+          in: query
+          schema: { type: string, enum: [all, active, inactive], default: all }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: sort
+          in: query
+          schema:
+            {
+              type: string,
+              enum: [lastName, "-lastName", createdAt, "-createdAt"],
+              default: lastName,
+            }
+      responses:
+        "200":
+          description: One page of employees.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EmployeeList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Staff]
+      operationId: createEmployee
+      summary: Create an employee and send the activation link (Admin)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateEmployeeRequest" }
+      responses:
+        "201":
+          description: Created. activationLinkIssued is false if the link could not be issued; resend it later.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreateEmployeeResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /employees/{id}:
+    parameters:
+      - $ref: "#/components/parameters/EmployeeId"
+    get:
+      tags: [Staff]
+      operationId: getEmployee
+      summary: Read an employee (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The employee.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Employee" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Staff]
+      operationId: updateEmployee
+      summary: Edit an employee, including the role (Admin)
+      description: Only the fields sent change. version is required; a stale version answers VERSION_CONFLICT.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateEmployeeRequest" }
+      responses:
+        "200":
+          description: The updated employee.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Employee" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+    delete:
+      tags: [Staff]
+      operationId: deleteEmployee
+      summary: Permanently delete an employee without history (Admin)
+      description: Exceptional. Anyone who ever signed in or acted must be deactivated instead.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reason
+          in: query
+          required: true
+          description: Why the employee is being deleted. It is kept in the audit trail.
+          schema: { type: string, minLength: 1 }
+      responses:
+        "204":
+          description: Deleted.
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /employees/{id}/deactivate:
+    parameters:
+      - $ref: "#/components/parameters/EmployeeId"
+    post:
+      tags: [Staff]
+      operationId: deactivateEmployee
+      summary: Deactivate an employee and end their sessions (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The deactivated employee.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Employee" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /employees/{id}/reactivate:
+    parameters:
+      - $ref: "#/components/parameters/EmployeeId"
+    post:
+      tags: [Staff]
+      operationId: reactivateEmployee
+      summary: Reactivate an employee (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The reactivated employee.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Employee" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /employees/{id}/resend-activation:
+    parameters:
+      - $ref: "#/components/parameters/EmployeeId"
+    post:
+      tags: [Staff]
+      operationId: resendActivation
+      summary: Send a new activation link (Admin)
+      description: Only for employees who have not set a password yet.
+      security:
+        - bearerAuth: []
+      responses:
+        "202":
+          description: Accepted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Accepted" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /advisors:
+    get:
+      tags: [Staff]
+      operationId: listAdvisors
+      summary: Active Sales Advisors for pickers (Admin, Manager)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The active advisors.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AdvisorList" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    refreshCookie:
+      type: apiKey
+      in: cookie
+      name: ef_employee_refresh
+  parameters:
+    EmployeeId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    CsrfHeader:
+      name: X-Requested-With
+      in: header
+      required: true
+      description: Must be EndosoFlow. A form on another site cannot send it.
+      schema: { type: string, enum: [EndosoFlow] }
+  responses:
+    BadRequest:
+      description: The request is malformed.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Unauthorized:
+      description: Missing, expired or invalid credentials.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Forbidden:
+      description: The employee's role does not allow this action.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    NotFound:
+      description: The record does not exist.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Conflict:
+      description: The request conflicts with the current state (version, uniqueness or a business rule).
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    Unprocessable:
+      description: The data breaks a validation or business rule. Field problems are listed in error.fields.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+    TooManyRequests:
+      description: Rate limit exceeded.
+      headers:
+        Retry-After:
+          description: Seconds to wait.
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ErrorResponse" }
+  schemas:
+    Health:
+      type: object
+      required: [status, database]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        database: { type: string, enum: [ok, error] }
+    FieldError:
+      type: object
+      required: [field, code, message]
+      properties:
+        field: { type: string }
+        code: { type: string }
+        message: { type: string }
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, description: Stable English code. }
+            message:
+              { type: string, description: Spanish text that is safe to show. }
+            fields:
+              type: array
+              items: { $ref: "#/components/schemas/FieldError" }
+            requestId: { type: string }
+    Accepted:
+      type: object
+      required: [status]
+      properties:
+        status: { type: string, enum: [accepted] }
+    Role:
+      type: string
+      enum: [system_admin, sales_manager, sales_advisor]
+    DocumentType:
+      type: string
+      enum: [DNI, CE, PAS]
+    LoginRequest:
+      type: object
+      required: [documentType, documentNumber, password]
+      properties:
+        documentType: { $ref: "#/components/schemas/DocumentType" }
+        documentNumber: { type: string }
+        password: { type: string }
+        rememberMe: { type: boolean, default: false }
+    TokenPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token: { type: string }
+        password: { type: string, minLength: 10, maxLength: 128 }
+    ForgotPasswordRequest:
+      type: object
+      required: [documentType, documentNumber]
+      properties:
+        documentType: { $ref: "#/components/schemas/DocumentType" }
+        documentNumber: { type: string }
+    ChangePasswordRequest:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword: { type: string }
+        newPassword: { type: string, minLength: 10, maxLength: 128 }
+    Profile:
+      type: object
+      required:
+        [
+          id,
+          documentType,
+          documentNumber,
+          firstName,
+          lastName,
+          businessEmail,
+          role,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        documentType: { $ref: "#/components/schemas/DocumentType" }
+        documentNumber: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        businessEmail: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+    SessionResponse:
+      type: object
+      required: [accessToken, expiresAt, employee]
+      properties:
+        accessToken: { type: string }
+        expiresAt: { type: string, format: date-time }
+        employee: { $ref: "#/components/schemas/Profile" }
+    Employee:
+      type: object
+      required:
+        [
+          id,
+          documentType,
+          documentNumber,
+          firstName,
+          lastName,
+          nameSource,
+          nationality,
+          gender,
+          birthdate,
+          hireDate,
+          businessPhone,
+          businessEmail,
+          role,
+          isActive,
+          version,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        documentType: { $ref: "#/components/schemas/DocumentType" }
+        documentNumber: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        nameSource: { type: string, enum: [manual, looked_up] }
+        nationality: { type: string }
+        gender: { type: string, enum: [M, F] }
+        birthdate: { type: string, format: date }
+        hireDate: { type: string, format: date }
+        personalPhone: { type: string, nullable: true }
+        personalEmail: { type: string, nullable: true }
+        businessPhone: { type: string }
+        businessEmail: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        isActive: { type: boolean }
+        activatedAt:
+          {
+            type: string,
+            format: date-time,
+            nullable: true,
+            description: Null until the person sets a password.,
+          }
+        version: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    EmployeeList:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Employee" }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    CreateEmployeeRequest:
+      type: object
+      required:
+        [
+          documentType,
+          documentNumber,
+          firstName,
+          lastName,
+          nationality,
+          gender,
+          birthdate,
+          hireDate,
+          businessPhone,
+          businessEmail,
+          role,
+        ]
+      properties:
+        documentType: { $ref: "#/components/schemas/DocumentType" }
+        documentNumber: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        nameSource: { type: string, enum: [manual, looked_up], default: manual }
+        nationality: { type: string }
+        gender: { type: string, enum: [M, F] }
+        birthdate: { type: string, format: date }
+        hireDate: { type: string, format: date }
+        personalPhone: { type: string, nullable: true }
+        personalEmail: { type: string, nullable: true }
+        businessPhone: { type: string }
+        businessEmail: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+    UpdateEmployeeRequest:
+      type: object
+      required: [version]
+      properties:
+        version: { type: integer }
+        documentType: { $ref: "#/components/schemas/DocumentType" }
+        documentNumber: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        nameSource: { type: string, enum: [manual, looked_up] }
+        nationality: { type: string }
+        gender: { type: string, enum: [M, F] }
+        birthdate: { type: string, format: date }
+        hireDate: { type: string, format: date }
+        personalPhone:
+          { type: string, description: An empty string clears the value. }
+        personalEmail:
+          { type: string, description: An empty string clears the value. }
+        businessPhone: { type: string }
+        businessEmail: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+    CreateEmployeeResult:
+      type: object
+      required: [employee, activationLinkIssued]
+      properties:
+        employee: { $ref: "#/components/schemas/Employee" }
+        activationLinkIssued: { type: boolean }
+    Advisor:
+      type: object
+      required: [id, firstName, lastName]
+      properties:
+        id: { type: string, format: uuid }
+        firstName: { type: string }
+        lastName: { type: string }
+    AdvisorList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Advisor" }

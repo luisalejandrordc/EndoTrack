@@ -1,35 +1,33 @@
 # EndosoFlow — Grupo Pana
 
-Platform for tracking vehicle sales sold through the Grupo Pana _endoso_ channel.
-This is the 1D foundation. Slice 1 is **the database** (migrations plus a SQL rule-check script).
-Slice 2 is the **Go backend foundation** (configuration, logging, database access, error mapping and the
-health endpoint). CI and employee authentication come next.
+Web platform for managing and tracking Grupo Pana's vehicle endoso process, featuring employee
+and customer portals, task-based workflows, and secure document access.
 
 ## Local setup on macOS
 
-1. Install PostgreSQL and goose with Homebrew. Use the same major version as your Supabase project. The example uses 18:
+Install PostgreSQL and goose with Homebrew. Use the same major version as your Supabase project. The example uses 18:
 
-   ```
-   brew install postgresql@18 goose
-   brew services start postgresql@18
-   echo 'export PATH="/opt/homebrew/opt/postgresql@18/bin:$PATH"' >> ~/.zshrc
-   source ~/.zshrc
-   ```
+```
+brew install postgresql@18 goose
+brew services start postgresql@18
+echo 'export PATH="/opt/homebrew/opt/postgresql@18/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
 
-   (On Intel Macs the Homebrew prefix is `/usr/local` instead of `/opt/homebrew`.)
+(On Intel Macs the Homebrew prefix is `/usr/local` instead of `/opt/homebrew`.)
 
-2. From the repository root:
+From the repository root:
 
-   ```
-   make db-create      # creates endosoflow_dev and endosoflow_test
-   make migrate-up     # applies all migrations to the dev database
-   make db-verify      # rebuilds the test database and runs ~70 rule checks
-   ```
+```
+make db-create      # creates endosoflow_dev and endosoflow_test
+make migrate-up     # applies all migrations to the dev database
+make db-verify      # rebuilds the test database and runs ~70 rule checks
+```
 
-   `make db-verify` ends with `ALL CHECKS PASSED`. Every rule from the Data Model (unique indexes,
-   partial indexes, CHECKs, generated columns, the six triggers) has at least one check.
+`make db-verify` ends with `ALL CHECKS PASSED`. Every rule from the Data Model (unique indexes,
+partial indexes, CHECKs, generated columns, the six triggers) has at least one check.
 
-## Go backend (slice 2)
+## Go backend
 
 ```
 brew install go
@@ -48,7 +46,7 @@ used in emailed links).
 
 Run `make fmt` before committing: CI checks formatting, and it will fail if the Go files are not formatted.
 
-## Authentication (slice 3)
+## Authentication
 
 The API now serves the employee authentication routes under `/api/v1`:
 `POST /auth/employee/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/activate`,
@@ -72,6 +70,20 @@ curl -i -X POST http://localhost:8080/api/v1/auth/employee/login \
   -H 'Content-Type: application/json' \
   -d '{"documentType":"DNI","documentNumber":"10000001","password":"YOUR-PASSWORD","rememberMe":false}'
 ```
+
+## Staff module and the API contract
+
+New routes (Admin unless noted): `GET/POST /employees`, `GET/PATCH/DELETE /employees/{id}`,
+`POST /employees/{id}/deactivate`, `/reactivate`, `/resend-activation`, and `GET /advisors` (Admin and Manager).
+Deleting takes the reason as a query parameter: `DELETE /employees/{id}?reason=Creado%20por%20error`.
+
+The contract lives in `backend/api/openapi.yaml`. A Go test (`make test`) fails when the code serves a route
+the contract does not describe, or the contract describes a route the code does not serve. To read the contract
+as a web page, paste the file into https://editor.swagger.io or run
+`npx @redocly/cli preview-docs backend/api/openapi.yaml`. The frontend will generate its TypeScript types from
+this file (`npx openapi-typescript backend/api/openapi.yaml -o frontend/src/shared/api/schema.d.ts`).
+
+Run `make tidy` again after pulling this slice: it adds one dependency for the contract test.
 
 ## Continuous integration
 

@@ -243,7 +243,7 @@ func TestANotYetActivatedAccountCannotLogIn(t *testing.T) {
 	wantCode(t, err, "INVALID_CREDENTIALS")
 }
 
-func TestFiveFailuresInsideTheWindowLockTheAccount_TEST(t *testing.T) {
+func TestFiveFailedLoginsLockTheEmployeeAccount(t *testing.T) {
 	env := newTestEnv(t)
 	emp := env.createEmployee(t, RoleSalesAdvisor, goodPassword)
 

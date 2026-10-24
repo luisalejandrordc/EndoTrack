@@ -8,6 +8,7 @@ import (
 	"endosoflow/internal/platform/config"
 	"endosoflow/internal/platform/database"
 	"endosoflow/internal/platform/logging"
+	"endosoflow/internal/staff"
 	"errors"
 	"fmt"
 	"net/http"
@@ -53,9 +54,14 @@ func run() error {
 		AppBaseURL: cfg.AppBaseURL, CookieSecure: cfg.CookieSecure, TrustProxy: cfg.TrustProxy,
 	})
 
+	staffService := staff.NewService(staff.Deps{
+		DB: pool, Activation: authService, Access: authService, Logger: logger,
+	})
+	staffHandler := staff.NewHandler(staffService, authHandler, logger)
+
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           newRouter(logger, pool, authHandler.Mount),
+		Handler:           newRouter(logger, pool, authHandler.Mount, staffHandler.Mount),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second, // uploads of up to 10 MB
 		WriteTimeout:      60 * time.Second,

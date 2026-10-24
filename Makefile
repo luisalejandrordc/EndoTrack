@@ -10,7 +10,6 @@ TEST_DB := $(firstword $(subst ?, ,$(notdir $(TEST_DATABASE_URL))))
 MIGRATIONS  := backend/db/migrations
 VERIFY_SQL  := backend/db/verify/constraints.sql
 
-
 .PHONY: help db-create db-drop db-reset migrate-up migrate-status db-verify tidy fmt build vet test run bootstrap-admin
 
 help:
