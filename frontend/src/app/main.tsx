@@ -11,6 +11,8 @@ import { Login } from "@/features/auth/Login";
 import { SalesWorkspace } from "@/features/sales/SalesWorkspace";
 import { NewSaleWizard } from "@/features/sales/NewSaleWizard";
 import { SaleDetail } from "@/features/sales/SaleDetail";
+import { StaffDirectory } from "@/features/staff/StaffDirectory";
+import { Catalog } from "@/features/catalog/Catalog";
 import "../index.css";
 
 const queryClient = new QueryClient();
@@ -25,6 +27,8 @@ const router = createBrowserRouter([
       { path: "sales", element: <SalesWorkspace /> },
       { path: "sales/new", element: <NewSaleWizard /> },
       { path: "sales/:id", element: <SaleDetail /> },
+      { path: "employees", element: <StaffDirectory /> },
+      { path: "catalog", element: <Catalog /> },
     ],
   },
 ]);
