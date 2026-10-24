@@ -3,6 +3,9 @@ package main
 
 import (
 	"context"
+	"endosoflow/internal/platform/config"
+	"endosoflow/internal/platform/database"
+	"endosoflow/internal/platform/logging"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,10 +13,6 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
-	"endosoflow/internal/platform/config"
-	"endosoflow/internal/platform/database"
-	"endosoflow/internal/platform/logging"
 )
 
 func main() {

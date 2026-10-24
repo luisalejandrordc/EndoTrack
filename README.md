@@ -43,6 +43,18 @@ curl http://localhost:8080/api/v1/health
 
 The health call should answer `{"status":"ok","database":"ok"}`.
 
+New settings in `backend/.env`: `JWT_SECRET` (at least 32 characters) and `APP_BASE_URL` (the frontend address
+used in emailed links).
+
+Run `make fmt` before committing: CI checks formatting, and it will fail if the Go files are not formatted.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request. GitHub starts a temporary
+PostgreSQL for it (you write no Docker code), applies the migrations, runs the SQL rule checks, then the
+format check, `go vet` and `go test`. Commit `backend/go.sum` (created by `make tidy`) so the workflow can
+cache dependencies.
+
 ## What the migrations contain
 
 | File   | Content                                                                                                                           |

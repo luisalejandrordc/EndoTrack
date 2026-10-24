@@ -3,11 +3,10 @@ package health
 
 import (
 	"context"
+	"endosoflow/internal/platform/httpx"
 	"log/slog"
 	"net/http"
 	"time"
-
-	"endosoflow/internal/platform/httpx"
 )
 
 // Pinger is satisfied by the database pool (and by fakes in tests).

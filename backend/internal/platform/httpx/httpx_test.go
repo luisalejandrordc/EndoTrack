@@ -2,14 +2,13 @@ package httpx
 
 import (
 	"encoding/json"
+	"endosoflow/internal/platform/apperr"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"endosoflow/internal/platform/apperr"
 )
 
 func quietLogger() *slog.Logger { return slog.New(slog.NewTextHandler(io.Discard, nil)) }

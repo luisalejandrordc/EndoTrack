@@ -5,6 +5,8 @@ package httpx
 import (
 	"context"
 	"encoding/json"
+	"endosoflow/internal/platform/apperr"
+	"endosoflow/internal/platform/ids"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -13,9 +15,6 @@ import (
 	"time"
 
 	chimw "github.com/go-chi/chi/v5/middleware"
-
-	"endosoflow/internal/platform/apperr"
-	"endosoflow/internal/platform/ids"
 )
 
 type ctxKey int

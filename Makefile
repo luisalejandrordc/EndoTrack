@@ -10,7 +10,8 @@ TEST_DB := $(firstword $(subst ?, ,$(notdir $(TEST_DATABASE_URL))))
 MIGRATIONS  := backend/db/migrations
 VERIFY_SQL  := backend/db/verify/constraints.sql
 
-.PHONY: help db-create db-drop db-reset migrate-up migrate-status db-verify tidy build vet test run
+
+.PHONY: help db-create db-drop db-reset migrate-up migrate-status db-verify tidy fmt build vet test run
 
 help:
 	@echo "db-create       create the dev and test databases"
@@ -20,6 +21,7 @@ help:
 	@echo "db-reset        drop and recreate the dev database, then migrate"
 	@echo "db-verify       rebuild the test database and run the SQL rule checks"
 	@echo "tidy            download Go dependencies and update go.mod / go.sum"
+	@echo "fmt             format the Go code (run before committing)"
 	@echo "build           compile the backend"
 	@echo "vet             run go vet (static checks)"
 	@echo "test            run the Go tests (run make db-verify once first)"
@@ -52,6 +54,9 @@ db-verify:
 
 tidy:
 	cd backend && go mod tidy
+
+fmt:
+	cd backend && gofmt -w .
 
 build:
 	cd backend && go build ./...

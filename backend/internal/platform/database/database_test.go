@@ -2,13 +2,12 @@ package database
 
 import (
 	"context"
+	"endosoflow/internal/platform/ids"
 	"errors"
 	"os"
 	"testing"
 
 	"github.com/jackc/pgx/v5"
-
-	"endosoflow/internal/platform/ids"
 )
 
 // These tests need a migrated database: run `make db-verify` once, then `make test`.

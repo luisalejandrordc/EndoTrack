@@ -56,13 +56,18 @@ func New(status int, code, message string) *Error {
 	return &Error{Code: code, Status: status, Message: message}
 }
 
-func BadRequest(code, message string) *Error      { return New(http.StatusBadRequest, code, message) }
-func Unauthorized(code, message string) *Error    { return New(http.StatusUnauthorized, code, message) }
-func Forbidden(code, message string) *Error       { return New(http.StatusForbidden, code, message) }
-func NotFound(code, message string) *Error        { return New(http.StatusNotFound, code, message) }
-func Conflict(code, message string) *Error        { return New(http.StatusConflict, code, message) }
-func Unprocessable(code, message string) *Error   { return New(http.StatusUnprocessableEntity, code, message) }
-func TooManyRequests(code, message string) *Error { return New(http.StatusTooManyRequests, code, message) }
+func BadRequest(code, message string) *Error   { return New(http.StatusBadRequest, code, message) }
+func Unauthorized(code, message string) *Error { return New(http.StatusUnauthorized, code, message) }
+func Forbidden(code, message string) *Error    { return New(http.StatusForbidden, code, message) }
+func NotFound(code, message string) *Error     { return New(http.StatusNotFound, code, message) }
+func Conflict(code, message string) *Error     { return New(http.StatusConflict, code, message) }
+func Unprocessable(code, message string) *Error {
+	return New(http.StatusUnprocessableEntity, code, message)
+}
+
+func TooManyRequests(code, message string) *Error {
+	return New(http.StatusTooManyRequests, code, message)
+}
 
 // Internal wraps an unexpected failure. The client only sees a generic message.
 func Internal(cause error) *Error {
@@ -121,17 +126,17 @@ var uniqueRules = map[string]rule{
 }
 
 var checkRules = map[string]rule{
-	"sale_payments_mismatch_reason":      {http.StatusUnprocessableEntity, "MISMATCH_REASON_REQUIRED", "El monto no coincide con el esperado: escriba el motivo de la diferencia."},
-	"sale_invoices_mismatch_reason":      {http.StatusUnprocessableEntity, "MISMATCH_REASON_REQUIRED", "El monto no coincide con el esperado: escriba el motivo de la diferencia."},
+	"sale_payments_mismatch_reason":       {http.StatusUnprocessableEntity, "MISMATCH_REASON_REQUIRED", "El monto no coincide con el esperado: escriba el motivo de la diferencia."},
+	"sale_invoices_mismatch_reason":       {http.StatusUnprocessableEntity, "MISMATCH_REASON_REQUIRED", "El monto no coincide con el esperado: escriba el motivo de la diferencia."},
 	"sale_financials_commission_positive": {http.StatusUnprocessableEntity, "COMMISSION_NOT_POSITIVE", "La comisión final debe ser mayor que cero."},
-	"sale_registers_vin_format":          {http.StatusUnprocessableEntity, "VIN_INVALID", "El VIN debe tener 17 caracteres y no puede incluir las letras I, O ni Q."},
-	"sale_registers_plate_format":        {http.StatusUnprocessableEntity, "PLATE_INVALID", "La placa debe tener 6 caracteres alfanuméricos."},
-	"sale_invoices_number_format":        {http.StatusUnprocessableEntity, "INVOICE_NUMBER_INVALID", "El número de factura debe tener serie de 4 caracteres, un guion y el correlativo."},
-	"customers_document_format":          {http.StatusUnprocessableEntity, "DOCUMENT_NUMBER_INVALID", "El número de documento no tiene el formato válido para su tipo."},
-	"employees_document_format":          {http.StatusUnprocessableEntity, "DOCUMENT_NUMBER_INVALID", "El número de documento no tiene el formato válido para su tipo."},
-	"sale_due_diligence_signer_format":   {http.StatusUnprocessableEntity, "DOCUMENT_NUMBER_INVALID", "El número de documento no tiene el formato válido para su tipo."},
-	"audit_logs_reason_required":           {http.StatusUnprocessableEntity, "REASON_REQUIRED", "Debe escribir el motivo de esta acción."},
-	"sale_registers_other_needs_text":    {http.StatusUnprocessableEntity, "CANCELLATION_TEXT_REQUIRED", "Con el motivo \u201cOtro\u201d debe escribir una explicación."},
+	"sale_registers_vin_format":           {http.StatusUnprocessableEntity, "VIN_INVALID", "El VIN debe tener 17 caracteres y no puede incluir las letras I, O ni Q."},
+	"sale_registers_plate_format":         {http.StatusUnprocessableEntity, "PLATE_INVALID", "La placa debe tener 6 caracteres alfanuméricos."},
+	"sale_invoices_number_format":         {http.StatusUnprocessableEntity, "INVOICE_NUMBER_INVALID", "El número de factura debe tener serie de 4 caracteres, un guion y el correlativo."},
+	"customers_document_format":           {http.StatusUnprocessableEntity, "DOCUMENT_NUMBER_INVALID", "El número de documento no tiene el formato válido para su tipo."},
+	"employees_document_format":           {http.StatusUnprocessableEntity, "DOCUMENT_NUMBER_INVALID", "El número de documento no tiene el formato válido para su tipo."},
+	"sale_due_diligence_signer_format":    {http.StatusUnprocessableEntity, "DOCUMENT_NUMBER_INVALID", "El número de documento no tiene el formato válido para su tipo."},
+	"audit_logs_reason_required":          {http.StatusUnprocessableEntity, "REASON_REQUIRED", "Debe escribir el motivo de esta acción."},
+	"sale_registers_other_needs_text":     {http.StatusUnprocessableEntity, "CANCELLATION_TEXT_REQUIRED", "Con el motivo \u201cOtro\u201d debe escribir una explicación."},
 }
 
 var foreignKeyRules = map[string]rule{

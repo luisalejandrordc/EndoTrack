@@ -2,10 +2,9 @@
 package logging
 
 import (
+	"endosoflow/internal/platform/config"
 	"io"
 	"log/slog"
-
-	"endosoflow/internal/platform/config"
 )
 
 // New returns a logger writing to w in the format and level chosen by the configuration.
