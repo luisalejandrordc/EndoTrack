@@ -100,3 +100,24 @@ WHERE
       i.vehicle_color_id = c.id
       AND i.viewpoint = 'main_view'
   );
+
+-- When each task became eligible to start: the previous task's completion time (Task 1: the sale's
+-- creation time). It is NULL while the previous task is not completed. Derived rather than stored, so it can
+-- never disagree with the tasks themselves, and a reopened task automatically changes the next task's value.
+CREATE VIEW v_task_eligibility AS
+SELECT
+  t.id AS task_instance_id,
+  t.sale_id,
+  t.task_number,
+  t.status,
+  t.started_at,
+  CASE
+    WHEN t.task_number = 1 THEN s.created_at
+    ELSE prev.completed_at
+  END AS eligible_at
+FROM
+  task_instances t
+  JOIN sale_registers s ON s.id = t.sale_id
+  LEFT JOIN task_instances prev ON prev.sale_id = t.sale_id
+  AND prev.task_number = t.task_number - 1
+  AND prev.status = 'completed';

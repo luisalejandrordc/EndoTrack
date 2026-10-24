@@ -83,6 +83,17 @@ func TestLoadCookieSecureCanBeOverridden(t *testing.T) {
 	}
 }
 
+func TestLoadTrustProxyDefaultsToFalse(t *testing.T) {
+	cfg, err := Load(env(withBase(nil)))
+	if err != nil || cfg.TrustProxy {
+		t.Fatalf("got %+v, %v", cfg, err)
+	}
+	cfg, err = Load(env(withBase(map[string]string{"TRUST_PROXY": "true"})))
+	if err != nil || !cfg.TrustProxy {
+		t.Fatalf("got %+v, %v", cfg, err)
+	}
+}
+
 func TestLoadRejectsAShortJWTSecret(t *testing.T) {
 	_, err := Load(env(withBase(map[string]string{"JWT_SECRET": "too-short"})))
 	if err == nil || !strings.Contains(err.Error(), "JWT_SECRET") {

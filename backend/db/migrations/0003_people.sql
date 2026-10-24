@@ -21,6 +21,7 @@ CREATE TABLE employees (
   password_hash text,
   activated_at timestamptz,
   failed_login_count integer NOT NULL DEFAULT 0,
+  first_failed_login_at timestamptz, -- start of the current 15-minute failure window
   locked_until timestamptz,
   is_system boolean NOT NULL DEFAULT false,
   is_active boolean NOT NULL DEFAULT true,
@@ -56,7 +57,11 @@ CREATE TABLE employees (
     OR password_hash IS NULL
   ),
   CONSTRAINT employees_lifecycle CHECK (is_active = (deactivated_at IS NULL)),
-  CONSTRAINT employees_failed_logins_nonnegative CHECK (failed_login_count >= 0)
+  CONSTRAINT employees_failed_logins_nonnegative CHECK (failed_login_count >= 0),
+  CONSTRAINT employees_failed_logins_window CHECK (
+    failed_login_count = 0
+    OR first_failed_login_at IS NOT NULL
+  )
 );
 
 CREATE UNIQUE INDEX ux_employees_business_email ON employees (business_email);
@@ -124,6 +129,7 @@ CREATE TABLE customers (
   portal_invited_at timestamptz,
   activated_at timestamptz,
   failed_login_count integer NOT NULL DEFAULT 0,
+  first_failed_login_at timestamptz, -- start of the current 15-minute failure window
   locked_until timestamptz,
   is_active boolean NOT NULL DEFAULT true,
   deactivated_at timestamptz,
@@ -182,7 +188,11 @@ CREATE TABLE customers (
   ),
   CONSTRAINT customers_email_lower CHECK (email = lower(email)),
   CONSTRAINT customers_lifecycle CHECK (is_active = (deactivated_at IS NULL)),
-  CONSTRAINT customers_failed_logins_nonnegative CHECK (failed_login_count >= 0)
+  CONSTRAINT customers_failed_logins_nonnegative CHECK (failed_login_count >= 0),
+  CONSTRAINT customers_failed_logins_window CHECK (
+    failed_login_count = 0
+    OR first_failed_login_at IS NOT NULL
+  )
 );
 
 CREATE INDEX ix_customers_created_by ON customers (created_by);

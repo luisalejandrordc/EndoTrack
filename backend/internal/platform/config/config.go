@@ -21,6 +21,7 @@ type Config struct {
 	JWTSecret       string // signs access tokens; at least 32 characters
 	AppBaseURL      string // the frontend address used in emailed links, without a trailing slash
 	CookieSecure    bool   // refresh cookie "Secure" flag; true everywhere except local development
+	TrustProxy      bool   // read the client IP from X-Forwarded-For (only behind a proxy you control)
 }
 
 var validEnvs = map[string]bool{"local": true, "test": true, "staging": true, "production": true}
@@ -94,6 +95,15 @@ func Load(getenv func(string) string) (Config, error) {
 			problems = append(problems, fmt.Sprintf("COOKIE_SECURE must be true or false (got %q)", text))
 		} else {
 			cfg.CookieSecure = secure
+		}
+	}
+
+	if text := getenv("TRUST_PROXY"); text != "" {
+		trust, err := strconv.ParseBool(text)
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("TRUST_PROXY must be true or false (got %q)", text))
+		} else {
+			cfg.TrustProxy = trust
 		}
 	}
 

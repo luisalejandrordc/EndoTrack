@@ -11,7 +11,7 @@ MIGRATIONS  := backend/db/migrations
 VERIFY_SQL  := backend/db/verify/constraints.sql
 
 
-.PHONY: help db-create db-drop db-reset migrate-up migrate-status db-verify tidy fmt build vet test run
+.PHONY: help db-create db-drop db-reset migrate-up migrate-status db-verify tidy fmt build vet test run bootstrap-admin
 
 help:
 	@echo "db-create       create the dev and test databases"
@@ -26,6 +26,7 @@ help:
 	@echo "vet             run go vet (static checks)"
 	@echo "test            run the Go tests (run make db-verify once first)"
 	@echo "run             start the API on http://localhost:8080"
+	@echo "bootstrap-admin create the first System Admin (see README)"
 
 db-create:
 	-createdb $(DEV_DB)
@@ -69,3 +70,7 @@ test:
 
 run:
 	cd backend && set -a && . ./.env && set +a && go run ./cmd/api
+
+# Example: make bootstrap-admin ARGS="-doc-number 10000001 -first-name Maju -last-name Admin -gender F -phone 999111222 -email maju@admin.com -birthdate 2004-10-05 -hire-date 2026-01-01"
+bootstrap-admin:
+	cd backend && set -a && . ./.env && set +a && go run ./cmd/bootstrap-admin $(ARGS)

@@ -1,18 +1,18 @@
 package main
 
 import (
+	"endosoflow/internal/platform/apperr"
+	"endosoflow/internal/platform/health"
+	"endosoflow/internal/platform/httpx"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-
-	"endosoflow/internal/platform/apperr"
-	"endosoflow/internal/platform/health"
-	"endosoflow/internal/platform/httpx"
 )
 
-// newRouter wires the middleware and the routes. Modules register their routes here as they are built.
-func newRouter(logger *slog.Logger, db health.Pinger) http.Handler {
+// newRouter wires the middleware and the routes. Each module passes a function that mounts its routes
+// under /api/v1.
+func newRouter(logger *slog.Logger, db health.Pinger, mounts ...func(chi.Router)) http.Handler {
 	r := chi.NewRouter()
 	r.Use(httpx.RequestID, httpx.Recover(logger), httpx.AccessLog(logger), httpx.SecurityHeaders)
 
@@ -25,6 +25,9 @@ func newRouter(logger *slog.Logger, db health.Pinger) http.Handler {
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Get("/health", health.Handler(db, logger))
+		for _, mount := range mounts {
+			mount(r)
+		}
 	})
 	return r
 }

@@ -129,7 +129,7 @@ CREATE TABLE task_instances (
   sale_id uuid NOT NULL REFERENCES sale_registers (id) ON DELETE CASCADE,
   task_number smallint NOT NULL REFERENCES task_definitions (task_number),
   status task_status NOT NULL DEFAULT 'pending',
-  eligible_at timestamptz,
+  -- When a task became eligible is not stored: it is derived (see v_task_eligibility).
   started_at timestamptz,
   completed_at timestamptz,
   due_date timestamptz,

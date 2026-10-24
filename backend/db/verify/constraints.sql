@@ -90,8 +90,8 @@ BEGIN
     'Hilux', 'SR', 'Blanco', 35000.00, 'hot', p_series, p_vin, p_plate,
     'a0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001');
   IF p_children THEN
-    INSERT INTO task_instances (sale_id, task_number, eligible_at, created_by)
-    SELECT p_id, n, CASE WHEN n = 1 THEN now() END, 'a0000000-0000-0000-0000-000000000001'
+    INSERT INTO task_instances (sale_id, task_number, created_by)
+    SELECT p_id, n, 'a0000000-0000-0000-0000-000000000001'
     FROM generate_series(1, 13) AS n;
     INSERT INTO sale_financials (sale_id) VALUES (p_id);
     INSERT INTO sale_due_diligence (sale_id) VALUES (p_id);
@@ -827,6 +827,20 @@ SELECT
     '23514'
   );
 
+SELECT
+  pg_temp.expect_fail (
+    'a failed-login count needs the start of its window',
+    $q$UPDATE employees SET failed_login_count = 2 WHERE id = 'a0000000-0000-0000-0000-000000000002'$q$,
+    '23514'
+  );
+
+SELECT
+  pg_temp.expect_ok (
+    'a failed-login count with its window start',
+    $q$UPDATE employees SET failed_login_count = 2, first_failed_login_at = now()
+     WHERE id = 'a0000000-0000-0000-0000-000000000002'$q$
+  );
+
 -- Staff -------------------------------------------------------------------------------------------
 SELECT
   pg_temp.expect_fail (
@@ -984,6 +998,32 @@ SELECT
     $q$SELECT count(*) FROM v_sale_milestones
      WHERE sale_id = 'd0000000-0000-0000-0000-000000000001' AND milestone_number = 2 AND state = 'pending'$q$,
     1
+  );
+
+SELECT
+  pg_temp.expect_equal (
+    'task 1 is eligible from the sale creation',
+    $q$SELECT count(*) FROM v_task_eligibility e JOIN sale_registers s ON s.id = e.sale_id
+     WHERE e.sale_id = 'd0000000-0000-0000-0000-000000000001' AND e.task_number = 1 AND e.eligible_at = s.created_at$q$,
+    1
+  );
+
+SELECT
+  pg_temp.expect_equal (
+    'task 2 became eligible when task 1 was completed',
+    $q$SELECT count(*) FROM v_task_eligibility e JOIN task_instances prev
+       ON prev.sale_id = e.sale_id AND prev.task_number = 1
+     WHERE e.sale_id = 'd0000000-0000-0000-0000-000000000001' AND e.task_number = 2
+       AND e.eligible_at = prev.completed_at$q$,
+    1
+  );
+
+SELECT
+  pg_temp.expect_equal (
+    'task 3 is not eligible while task 2 is not completed',
+    $q$SELECT count(*) FROM v_task_eligibility
+     WHERE sale_id = 'd0000000-0000-0000-0000-000000000001' AND task_number = 3 AND eligible_at IS NOT NULL$q$,
+    0
   );
 
 SELECT

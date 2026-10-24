@@ -48,6 +48,31 @@ used in emailed links).
 
 Run `make fmt` before committing: CI checks formatting, and it will fail if the Go files are not formatted.
 
+## Authentication (slice 3)
+
+The API now serves the employee authentication routes under `/api/v1`:
+`POST /auth/employee/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/activate`,
+`POST /auth/forgot-password`, `POST /auth/reset-password`, `GET /me` and `PUT /me/password`.
+
+Create the first System Admin once (it refuses to run if one already exists):
+
+```
+make bootstrap-admin ARGS="-doc-number 10000001 -first-name Maju -last-name Admin -gender F \
+  -phone 999111222 -email maju@admin.com -birthdate 2004-10-05 -hire-date 2026-01-01"
+```
+
+It prints an activation link. Locally no real email is sent: emails are written to the server log, so you
+can also copy the link from there. The frontend will need two pages that match the links:
+`/activar-cuenta?token=...` and `/restablecer-contrasena?token=...`.
+
+Try the login with curl after activating (the account is created by the command above):
+
+```
+curl -i -X POST http://localhost:8080/api/v1/auth/employee/login \
+  -H 'Content-Type: application/json' \
+  -d '{"documentType":"DNI","documentNumber":"10000001","password":"YOUR-PASSWORD","rememberMe":false}'
+```
+
 ## Continuous integration
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request. GitHub starts a temporary
