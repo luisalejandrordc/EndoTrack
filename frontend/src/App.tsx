@@ -272,9 +272,14 @@ function LoginPage({
   return (
     <div className="login-layout">
       <section className="login-brand-panel">
-        <div className="login-brand-top">
-          <Brand />
-        </div>
+        {/* <div className="login-brand-top"> */}
+        {/*   <Brand /> */}
+        {/*   <img */}
+        {/*     src="endosoflow-logo-transparent.png" */}
+        {/*     className="logo-image" */}
+        {/*     alt="EndosoFlow Logo" */}
+        {/*   /> */}
+        {/* </div> */}
         <div className="login-visual">
           <div className="login-eyebrow">
             <span className="eyebrow-line" /> PLATAFORMA DE GESTIÓN COMERCIAL
@@ -323,11 +328,16 @@ function LoginPage({
         <div className="login-decoration decoration-two" />
       </section>
       <section className="login-form-panel">
-        <div className="login-mobile-brand">
-          <Brand />
-        </div>
+        <div className="login-mobile-brand">{/* <Brand /> */}</div>
         <div className="login-form-card">
           <div className="login-form-heading">
+            <div className="brand-container">
+              <img
+                src="endosoflow-logo-transparent.png"
+                className="logo-image"
+                alt="EndosoFlow Logo"
+              />
+            </div>
             <span className="section-kicker">PORTAL DE COLABORADORES</span>
             <h2>
               {forgot ? "Recupera tu acceso" : "Qué bueno tenerte de vuelta"}

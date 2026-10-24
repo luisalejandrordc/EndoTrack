@@ -124,6 +124,14 @@ button:focus:not(:focus-visible) {
   width: 34px;
   height: 34px;
 }
+.brand-container {
+  text-align: center;
+}
+.logo-image {
+  width: 280px;
+  padding-bottom: 20px;
+  /* border-radius: 10px; */
+}
 .login-layout {
   display: grid;
   grid-template-columns: minmax(440px, 1fr) minmax(450px, 0.92fr);
@@ -159,10 +167,10 @@ button:focus:not(:focus-visible) {
 .login-visual {
   width: 100%;
   max-width: 595px;
-  margin: auto 0;
+  /* margin: auto 0; */
   position: relative;
   z-index: 2;
-  padding: 68px 0 52px;
+  padding: 10px 0 52px;
 }
 .login-eyebrow,
 .section-kicker {
@@ -1323,7 +1331,7 @@ button:focus:not(:focus-visible) {
 .current-task-cell span {
   font-size: 9px;
   color: #9aa69f;
-  display: block;
+  /* display: block; */
   white-space: nowrap;
 }
 .vehicle-cell {
@@ -4262,7 +4270,7 @@ button:focus:not(:focus-visible) {
     width: 100%;
     max-width: 410px;
     display: block;
-    margin: 12px 0 60px;
+    margin: 12px 0 0px;
   }
   .login-mobile-brand .brand-mark {
     width: 35px;
