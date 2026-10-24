@@ -1,5 +1,7 @@
 # Open questions
 
+- Should you use github actions instead of cron-job.org, cause you are already using it for CI (Continuous Integration).
+
 - Should the 'task_instances' table record the eligible_at timestamp? Cause it will always be the same as the completed_at timestamp of the immediate previous task.
 
 - Should Series, VIN, and plate be unique across ALL sales (active, completed, or cancelled)?
