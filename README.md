@@ -1,4 +1,4 @@
-# EndosoFlow — Grupo Pana (Maju)
+# EndosoFlow — Grupo Pana
 
 Platform for tracking vehicle sales sold through the Grupo Pana _endoso_ channel.
 This is the 1D foundation. Slice 1 is **the database** (migrations plus a SQL rule-check script).
