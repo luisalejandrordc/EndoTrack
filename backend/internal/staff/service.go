@@ -152,7 +152,7 @@ func (s *Service) Create(ctx context.Context, actor auth.Actor, in CreateInput) 
 		}, now)
 	})
 	if err != nil {
-		return nil, err
+		return nil, apperr.FromError(err)
 	}
 
 	created, err := findEmployee(ctx, s.db, id, false)
@@ -288,7 +288,7 @@ func (s *Service) Update(ctx context.Context, actor auth.Actor, id uuid.UUID, in
 		return err
 	})
 	if err != nil {
-		return nil, err
+		return nil, apperr.FromError(err)
 	}
 	return result, nil
 }

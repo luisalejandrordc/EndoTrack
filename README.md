@@ -80,7 +80,7 @@ Deleting takes the reason as a query parameter: `DELETE /employees/{id}?reason=C
 The contract lives in `backend/api/openapi.yaml`. A Go test (`make test`) fails when the code serves a route
 the contract does not describe, or the contract describes a route the code does not serve. To read the contract
 as a web page, paste the file into https://editor.swagger.io or run
-`npx @redocly/cli preview-docs backend/api/openapi.yaml`. The frontend will generate its TypeScript types from
+`npx @redocly/cli build-docs backend/api/openapi.yaml`. The frontend will generate its TypeScript types from
 this file (`npx openapi-typescript backend/api/openapi.yaml -o frontend/src/shared/api/schema.d.ts`).
 
 Run `make tidy` again after pulling this slice: it adds one dependency for the contract test.
