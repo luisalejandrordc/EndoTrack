@@ -114,4 +114,3 @@ Migrations are forward-only: fix mistakes with a new file, never by editing an a
 ## Not included yet
 
 - Database roles for production (`migrator` and `app_backend`) and the controlled sale-deletion function.
-- Employee authentication, the business modules, the frontend and CI.
