@@ -80,3 +80,7 @@ src/
 - [ ] Replace sample task names and milestone labels with `/reference` response values
 - [ ] Replace demo image URLs with current catalog image URLs / signed storage URLs
 - [ ] Add upload and optimistic-lock handling when the task/document endpoints are available
+
+## Brand palette
+
+The UI uses the EndosoFlow / GrupoPana red-and-black palette: logo red `#F11119`, darker red `#C90E16`, charcoal `#191919`, and neutral gray/white surfaces. The palette tokens are defined at the top of `src/styles.css` (`--brand-red`, `--brand-red-dark`, `--brand-red-soft`, and `--brand-red-muted`).
