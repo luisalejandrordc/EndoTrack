@@ -14,6 +14,7 @@ import { SaleDetail } from "@/features/sales/SaleDetail";
 import { StaffDirectory } from "@/features/staff/StaffDirectory";
 import { Catalog } from "@/features/catalog/Catalog";
 import "../index.css";
+import { NewEmployee } from "@/features/staff/NewEmployee";
 
 // Start MSW only when VITE_USE_MOCKS=true
 async function enableMocking() {
@@ -41,6 +42,7 @@ const router = createBrowserRouter([
       { path: "sales/new", element: <NewSaleWizard /> },
       { path: "sales/:id", element: <SaleDetail /> },
       { path: "employees", element: <StaffDirectory /> },
+      { path: "employees/new", element: <NewEmployee /> },
       { path: "catalog", element: <Catalog /> },
     ],
   },

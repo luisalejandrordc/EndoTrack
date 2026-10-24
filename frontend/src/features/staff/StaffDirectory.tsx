@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/shared/api/client";
+import { Link } from "react-router-dom";
 
 export function StaffDirectory() {
   const { data: staff, isLoading } = useQuery({
@@ -16,9 +17,12 @@ export function StaffDirectory() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Empleados</h2>
-        <button className="bg-red-600 text-white px-4 py-2 rounded">
+        <Link
+          to="/employees/new"
+          className="bg-red-600 text-white px-4 py-2 rounded font-medium hover:bg-red-700 transition-colors"
+        >
           Nuevo Empleado
-        </button>
+        </Link>
       </div>
 
       <div className="bg-white rounded shadow overflow-x-auto">
