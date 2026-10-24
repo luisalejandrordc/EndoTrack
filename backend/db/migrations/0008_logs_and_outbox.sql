@@ -31,6 +31,7 @@ CREATE TABLE audit_logs (
       entity_type = 'task_instance'
       AND action IN (
         'STARTED',
+        'UPDATED',
         'COMPLETED',
         'RESTARTED',
         'REOPENED',

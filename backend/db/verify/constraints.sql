@@ -888,6 +888,24 @@ SELECT
   );
 
 SELECT
+  pg_temp.expect_ok (
+    'saving an in-progress task is audited as UPDATED',
+    $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, sale_id, entity_type, entity_id, action, changes_summary)
+     VALUES ('a0000000-0000-0000-0000-000000000001', 'employee', 'd0000000-0000-0000-0000-000000000001',
+             'task_instance', 'd0000000-0000-0000-0000-0000000000bb', 'UPDATED',
+             '{"accessoryAmount": {"before": "500.00", "after": "550.00"}}')$q$
+  );
+
+SELECT
+  pg_temp.expect_fail (
+    'correcting a completed task needs a reason',
+    $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, sale_id, entity_type, entity_id, action)
+     VALUES ('a0000000-0000-0000-0000-000000000001', 'employee', 'd0000000-0000-0000-0000-000000000001',
+             'task_instance', 'd0000000-0000-0000-0000-0000000000bb', 'CORRECTED')$q$,
+    '23514'
+  );
+
+SELECT
   pg_temp.expect_fail (
     'a permanent deletion needs a reason',
     $q$INSERT INTO audit_logs (actor_employee_id, actor_kind, entity_type, entity_id, action)

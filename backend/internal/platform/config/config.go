@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -17,6 +18,9 @@ type Config struct {
 	LogLevel        slog.Level
 	LogFormat       string // "text" (readable) or "json" (for hosting platforms)
 	ShutdownTimeout time.Duration
+	JWTSecret       string // signs access tokens; at least 32 characters
+	AppBaseURL      string // the frontend address used in emailed links, without a trailing slash
+	CookieSecure    bool   // refresh cookie "Secure" flag; true everywhere except local development
 }
 
 var validEnvs = map[string]bool{"local": true, "test": true, "staging": true, "production": true}
@@ -67,6 +71,30 @@ func Load(getenv func(string) string) (Config, error) {
 		problems = append(problems, fmt.Sprintf("SHUTDOWN_TIMEOUT must be a positive duration such as 10s (got %q)", timeoutText))
 	} else {
 		cfg.ShutdownTimeout = timeout
+	}
+
+	cfg.JWTSecret = getenv("JWT_SECRET")
+	if len(cfg.JWTSecret) < 32 {
+		problems = append(problems, "JWT_SECRET is required and must be at least 32 characters")
+	}
+
+	cfg.AppBaseURL = strings.TrimRight(getenv("APP_BASE_URL"), "/")
+	if cfg.AppBaseURL == "" {
+		if cfg.Env == "local" {
+			cfg.AppBaseURL = "http://localhost:5173"
+		} else {
+			problems = append(problems, "APP_BASE_URL is required outside local development (emailed links use it)")
+		}
+	}
+
+	cfg.CookieSecure = cfg.Env != "local"
+	if text := getenv("COOKIE_SECURE"); text != "" {
+		secure, err := strconv.ParseBool(text)
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("COOKIE_SECURE must be true or false (got %q)", text))
+		} else {
+			cfg.CookieSecure = secure
+		}
 	}
 
 	if len(problems) > 0 {

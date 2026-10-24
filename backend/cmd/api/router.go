@@ -1,13 +1,14 @@
 package main
 
 import (
-	"endosoflow/internal/platform/apperr"
-	"endosoflow/internal/platform/health"
-	"endosoflow/internal/platform/httpx"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+
+	"endosoflow/internal/platform/apperr"
+	"endosoflow/internal/platform/health"
+	"endosoflow/internal/platform/httpx"
 )
 
 // newRouter wires the middleware and the routes. Modules register their routes here as they are built.
