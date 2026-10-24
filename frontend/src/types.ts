@@ -1,7 +1,7 @@
-export type Role = 'system_admin' | 'sales_manager' | 'sales_advisor';
-export type DocumentType = 'DNI' | 'CE' | 'PAS';
-export type SaleState = 'active' | 'completed' | 'cancelled';
-export type TaskStatus = 'pending' | 'eligible' | 'in_progress' | 'completed';
+export type Role = "system_admin" | "sales_manager" | "sales_advisor";
+export type DocumentType = "DNI" | "CE" | "PAS";
+export type SaleState = "active" | "completed" | "cancelled";
+export type TaskStatus = "pending" | "eligible" | "in_progress" | "completed";
 
 export interface EmployeeProfile {
   id: string;
@@ -15,7 +15,7 @@ export interface EmployeeProfile {
 
 export interface Employee extends EmployeeProfile {
   nationality: string;
-  gender: 'M' | 'F';
+  gender: "M" | "F";
   birthdate: string;
   hireDate: string;
   businessPhone: string;
@@ -56,7 +56,7 @@ export interface Sale {
   vehicleImage: string;
   advisor: string;
   advisorId: string;
-  temperature: 'hot' | 'warm' | 'cold';
+  temperature: "hot" | "warm" | "cold";
   state: SaleState;
   createdAt: string;
   quotedPrice: number;

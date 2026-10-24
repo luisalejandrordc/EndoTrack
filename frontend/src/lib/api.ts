@@ -1,6 +1,15 @@
-import type { DocumentType, Employee, EmployeeProfile, Role, SessionResponse } from '../types';
+import type {
+  DocumentType,
+  Employee,
+  EmployeeProfile,
+  Role,
+  SessionResponse,
+} from "../types";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "/api/v1").replace(
+  /\/$/,
+  "",
+);
 
 export class ApiError extends Error {
   code: string;
@@ -8,9 +17,15 @@ export class ApiError extends Error {
   fields?: { field: string; code: string; message: string }[];
   requestId?: string;
 
-  constructor(message: string, code: string, status: number, fields?: ApiError['fields'], requestId?: string) {
+  constructor(
+    message: string,
+    code: string,
+    status: number,
+    fields?: ApiError["fields"],
+    requestId?: string,
+  ) {
     super(message);
-    this.name = 'ApiError';
+    this.name = "ApiError";
     this.code = code;
     this.status = status;
     this.fields = fields;
@@ -26,7 +41,7 @@ export interface CreateEmployeeInput {
   firstName: string;
   lastName: string;
   nationality: string;
-  gender: 'M' | 'F';
+  gender: "M" | "F";
   birthdate: string;
   hireDate: string;
   personalPhone?: string;
@@ -58,8 +73,8 @@ export class ApiClient {
     if (!response.ok) {
       const error = payload?.error;
       throw new ApiError(
-        error?.message || 'Ocurrió un error. Inténtalo nuevamente.',
-        error?.code || 'REQUEST_FAILED',
+        error?.message || "Ocurrió un error. Inténtalo nuevamente.",
+        error?.code || "REQUEST_FAILED",
         response.status,
         error?.fields,
         error?.requestId,
@@ -71,52 +86,71 @@ export class ApiClient {
   async request<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const { skipRefresh, ...fetchOptions } = options;
     const headers = new Headers(fetchOptions.headers || {});
-    if (fetchOptions.body && !(fetchOptions.body instanceof FormData) && !headers.has('Content-Type')) {
-      headers.set('Content-Type', 'application/json');
+    if (
+      fetchOptions.body &&
+      !(fetchOptions.body instanceof FormData) &&
+      !headers.has("Content-Type")
+    ) {
+      headers.set("Content-Type", "application/json");
     }
-    if (this.accessToken) headers.set('Authorization', `Bearer ${this.accessToken}`);
+    if (this.accessToken)
+      headers.set("Authorization", `Bearer ${this.accessToken}`);
     const response = await fetch(`${API_BASE}${path}`, {
       ...fetchOptions,
       headers,
-      credentials: 'include',
+      credentials: "include",
     });
 
-    if (response.status === 401 && !skipRefresh && this.accessToken && !path.startsWith('/auth/')) {
+    if (
+      response.status === 401 &&
+      !skipRefresh &&
+      this.accessToken &&
+      !path.startsWith("/auth/")
+    ) {
       const refreshed = await this.refreshSession();
-      if (refreshed) return this.request<T>(path, { ...options, skipRefresh: true });
+      if (refreshed)
+        return this.request<T>(path, { ...options, skipRefresh: true });
       this.accessToken = null;
       this.onUnauthorized?.();
     }
     return this.parseResponse<T>(response);
   }
 
-  async login(input: { documentType: DocumentType; documentNumber: string; password: string; rememberMe: boolean }) {
-    const session = await this.request<SessionResponse>('/auth/employee/login', {
-      method: 'POST',
-      body: JSON.stringify(input),
-      skipRefresh: true,
-    });
+  async login(input: {
+    documentType: DocumentType;
+    documentNumber: string;
+    password: string;
+    rememberMe: boolean;
+  }) {
+    const session = await this.request<SessionResponse>(
+      "/auth/employee/login",
+      {
+        method: "POST",
+        body: JSON.stringify(input),
+        skipRefresh: true,
+      },
+    );
     this.accessToken = session.accessToken;
     return session;
   }
 
   async refreshSession(): Promise<SessionResponse | null> {
     const response = await fetch(`${API_BASE}/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'X-Requested-With': 'EndosoFlow' },
+      method: "POST",
+      credentials: "include",
+      headers: { "X-Requested-With": "EndosoFlow" },
     });
     if (!response.ok) return null;
-    const session = await response.json() as SessionResponse;
+    const session = (await response.json()) as SessionResponse;
     this.accessToken = session.accessToken;
     return session;
   }
 
   async logout() {
     try {
-      await this.request<void>('/auth/logout', {
-        method: 'POST',
-        headers: { 'X-Requested-With': 'EndosoFlow' },
+      await this.request<void>("/auth/logout", {
+        method: "POST",
+        headers: { "X-Requested-With": "EndosoFlow" },
       });
     } finally {
       this.accessToken = null;
@@ -124,37 +158,63 @@ export class ApiClient {
   }
 
   health() {
-    return this.request<{ status: 'ok' | 'degraded'; database: 'ok' | 'error' }>('/health', { skipRefresh: true });
+    return this.request<{
+      status: "ok" | "degraded";
+      database: "ok" | "error";
+    }>("/health", { skipRefresh: true });
   }
 
   me() {
-    return this.request<EmployeeProfile>('/me');
+    return this.request<EmployeeProfile>("/me");
   }
 
-  forgotPassword(input: { documentType: DocumentType; documentNumber: string }) {
-    return this.request<{ status: 'accepted' }>('/auth/forgot-password', {
-      method: 'POST',
+  forgotPassword(input: {
+    documentType: DocumentType;
+    documentNumber: string;
+  }) {
+    return this.request<{ status: "accepted" }>("/auth/forgot-password", {
+      method: "POST",
       body: JSON.stringify(input),
       skipRefresh: true,
     });
   }
 
   changePassword(input: { currentPassword: string; newPassword: string }) {
-    return this.request<void>('/me/password', { method: 'PUT', body: JSON.stringify(input) });
+    return this.request<void>("/me/password", {
+      method: "PUT",
+      body: JSON.stringify(input),
+    });
   }
 
-  listEmployees(params: { q?: string; role?: Role; status?: 'all' | 'active' | 'inactive'; page?: number; pageSize?: number } = {}) {
+  listEmployees(
+    params: {
+      q?: string;
+      role?: Role;
+      status?: "all" | "active" | "inactive";
+      page?: number;
+      pageSize?: number;
+    } = {},
+  ) {
     const search = new URLSearchParams();
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== '') search.set(key, String(value));
+      if (value !== undefined && value !== "") search.set(key, String(value));
     });
-    return this.request<{ items: Employee[]; page: number; pageSize: number; total: number }>(`/employees?${search.toString()}`);
+    return this.request<{
+      items: Employee[];
+      page: number;
+      pageSize: number;
+      total: number;
+    }>(`/employees?${search.toString()}`);
   }
 
   createEmployee(input: CreateEmployeeInput) {
-    return this.request<{ employee: Employee; activationLinkIssued: boolean }>('/employees', {
-      method: 'POST', body: JSON.stringify(input),
-    });
+    return this.request<{ employee: Employee; activationLinkIssued: boolean }>(
+      "/employees",
+      {
+        method: "POST",
+        body: JSON.stringify(input),
+      },
+    );
   }
 }
 
