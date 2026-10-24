@@ -15,6 +15,19 @@ import { StaffDirectory } from "@/features/staff/StaffDirectory";
 import { Catalog } from "@/features/catalog/Catalog";
 import "../index.css";
 
+// Start MSW only when VITE_USE_MOCKS=true
+async function enableMocking() {
+  if (import.meta.env.VITE_USE_MOCKS !== "true") {
+    return;
+  }
+
+  const { worker } = await import("@/shared/api/mocks/browser");
+
+  return worker.start({
+    onUnhandledRequest: "bypass",
+  });
+}
+
 const queryClient = new QueryClient();
 
 const router = createBrowserRouter([
@@ -33,10 +46,17 @@ const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
-  </StrictMode>,
-);
+// Initialize MSW before rendering the application
+enableMocking()
+  .then(() => {
+    createRoot(document.getElementById("root")!).render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+        </QueryClientProvider>
+      </StrictMode>,
+    );
+  })
+  .catch((error) => {
+    console.error("Failed to initialize application:", error);
+  });
