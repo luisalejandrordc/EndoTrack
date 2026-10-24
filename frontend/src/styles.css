@@ -124,6 +124,14 @@ button:focus:not(:focus-visible) {
   width: 34px;
   height: 34px;
 }
+.login-brand-top {
+  text-align: center;
+}
+.login-brand-top .logo-landscape {
+  width: 100%;
+  max-width: 280px;
+  padding-bottom: 24px;
+}
 .login-layout {
   display: grid;
   grid-template-columns: minmax(440px, 1fr) minmax(450px, 0.92fr);
@@ -133,7 +141,7 @@ button:focus:not(:focus-visible) {
 .login-brand-panel {
   background: #191919;
   min-height: 100vh;
-  padding: 38px clamp(36px, 5vw, 78px) 24px;
+  padding: 48px clamp(36px, 5vw, 78px) 24px;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -159,10 +167,10 @@ button:focus:not(:focus-visible) {
 .login-visual {
   width: 100%;
   max-width: 595px;
-  margin: auto 0;
+  margin: 0;
   position: relative;
   z-index: 2;
-  padding: 68px 0 52px;
+  padding-bottom: 52px;
 }
 .login-eyebrow,
 .section-kicker {
@@ -282,6 +290,7 @@ button:focus:not(:focus-visible) {
   justify-content: center;
   padding: 48px clamp(26px, 5.2vw, 86px) 22px;
   position: relative;
+  background-color: white;
 }
 .login-form-card {
   width: 100%;
@@ -588,6 +597,14 @@ button:focus:not(:focus-visible) {
 }
 .sidebar-brand {
   padding: 0 11px 26px;
+  text-align: center;
+}
+.sidebar-brand .logo-landscape {
+  width: 85%;
+  padding-bottom: 0;
+}
+.sidebar-brand .logo-square {
+  display: none;
 }
 .sidebar-brand .brand-mark {
   width: 35px;
@@ -1323,7 +1340,7 @@ button:focus:not(:focus-visible) {
 .current-task-cell span {
   font-size: 9px;
   color: #a3a3a3;
-  display: block;
+  /* display: block; */
   white-space: nowrap;
 }
 .vehicle-cell {
@@ -4170,7 +4187,14 @@ button:focus:not(:focus-visible) {
     padding: 20px 8px 12px;
   }
   .sidebar-brand {
-    padding: 0 9px 25px;
+    padding: 0 8px 25px;
+  }
+  .sidebar-brand .logo-landscape {
+    display: none;
+  }
+  .sidebar-brand .logo-square {
+    display: block;
+    width: 40px;
   }
   .sidebar-brand .brand-wordmark,
   .sidebar-workspace > div:nth-child(2),
@@ -4247,6 +4271,10 @@ button:focus:not(:focus-visible) {
   }
 }
 @media (max-width: 760px) {
+  .logo-image {
+    padding-bottom: 24px;
+    margin-top: 12px;
+  }
   .login-layout {
     grid-template-columns: 1fr;
   }
@@ -4290,6 +4318,20 @@ button:focus:not(:focus-visible) {
   }
   .sidebar.mobile-open {
     transform: translateX(0);
+  }
+  .sidebar-brand {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+  }
+  .sidebar-brand .logo-landscape {
+    display: block;
+    width: 85%;
+    padding-bottom: 0;
+  }
+  .sidebar-brand .logo-square {
+    display: none;
   }
   .sidebar-brand .brand-wordmark,
   .sidebar-workspace > div:nth-child(2),
