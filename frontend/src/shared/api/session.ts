@@ -8,10 +8,28 @@ const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
 
 export const session = {
-  get token() { return token; },
-  get employee() { return employee; },
-  set(d: SessionResponse) { token = d.accessToken; employee = d.employee; emit(); },
-  clear() { token = null; employee = null; emit(); },
-  subscribe(l: () => void) { listeners.add(l); return () => { listeners.delete(l); }; },
+  get token() {
+    return token;
+  },
+  get employee() {
+    return employee;
+  },
+  set(d: SessionResponse) {
+    token = d.accessToken;
+    employee = d.employee;
+    emit();
+  },
+  clear() {
+    token = null;
+    employee = null;
+    emit();
+  },
+  subscribe(l: () => void) {
+    listeners.add(l);
+    return () => {
+      listeners.delete(l);
+    };
+  },
 };
-export const useSessionEmployee = () => useSyncExternalStore(session.subscribe, () => employee);
+export const useSessionEmployee = () =>
+  useSyncExternalStore(session.subscribe, () => employee);

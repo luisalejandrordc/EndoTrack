@@ -13,9 +13,13 @@ import "./styles.css";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 20_000, refetchOnWindowFocus: false,
+      staleTime: 20_000,
+      refetchOnWindowFocus: false,
       // Rule violations and permission errors will not change on retry; only network hiccups do.
-      retry: (n, e) => (e instanceof ApiError && e.status !== 0 && e.status < 500 ? false : n < 2),
+      retry: (n, e) =>
+        e instanceof ApiError && e.status !== 0 && e.status < 500
+          ? false
+          : n < 2,
     },
   },
 });

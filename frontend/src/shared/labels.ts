@@ -1,18 +1,40 @@
 import type { DocumentType, Role } from "./api/types";
 
 // One place for Spanish labels. When GET /reference exists, load these from it instead (see IA §7).
-export const roleLabel: Record<Role, string> = { system_admin: "Administrador", sales_manager: "Gerente de ventas", sales_advisor: "Asesor de ventas" };
+export const roleLabel: Record<Role, string> = {
+  system_admin: "Administrador",
+  sales_manager: "Gerente de ventas",
+  sales_advisor: "Asesor de ventas",
+};
 export const docTypes: DocumentType[] = ["DNI", "CE", "PAS"];
-export const docTypeLabel: Record<string, string> = { DNI: "DNI", CE: "Carné de extranjería", PAS: "Pasaporte", CDI: "Doc. de identidad diplomático", RUC: "RUC" };
-export const temperatureLabel = { hot: "Caliente", warm: "Tibio", cold: "Frío" } as const;
+export const docTypeLabel: Record<string, string> = {
+  DNI: "DNI",
+  CE: "Carné de extranjería",
+  PAS: "Pasaporte",
+  CDI: "Doc. de identidad diplomático",
+  RUC: "RUC",
+};
+export const temperatureLabel = {
+  hot: "Caliente",
+  warm: "Tibio",
+  cold: "Frío",
+} as const;
 export const temperatureHint = {
   hot: "El cliente quiere comprar pronto.",
   warm: "Interesado, aún compara opciones.",
   cold: "Primer contacto o interés bajo.",
 } as const;
 export type Temperature = keyof typeof temperatureLabel;
-export const saleStateLabel = { active: "Activa", completed: "Completada", cancelled: "Cancelada" } as const;
-export const taskStatusLabel = { pending: "Pendiente", in_progress: "En curso", completed: "Completada" } as const;
+export const saleStateLabel = {
+  active: "Activa",
+  completed: "Completada",
+  cancelled: "Cancelada",
+} as const;
+export const taskStatusLabel = {
+  pending: "Pendiente",
+  in_progress: "En curso",
+  completed: "Completada",
+} as const;
 export const customerTypeLabel: Record<string, string> = {
   diplomatico: "Diplomático",
   embajada: "Embajada",
