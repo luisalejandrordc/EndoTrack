@@ -16,3 +16,4 @@
   - RUC: `https://e-consultaruc.sunat.gob.pe/cl-ti-itmrconsruc/FrameCriterioBusquedaWeb.jsp`.
 - Create a special function or a new program to upload data through csv or excel files, so we can import the existing company data to out PostgreSQL database faster.
 - Study the possibility of using github actions instead of cron-job.org for schedules executions.
+- Implement in-app notifications for employees (and maybe for customers too).
