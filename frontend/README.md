@@ -52,6 +52,8 @@ If the Go server listens on a different port, update `VITE_API_PROXY_TARGET`. Fo
 
 ## Validation
 
+Environment variable VITE_DEMO_MODE must be set to true before running the tests.
+
 ```bash
 npm run typecheck   # tsc --noEmit
 npm test            # Vitest: pure sale logic + app smoke tests (jsdom)
