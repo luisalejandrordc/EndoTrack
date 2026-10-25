@@ -3,94 +3,41 @@
 Web platform for managing and tracking Grupo Pana's vehicle endoso process, featuring employee
 and customer portals, task-based workflows, and secure document access.
 
-## Local setup on macOS
+## Local setup
 
-Install PostgreSQL and goose with Homebrew. Use the same major version as your Supabase project. The example uses 18:
+### Prerequisites
 
-```
-brew install postgresql@18 goose
-brew services start postgresql@18
-echo 'export PATH="/opt/homebrew/opt/postgresql@18/bin:$PATH"' >> ~/.zshrc
-source ~/.zshrc
-```
+Install the following tools:
 
-(On Intel Macs the Homebrew prefix is `/usr/local` instead of `/opt/homebrew`.)
+- **Go** — version specified in `backend/go.mod`
+- **PostgreSQL** — same major version as your Supabase project (18 in this example)
+- **[goose](https://github.com/pressly/goose)** — database migrations
+- **[GNU Make](https://www.gnu.org/software/make/)** — required to run project commands
+- **curl** — to check the API health endpoint
+
+Ensure `go`, `psql`, `goose`, and `make` are available on your `PATH`, and start the PostgreSQL service.
+
+### Configure the environment
+
+From the repository root, create your local environment file:
+
+    cp backend/.env.example backend/.env
+
+Review `backend/.env` and adjust the database connection URLs and other settings as needed. The default
+configuration assumes PostgreSQL is running locally on port 5432.
+
+### Initialize the databases
 
 From the repository root:
 
 ```
-make db-create      # creates endosoflow_dev and endosoflow_test
-make migrate-up     # applies all migrations to the dev database
-make db-verify      # rebuilds the test database and runs ~70 rule checks
+    make db-create      # creates endosoflow_dev and endosoflow_test
+    make migrate-up     # applies all migrations to the dev database
+    make db-verify      # rebuilds the test database and runs ~70 rule checks
 ```
 
 `make db-verify` ends with `ALL CHECKS PASSED`. Every rule from the Data Model (unique indexes,
 partial indexes, CHECKs, generated columns, the six triggers) has at least one check.
-
-## Go backend
-
-```
-brew install go
-cp backend/.env.example backend/.env
-make tidy      # downloads dependencies and creates go.sum (needs internet)
-make vet       # static checks
-make test      # unit tests; the database tests run against endosoflow_test (run make db-verify first)
-make run       # starts the API
-curl http://localhost:8080/api/v1/health
-```
-
-The health call should answer `{"status":"ok","database":"ok"}`.
-
-New settings in `backend/.env`: `JWT_SECRET` (at least 32 characters) and `APP_BASE_URL` (the frontend address
-used in emailed links).
-
-Run `make fmt` before committing: CI checks formatting, and it will fail if the Go files are not formatted.
-
-## Authentication
-
-The API now serves the employee authentication routes under `/api/v1`:
-`POST /auth/employee/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/activate`,
-`POST /auth/forgot-password`, `POST /auth/reset-password`, `GET /me` and `PUT /me/password`.
-
-Create the first System Admin once (it refuses to run if one already exists):
-
-```
-make bootstrap-admin ARGS="-doc-number 10000001 -first-name Maju -last-name Admin -gender F \
-  -phone 999111222 -email maju@admin.com -birthdate 2004-10-05 -hire-date 2026-01-01"
-```
-
-It prints an activation link. Locally no real email is sent: emails are written to the server log, so you
-can also copy the link from there. The frontend will need two pages that match the links:
-`/activar-cuenta?token=...` and `/restablecer-contrasena?token=...`.
-
-Try the login with curl after activating (the account is created by the command above):
-
-```
-curl -i -X POST http://localhost:8080/api/v1/auth/employee/login \
-  -H 'Content-Type: application/json' \
-  -d '{"documentType":"DNI","documentNumber":"10000001","password":"YOUR-PASSWORD","rememberMe":false}'
-```
-
-## Staff module and the API contract
-
-New routes (Admin unless noted): `GET/POST /employees`, `GET/PATCH/DELETE /employees/{id}`,
-`POST /employees/{id}/deactivate`, `/reactivate`, `/resend-activation`, and `GET /advisors` (Admin and Manager).
-Deleting takes the reason as a query parameter: `DELETE /employees/{id}?reason=Creado%20por%20error`.
-
-The contract lives in `backend/api/openapi.yaml`. A Go test (`make test`) fails when the code serves a route
-the contract does not describe, or the contract describes a route the code does not serve. To read the contract
-as a web page, paste the file into https://editor.swagger.io or run
-`npx @redocly/cli build-docs backend/api/openapi.yaml`. The frontend will generate its TypeScript types from
-this file (`npx openapi-typescript backend/api/openapi.yaml -o frontend/src/shared/api/schema.d.ts`).
-
-Run `make tidy` again after pulling this slice: it adds one dependency for the contract test.
-
-## Continuous integration
-
-`.github/workflows/ci.yml` runs on every push to `main` and every pull request. GitHub starts a temporary
-PostgreSQL for it (you write no Docker code), applies the migrations, runs the SQL rule checks, then the
-format check, `go vet` and `go test`. Commit `backend/go.sum` (created by `make tidy`) so the workflow can
-cache dependencies.
 
 ## What the migrations contain
 
@@ -111,6 +58,79 @@ cache dependencies.
 
 Migrations are forward-only: fix mistakes with a new file, never by editing an applied one.
 
-## Not included yet
+## Go backend
 
-- Database roles for production (`migrator` and `app_backend`) and the controlled sale-deletion function.
+From the repository root:
+
+```
+    make tidy      # downloads dependencies and creates go.sum (needs internet)
+    make fmt       # formats Go source files
+    make vet       # static checks
+    make test      # unit tests; the database tests run against endosoflow_test
+    make run       # starts the API
+```
+
+Check the API health:
+
+    curl http://localhost:8080/api/v1/health
+
+The expected response is `{"status":"ok","database":"ok"}`.
+
+## Continuous integration
+
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request. GitHub starts a temporary
+PostgreSQL for it (you write no Docker code), applies the migrations, runs the SQL rule checks, then the
+format check, `go vet` and `go test`. Commit `backend/go.sum` (created by `make tidy`) so the workflow can
+cache dependencies.
+
+## Authentication
+
+The API now serves the employee authentication routes under `/api/v1`:
+`POST /auth/employee/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/activate`,
+`POST /auth/forgot-password`, `POST /auth/reset-password`, `GET /me` and `PUT /me/password`.
+
+Create the first System Admin once (it refuses to run if one already exists):
+
+```
+make bootstrap-admin ARGS="-doc-number 10000001 -first-name Maju -last-name Admin -gender F \
+  -phone 999111222 -email maju@admin.com -birthdate 2004-10-05 -hire-date 2026-01-01"
+```
+
+It prints an activation link. Locally no real email is sent: emails are written to the server log, so you
+can also copy the link from there. The frontend will need two pages that match the links:
+`/activar-cuenta?token=...` and `/restablecer-contrasena?token=...`.
+
+Before logging in, activate the account using the token from the activation link and choose a password.
+The activation endpoint expects token and password in the JSON request body.
+
+```
+curl -i -X POST http://localhost:8080/api/v1/auth/activate \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "token": "YOUR-ACTIVATION-TOKEN",
+    "password": "YOUR-PASSWORD"
+  }'
+```
+
+A successful activation returns HTTP 204 No Content. Replace YOUR-ACTIVATION-TOKEN with the token from the
+activation link and YOUR-PASSWORD with the password you want to use for login.
+
+After activating the account, try logging in with curl:
+
+```
+curl -i -X POST http://localhost:8080/api/v1/auth/employee/login \
+  -H 'Content-Type: application/json' \
+  -d '{"documentType":"DNI","documentNumber":"10000001","password":"YOUR-PASSWORD","rememberMe":false}'
+```
+
+## Staff module and the API contract
+
+New routes (Admin unless noted): `GET/POST /employees`, `GET/PATCH/DELETE /employees/{id}`,
+`POST /employees/{id}/deactivate`, `/reactivate`, `/resend-activation`, and `GET /advisors` (Admin and Manager).
+Deleting takes the reason as a query parameter: `DELETE /employees/{id}?reason=Creado%20por%20error`.
+
+The contract lives in `backend/api/openapi.yaml`. A Go test (`make test`) fails when the code serves a route
+the contract does not describe, or the contract describes a route the code does not serve. To read the contract
+as a web page, paste the file into https://editor.swagger.io or run
+`npx @redocly/cli build-docs backend/api/openapi.yaml --output=docs/api-docs.html`. The frontend will generate
+its TypeScript types from this file (`npx openapi-typescript backend/api/openapi.yaml -o frontend/src/shared/api/schema.d.ts`).
