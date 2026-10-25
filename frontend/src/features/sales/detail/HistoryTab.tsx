@@ -1,117 +1,83 @@
-import type { Dispatch, SetStateAction } from "react";
+import { formatDate } from "../../../shared/lib/format";
+import type { Sale, TaskItem } from "../../../shared/types";
 import type { Toast } from "../../../shared/ui/toast";
 import { Icon } from "../../../shared/ui/Icon";
+import { TimelineItem } from "../components/TimelineItem";
 
-export function DocumentsTab({
-  documentStatuses,
-  setDocumentStatuses,
+export function HistoryTab({
+  sale,
+  activeTask,
   toast,
 }: {
-  documentStatuses: Record<string, string>;
-  setDocumentStatuses: Dispatch<SetStateAction<Record<string, string>>>;
+  sale: Sale;
+  activeTask: TaskItem | undefined;
   toast: (toast: Toast) => void;
 }) {
   return (
-    <div className="documents-tab">
+    <div className="history-tab">
       <div className="subsection-heading">
         <div>
-          <h3>Documentos de la operación</h3>
-          <p>Archivos asociados a cada etapa del proceso.</p>
+          <h3>Historial de actividad</h3>
+          <p>Seguimiento de las acciones registradas en la operación.</p>
         </div>
         <button
           className="button button-secondary button-sm"
           onClick={() =>
-            toast({
-              title: "Descarga preparada",
-              message:
-                "En modo demo, los documentos son representaciones visuales.",
-              tone: "info",
-            })
+            toast({ title: "Historial actualizado", tone: "success" })
           }
         >
-          <Icon name="download" size={15} /> Descargar lista
+          <Icon name="refresh" size={15} /> Actualizar
         </button>
       </div>
-      <div className="document-groups">
-        {[
-          {
-            task: "Tarea 1 · Cotización",
-            items: ["Cotización PDF", "Cotización Excel"],
-          },
-          {
-            task: "Tarea 2 · Cliente",
-            items: [
-              "Escaneo de documento de identidad",
-              "Declaración jurada de conocimiento del cliente",
-              "Poder de representación",
-            ],
-          },
-          { task: "Tarea 4 · Pago", items: ["Constancia de abono"] },
-          { task: "Tarea 10 · Inscripción", items: ["TIVe"] },
-        ].map((group) => (
-          <div className="document-group" key={group.task}>
-            <h4>{group.task}</h4>
-            {group.items.map((name) => (
-              <div className="document-row" key={name}>
-                <span
-                  className={`document-icon ${documentStatuses[name] === "Cargado" ? "uploaded" : ""}`}
-                >
-                  <Icon
-                    name={
-                      name.toLowerCase().includes("excel")
-                        ? "file-text"
-                        : "file-check"
-                    }
-                    size={17}
-                  />
-                </span>
-                <div className="document-copy">
-                  <strong>{name}</strong>
-                  <span>
-                    {name.toLowerCase().includes("excel")
-                      ? "Excel · Interno"
-                      : "PDF · Visible para el cliente"}
-                  </span>
-                </div>
-                <span
-                  className={`document-state ${documentStatuses[name] === "Cargado" ? "uploaded" : ""}`}
-                >
-                  <i />
-                  {documentStatuses[name] || "Pendiente"}
-                </span>
-                <label
-                  className="icon-button document-upload"
-                  title="Adjuntar o reemplazar archivo"
-                >
-                  <Icon name="upload" size={16} />
-                  <input
-                    type="file"
-                    accept=".pdf,.xls,.xlsx"
-                    hidden
-                    onChange={(event) => {
-                      if (event.target.files?.[0]) {
-                        setDocumentStatuses((old) => ({
-                          ...old,
-                          [name]: "Cargado",
-                        }));
-                        toast({
-                          title: "Documento adjuntado",
-                          message: event.target.files[0].name,
-                          tone: "success",
-                        });
-                      }
-                    }}
-                  />
-                </label>
-              </div>
-            ))}
-          </div>
-        ))}
+      <div className="timeline">
+        <TimelineItem
+          icon="sales"
+          title="Venta registrada"
+          text={`Se creó la operación ${sale.code}.`}
+          date={formatDate(sale.createdAt)}
+          actor={sale.advisor}
+          tone="green"
+        />
+        <TimelineItem
+          icon="check-circle"
+          title="Datos de la cotización completados"
+          text="La información inicial de la unidad fue registrada."
+          date={formatDate(sale.createdAt)}
+          actor={sale.advisor}
+          tone="blue"
+        />
+        {sale.tasks
+          .filter((task) => task.status === "completed")
+          .slice(-3)
+          .reverse()
+          .map((task) => (
+            <TimelineItem
+              key={task.number}
+              icon="check-circle"
+              title={`Tarea ${task.number} completada`}
+              text={task.name}
+              date={
+                task.completedAt
+                  ? formatDate(task.completedAt)
+                  : "Fecha de muestra"
+              }
+              actor={sale.advisor}
+              tone="green"
+            />
+          ))}
+        <TimelineItem
+          icon="clock"
+          title={
+            activeTask
+              ? `Tarea ${activeTask.number} ${activeTask.status === "in_progress" ? "iniciada" : "habilitada"}`
+              : "Estado actual de la operación"
+          }
+          text={activeTask?.name || "No hay tareas pendientes."}
+          date="24 oct. 2026"
+          actor={sale.advisor}
+          tone="amber"
+        />
       </div>
-      <p className="muted-caption">
-        <Icon name="shield-check" size={15} /> Los documentos internos no serán
-        visibles para el cliente en la Fase 2.
-      </p>
     </div>
   );
 }
