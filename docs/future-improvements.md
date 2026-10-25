@@ -1,5 +1,6 @@
 # Future improvements
 
+- Replace man/woman default profile pictures by using the user name's initials.
 - Add periodic database backups (**Rec:** a scheduled `pg_dump` to R2 from a free GitHub Actions job.).
 - Analyze a more robust task dependencies and exceptional progression model involving: soft/hard dependencies, exceptional overrides, override permissions, audit trail, and warings.
 - When uploading the Receipt in PDF (factura), the date and amount in USD fields could be automatically filled.
