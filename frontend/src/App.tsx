@@ -480,7 +480,8 @@ function LoginPage({
               {demoMode && (
                 <>
                   <div className="login-divider">
-                    <span /> <small>O PARA TU PRESENTACIÓN</small> <span />
+                    {/* <span /> <small>O PARA TU PRESENTACIÓN</small> <span /> */}
+                    <span /> <small>O PARA LOCAL TESTS</small> <span />
                   </div>
                   <button
                     type="button"
