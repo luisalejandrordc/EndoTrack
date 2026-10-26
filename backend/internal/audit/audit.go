@@ -16,6 +16,7 @@ import (
 // Entity types and actions. The database only accepts valid pairs (see audit_logs_valid_pair).
 const (
 	EntityEmployee = "employee"
+	EntityCustomer = "customer"
 
 	ActionCreated     = "CREATED"
 	ActionUpdated     = "UPDATED"

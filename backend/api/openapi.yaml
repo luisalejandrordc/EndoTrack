@@ -17,6 +17,8 @@ info:
     EMPLOYEE_ALREADY_EXISTS, EMPLOYEE_EMAIL_ALREADY_USED, EMPLOYEE_ALREADY_ACTIVATED, EMPLOYEE_ALREADY_ACTIVE,
     EMPLOYEE_ALREADY_INACTIVE, EMPLOYEE_HAS_HISTORY, CANNOT_DEACTIVATE_SELF, CANNOT_DELETE_SELF,
     ADVISOR_HAS_ACTIVE_SALES, LAST_ADMIN_PROTECTED, REASON_REQUIRED, ROUTE_NOT_FOUND, METHOD_NOT_ALLOWED,
+    CUSTOMER_NOT_FOUND, CUSTOMER_ALREADY_EXISTS, CUSTOMER_ALREADY_ACTIVE, CUSTOMER_ALREADY_INACTIVE,
+    CUSTOMER_HAS_SALES, IDENTITY_NOT_FOUND, LOOKUP_NOT_SUPPORTED, LOOKUP_QUOTA_EXHAUSTED, LOOKUP_UNAVAILABLE,
     INTERNAL_ERROR.
 
     **Authentication.** Employees sign in with `POST /auth/employee/login` and send the returned access token as
@@ -28,6 +30,7 @@ tags:
   - name: System
   - name: Authentication
   - name: Staff
+  - name: Customers
 paths:
   /health:
     get:
@@ -392,6 +395,263 @@ paths:
               schema: { $ref: "#/components/schemas/AdvisorList" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /customers:
+    get:
+      tags: [Customers]
+      operationId: listCustomers
+      summary: List customers in the caller's scope
+      description: |
+        Admins and Managers see every customer. An Advisor sees the customers with at least one sale currently
+        assigned to them, plus the customers they created that have no sale yet.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Matches names (ignoring accents and case), the start of a document number or of an email.
+          schema: { type: string }
+        - name: customerType
+          in: query
+          schema: { $ref: "#/components/schemas/CustomerType" }
+        - name: status
+          in: query
+          schema: { type: string, enum: [all, active, inactive], default: all }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: sort
+          in: query
+          schema:
+            {
+              type: string,
+              enum: [displayName, "-displayName", createdAt, "-createdAt"],
+              default: displayName,
+            }
+      responses:
+        "200":
+          description: One page of customers.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Customers]
+      operationId: createCustomer
+      summary: Create a customer
+      description: |
+        A Diplomático (person) needs first name, last name and gender and a DNI, CE, PAS or CDI. An organization
+        needs a legal name plus a contact's first name, last name and job title and a RUC. The pair (document type,
+        number) is unique. Fields that do not apply to the type are ignored. The portal status starts as not_invited.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateCustomerRequest" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Customer" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /customers/lookup:
+    get:
+      tags: [Customers]
+      operationId: lookupCustomer
+      summary: Check whether a customer exists for a document
+      description: |
+        Admins and Managers get the full record. An Advisor who is not linked to the customer gets the legal name
+        only (access name_only) and never learns about the customer's sales. Every lookup is logged and each
+        employee is limited per minute.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentType
+          in: query
+          required: true
+          schema: { $ref: "#/components/schemas/CustomerDocumentType" }
+        - name: documentNumber
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: The lookup result.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CustomerLookupResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+  /customers/{id}:
+    parameters:
+      - $ref: "#/components/parameters/CustomerId"
+    get:
+      tags: [Customers]
+      operationId: getCustomer
+      summary: Read a customer in the caller's scope
+      description: A customer outside an Advisor's scope answers 404, as if it did not exist.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The customer.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Customer" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Customers]
+      operationId: updateCustomer
+      summary: Edit a customer in the caller's scope
+      description: |
+        Only the fields sent change. version is required; a stale version answers VERSION_CONFLICT. Editing a name
+        without sending nameSource marks it as manual. Existing sale snapshots never change.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateCustomerRequest" }
+      responses:
+        "200":
+          description: The updated customer.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Customer" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+    delete:
+      tags: [Customers]
+      operationId: deleteCustomer
+      summary: Permanently delete a customer without sales (Admin)
+      description: Exceptional. A customer with any sale must be deactivated instead.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reason
+          in: query
+          required: true
+          description: Why the customer is being deleted. It is kept in the audit trail.
+          schema: { type: string, minLength: 1 }
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /customers/{id}/deactivate:
+    parameters:
+      - $ref: "#/components/parameters/CustomerId"
+    post:
+      tags: [Customers]
+      operationId: deactivateCustomer
+      summary: Deactivate a customer (Admin, Manager)
+      description: An inactive customer cannot receive new sales or portal access. History is kept.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The deactivated customer.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Customer" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /customers/{id}/reactivate:
+    parameters:
+      - $ref: "#/components/parameters/CustomerId"
+    post:
+      tags: [Customers]
+      operationId: reactivateCustomer
+      summary: Reactivate a customer (Admin, Manager)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The reactivated customer.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Customer" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /lookups/identity:
+    get:
+      tags: [Customers]
+      operationId: lookupIdentity
+      summary: Fill a name from a DNI or RUC (Codart)
+      description: |
+        Only DNI and RUC are supported; CE, PAS and CDI are always typed by hand. A customer we already have is
+        answered from our database (source database) and costs no provider call. Otherwise the request counts
+        against a per-minute limit and the monthly Codart quota (110) before the provider is called. When this
+        fails for any reason (404, 409, 429, 503), the client unlocks manual entry.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: documentType
+          in: query
+          required: true
+          schema: { type: string, enum: [DNI, RUC] }
+        - name: documentNumber
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: The name data found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdentityResult" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+        "503":
+          description: The provider is unavailable or not configured (LOOKUP_UNAVAILABLE).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /lookups/identity/quota:
+    get:
+      tags: [Customers]
+      operationId: getIdentityQuota
+      summary: Codart usage this month, Lima time (Admin)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The monthly usage.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/IdentityQuota" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 components:
   securitySchemes:
     bearerAuth:
@@ -403,6 +663,11 @@ components:
       in: cookie
       name: ef_employee_refresh
   parameters:
+    CustomerId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     EmployeeId:
       name: id
       in: path
@@ -678,3 +943,170 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/Advisor" }
+    CustomerType:
+      type: string
+      enum:
+        [
+          diplomatico,
+          embajada,
+          entidad_religiosa_catolica,
+          entidad_religiosa_no_catolica,
+          organismo_internacional,
+        ]
+    CustomerDocumentType:
+      type: string
+      enum: [DNI, CE, PAS, CDI, RUC]
+    Customer:
+      type: object
+      description: |
+        A Diplomático (person) has firstName, lastName and gender; an organization has legalName and a contact.
+        The fields of the other shape are null. displayName is the legal name, or first and last name.
+      required:
+        [
+          id,
+          customerType,
+          documentType,
+          documentNumber,
+          displayName,
+          nameSource,
+          nationality,
+          phone,
+          email,
+          portalStatus,
+          isActive,
+          version,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        customerType: { $ref: "#/components/schemas/CustomerType" }
+        documentType: { $ref: "#/components/schemas/CustomerDocumentType" }
+        documentNumber:
+          { type: string, description: "Text, so leading zeros survive." }
+        firstName: { type: string, nullable: true }
+        lastName: { type: string, nullable: true }
+        gender: { type: string, enum: [M, F], nullable: true }
+        legalName: { type: string, nullable: true }
+        displayName: { type: string }
+        nameSource: { type: string, enum: [manual, looked_up] }
+        nationality: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        contactFirstName: { type: string, nullable: true }
+        contactLastName: { type: string, nullable: true }
+        contactJobTitle: { type: string, nullable: true }
+        portalStatus: { type: string, enum: [not_invited, invited, active] }
+        isActive: { type: boolean }
+        version: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    CustomerBrief:
+      type: object
+      description: What an Advisor sees of a customer outside their scope.
+      required: [id, displayName, customerType, isActive]
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: string }
+        customerType: { $ref: "#/components/schemas/CustomerType" }
+        isActive: { type: boolean }
+    CustomerList:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Customer" }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    CreateCustomerRequest:
+      type: object
+      required:
+        [customerType, documentType, documentNumber, nationality, phone, email]
+      properties:
+        customerType: { $ref: "#/components/schemas/CustomerType" }
+        documentType: { $ref: "#/components/schemas/CustomerDocumentType" }
+        documentNumber: { type: string }
+        firstName: { type: string, description: Required for a diplomatico. }
+        lastName: { type: string, description: Required for a diplomatico. }
+        gender:
+          {
+            type: string,
+            enum: [M, F],
+            description: Required for a diplomatico.,
+          }
+        legalName: { type: string, description: Required for an organization. }
+        nameSource: { type: string, enum: [manual, looked_up], default: manual }
+        nationality: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        contactFirstName:
+          { type: string, description: Required for an organization. }
+        contactLastName:
+          { type: string, description: Required for an organization. }
+        contactJobTitle:
+          { type: string, description: Required for an organization. }
+    UpdateCustomerRequest:
+      type: object
+      required: [version]
+      properties:
+        version: { type: integer }
+        customerType: { $ref: "#/components/schemas/CustomerType" }
+        documentType: { $ref: "#/components/schemas/CustomerDocumentType" }
+        documentNumber: { type: string }
+        firstName: { type: string }
+        lastName: { type: string }
+        gender: { type: string, enum: [M, F] }
+        legalName: { type: string }
+        nameSource: { type: string, enum: [manual, looked_up] }
+        nationality: { type: string }
+        phone: { type: string }
+        email: { type: string }
+        contactFirstName: { type: string }
+        contactLastName: { type: string }
+        contactJobTitle: { type: string }
+    CustomerLookupResult:
+      type: object
+      required: [exists]
+      properties:
+        exists: { type: boolean }
+        access:
+          {
+            type: string,
+            enum: [full, name_only],
+            description: Present when the customer exists.,
+          }
+        customer:
+          {
+            $ref: "#/components/schemas/Customer",
+            description: Present when access is full.,
+          }
+        brief:
+          {
+            $ref: "#/components/schemas/CustomerBrief",
+            description: Present when access is name_only.,
+          }
+    IdentityResult:
+      type: object
+      required: [documentType, documentNumber, source]
+      properties:
+        documentType: { type: string, enum: [DNI, RUC] }
+        documentNumber: { type: string }
+        source: { type: string, enum: [provider, database] }
+        firstName: { type: string, description: DNI only. }
+        lastName:
+          {
+            type: string,
+            description: DNI only; first and second surname joined.,
+          }
+        legalName: { type: string, description: RUC only. }
+    IdentityQuota:
+      type: object
+      required: [limit, used, remaining, periodStart, periodEnd]
+      properties:
+        limit: { type: integer }
+        used: { type: integer }
+        remaining: { type: integer }
+        periodStart: { type: string, format: date-time }
+        periodEnd: { type: string, format: date-time }
