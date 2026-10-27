@@ -1,5 +1,6 @@
 # Future improvements
 
+- Check the uploaded images (profile photos and vehicle pictures) dimensions, and not only the file type.
 - Replace man/woman default profile pictures by using the user name's initials.
 - Add periodic database backups (**Rec:** a scheduled `pg_dump` to R2 from a free GitHub Actions job.).
 - Analyze a more robust task dependencies and exceptional progression model involving: soft/hard dependencies, exceptional overrides, override permissions, audit trail, and warings.
