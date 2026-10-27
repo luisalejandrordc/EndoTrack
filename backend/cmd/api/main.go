@@ -3,8 +3,10 @@ package main
 
 import (
 	"context"
+	"endosoflow/internal/adapters/codart"
 	"endosoflow/internal/adapters/mail"
 	"endosoflow/internal/auth"
+	"endosoflow/internal/customers"
 	"endosoflow/internal/platform/config"
 	"endosoflow/internal/platform/database"
 	"endosoflow/internal/platform/logging"
@@ -59,9 +61,20 @@ func run() error {
 	})
 	staffHandler := staff.NewHandler(staffService, authHandler, logger)
 
+	// Automatic name lookup needs the Codart token; without it the lookup answers "unavailable" and the
+	// screens fall back to manual entry.
+	var identity customers.IdentityProvider
+	if cfg.CodartToken != "" {
+		identity = codart.New(cfg.CodartBaseURL, cfg.CodartToken, nil)
+	} else {
+		logger.Warn("CODART_TOKEN is not set: automatic DNI/RUC name lookup is off")
+	}
+	customersService := customers.NewService(customers.Deps{DB: pool, Identity: identity, Logger: logger})
+	customersHandler := customers.NewHandler(customersService, authHandler, logger)
+
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           newRouter(logger, pool, authHandler.Mount, staffHandler.Mount),
+		Handler:           newRouter(logger, pool, authHandler.Mount, staffHandler.Mount, customersHandler.Mount),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second, // uploads of up to 10 MB
 		WriteTimeout:      60 * time.Second,

@@ -22,6 +22,8 @@ type Config struct {
 	AppBaseURL      string // the frontend address used in emailed links, without a trailing slash
 	CookieSecure    bool   // refresh cookie "Secure" flag; true everywhere except local development
 	TrustProxy      bool   // read the client IP from X-Forwarded-For (only behind a proxy you control)
+	CodartToken     string // bearer token for the Codart identity API; empty turns automatic name lookup off
+	CodartBaseURL   string // Codart address; empty means the production address
 }
 
 var validEnvs = map[string]bool{"local": true, "test": true, "staging": true, "production": true}
@@ -106,6 +108,9 @@ func Load(getenv func(string) string) (Config, error) {
 			cfg.TrustProxy = trust
 		}
 	}
+
+	cfg.CodartToken = strings.TrimSpace(getenv("CODART_TOKEN"))
+	cfg.CodartBaseURL = strings.TrimRight(strings.TrimSpace(getenv("CODART_BASE_URL")), "/")
 
 	if len(problems) > 0 {
 		return Config{}, errors.New("invalid configuration:\n  - " + strings.Join(problems, "\n  - "))

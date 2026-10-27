@@ -26,7 +26,7 @@ Requirements: Node.js 20+ and npm.
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local
+cp .env.example .env
 npm run dev
 ```
 
@@ -52,22 +52,45 @@ If the Go server listens on a different port, update `VITE_API_PROXY_TARGET`. Fo
 
 ## Validation
 
+Environment variable VITE_DEMO_MODE must be set to true before running the tests.
+
 ```bash
-npm run typecheck
-npm run build
+npm run typecheck   # tsc --noEmit
+npm test            # Vitest: pure sale logic + app smoke tests (jsdom)
+npm run build       # tsc -b && vite build
 ```
 
 ## Project structure
 
 ```text
 src/
-  components/    icon primitive, modal
-  data/          presentation data and 13 task definitions
-  lib/api.ts     typed API client / error envelope
-  App.tsx        authentication, shell, page flows
-  styles.css     design system and responsive layouts
-  types.ts       domain-facing frontend types
+  main.tsx                 entry point
+  app/                     shell, navigation, wiring
+    App.tsx                composes auth, demo workspace, pages and dialogs
+    layout/                Sidebar, Topbar, AppShell
+    navigation.ts          View type
+    useDemoWorkspace.ts    DEMO-ONLY in-memory data (sales, customers, catalog)
+  features/                one folder per business area
+    auth/                  LoginPage, useAuth
+    sales/                 SalesWorkspace, SaleDetail (+ detail/ tabs), NewSaleWizard,
+                           ConfirmModal, saleActions.ts (DEMO-ONLY rules), hooks
+    customers/  catalog/  staff/  profile/
+  shared/
+    api/client.ts          typed API client, token refresh, error envelope
+    demo/data.ts           presentation data and the 13 task definitions
+    lib/                   format helpers, roles
+    ui/                    Icon, Modal, Field, Brand, MetricCard, ApiGap, toast
+    config.ts              demoMode flag
+    types.ts               domain-facing frontend types
+  styles/                  design system split by area; index.css fixes the cascade order
+  test/                    Vitest setup
 ```
+
+Rules of thumb while the project grows:
+
+- A feature never imports from another feature's internals; shared code goes to `shared/`.
+- Anything marked **DEMO-ONLY** (`useDemoWorkspace.ts`, `saleActions.ts`, `shared/demo/`) is scaffolding. When a resource's routes appear in `backend/api/openapi.yaml`, move that resource to the real API and delete its demo code. The backend owns every business rule.
+- `styles/index.css` imports the files in a fixed order because later files override earlier ones; keep new sections before `responsive.css`.
 
 ## Backend integration checklist
 
