@@ -208,6 +208,7 @@ export default function App() {
             }}
             demo={demoMode}
             role={currentUser.role}
+            toast={notify}
           />
         )}
         {page === "catalog" && (

@@ -4,18 +4,26 @@ export function Field({
   label,
   children,
   hint,
+  error,
   className = "",
 }: {
   label: string;
   children: ReactNode;
   hint?: string;
+  error?: string;
   className?: string;
 }) {
   return (
-    <label className={`field ${className}`}>
+    <label className={`field ${className} ${error ? "has-error" : ""}`.trim()}>
       <span className="field-label">{label}</span>
       {children}
-      {hint && <small className="field-hint">{hint}</small>}
+      {error ? (
+        <small className="field-error" role="alert">
+          {error}
+        </small>
+      ) : (
+        hint && <small className="field-hint">{hint}</small>
+      )}
     </label>
   );
 }

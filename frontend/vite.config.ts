@@ -11,6 +11,11 @@ export default defineConfig(({ mode }) => {
           target: env.VITE_API_PROXY_TARGET || "http://localhost:8080",
           changeOrigin: true,
         },
+        // Catalog images served by the backend when R2 is not configured (local development).
+        "/media": {
+          target: env.VITE_API_PROXY_TARGET || "http://localhost:8080",
+          changeOrigin: true,
+        },
       },
     },
   };
