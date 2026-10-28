@@ -5,7 +5,9 @@ import (
 	"context"
 	"endosoflow/internal/adapters/codart"
 	"endosoflow/internal/adapters/mail"
+	"endosoflow/internal/adapters/storage"
 	"endosoflow/internal/auth"
+	"endosoflow/internal/catalog"
 	"endosoflow/internal/customers"
 	"endosoflow/internal/platform/config"
 	"endosoflow/internal/platform/database"
@@ -72,9 +74,37 @@ func run() error {
 	customersService := customers.NewService(customers.Deps{DB: pool, Identity: identity, Logger: logger})
 	customersHandler := customers.NewHandler(customersService, authHandler, logger)
 
+	// Catalog images live in Cloudflare R2. Local and test environments use a folder served at /media;
+	// anywhere else a missing store makes image uploads fail loudly.
+	var store storage.Store = storage.Unconfigured()
+	var localStore *storage.Local
+	switch {
+	case cfg.R2Configured():
+		store = storage.NewR2(storage.R2Config{
+			AccountID: cfg.R2AccountID, AccessKeyID: cfg.R2AccessKeyID, SecretAccessKey: cfg.R2SecretAccessKey,
+			Bucket: cfg.R2Bucket, PublicBaseURL: cfg.R2PublicBaseURL, Endpoint: cfg.R2Endpoint,
+		})
+	case cfg.Env == "local" || cfg.Env == "test":
+		localStore = storage.NewLocal(cfg.LocalMediaDir, cfg.MediaBaseURL)
+		store = localStore
+		logger.Warn("R2 is not configured: catalog images are kept on local disk", "dir", cfg.LocalMediaDir)
+	default:
+		logger.Warn("R2 is not configured: catalog image uploads will fail")
+	}
+	catalogService := catalog.NewService(catalog.Deps{DB: pool, Store: store, Logger: logger})
+	catalogHandler := catalog.NewHandler(catalogService, authHandler, logger)
+
+	var handler http.Handler = newRouter(logger, pool, authHandler.Mount, staffHandler.Mount, customersHandler.Mount, catalogHandler.Mount)
+	if localStore != nil {
+		mux := http.NewServeMux()
+		mux.Handle("/media/", http.StripPrefix("/media/", localStore.Handler()))
+		mux.Handle("/", handler)
+		handler = mux
+	}
+
 	server := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           newRouter(logger, pool, authHandler.Mount, staffHandler.Mount, customersHandler.Mount),
+		Handler:           handler,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       60 * time.Second, // uploads of up to 10 MB
 		WriteTimeout:      60 * time.Second,

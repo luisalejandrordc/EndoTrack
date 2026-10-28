@@ -19,6 +19,11 @@ info:
     ADVISOR_HAS_ACTIVE_SALES, LAST_ADMIN_PROTECTED, REASON_REQUIRED, ROUTE_NOT_FOUND, METHOD_NOT_ALLOWED,
     CUSTOMER_NOT_FOUND, CUSTOMER_ALREADY_EXISTS, CUSTOMER_ALREADY_ACTIVE, CUSTOMER_ALREADY_INACTIVE,
     CUSTOMER_HAS_SALES, IDENTITY_NOT_FOUND, LOOKUP_NOT_SUPPORTED, LOOKUP_QUOTA_EXHAUSTED, LOOKUP_UNAVAILABLE,
+    MODEL_NOT_FOUND, VERSION_NOT_FOUND, COLOR_NOT_FOUND, IMAGE_NOT_FOUND, MODEL_NAME_ALREADY_USED,
+    VERSION_NAME_ALREADY_USED, COLOR_NAME_ALREADY_USED, CATALOG_ENTRY_ALREADY_ARCHIVED,
+    CATALOG_ENTRY_ALREADY_ACTIVE, CATALOG_ENTRY_IN_USE, CATALOG_INCOMPLETE, LAST_ACTIVE_VERSION,
+    LAST_ACTIVE_COLOR, MAIN_IMAGE_REQUIRED, IMAGE_REQUIRED, IMAGE_TOO_LARGE, IMAGE_TYPE_NOT_ALLOWED,
+    INVALID_MULTIPART, STORAGE_UNAVAILABLE,
     INTERNAL_ERROR.
 
     **Authentication.** Employees sign in with `POST /auth/employee/login` and send the returned access token as
@@ -31,6 +36,7 @@ tags:
   - name: Authentication
   - name: Staff
   - name: Customers
+  - name: Catalog
 paths:
   /health:
     get:
@@ -652,6 +658,513 @@ paths:
               schema: { $ref: "#/components/schemas/IdentityQuota" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /vehicle-models:
+    get:
+      tags: [Catalog]
+      operationId: listVehicleModels
+      summary: List vehicle models
+      description: Admins and Managers see archived models too. An Advisor always gets active models only.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: Matches the model name, ignoring accents and case.
+          schema: { type: string }
+        - name: category
+          in: query
+          schema: { $ref: "#/components/schemas/VehicleCategory" }
+        - name: status
+          in: query
+          schema: { type: string, enum: [all, active, archived], default: all }
+        - name: page
+          in: query
+          schema: { type: integer, minimum: 1, default: 1 }
+        - name: pageSize
+          in: query
+          schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+        - name: sort
+          in: query
+          schema:
+            {
+              type: string,
+              enum: [name, "-name", createdAt, "-createdAt"],
+              default: name,
+            }
+      responses:
+        "200":
+          description: One page of models.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleModelList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      tags: [Catalog]
+      operationId: createVehicleModel
+      summary: Create a model with its first version, color and Main view image (Admin, Manager)
+      description: |
+        Sent as multipart/form-data with a JSON part called data and a file part called mainImage. A model cannot
+        exist without a version, a color and that color's Main view image, so all of it is saved at once or not at
+        all. The price may be a JSON number or a string; it is stored with two decimals. Images must be JPEG, PNG
+        or WebP and at most 5 MB; the type is decided from the file's bytes, not from what the client says.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/CreateVehicleModelMultipart" }
+            encoding:
+              data: { contentType: application/json }
+              mainImage: { contentType: "image/jpeg, image/png, image/webp" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleModel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413":
+          description: The image is larger than 5 MB (IMAGE_TOO_LARGE).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "503":
+          description: The file store is unavailable (STORAGE_UNAVAILABLE). Nothing was saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /vehicle-models/{id}:
+    parameters:
+      - $ref: "#/components/parameters/VehicleModelId"
+    get:
+      tags: [Catalog]
+      operationId: getVehicleModel
+      summary: Read a model with its versions, colors and images
+      description: An Advisor gets it only while it is active, and without archived versions and colors.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The model.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleModel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Catalog]
+      operationId: updateVehicleModel
+      summary: Edit a model (Admin, Manager)
+      description: Only the fields sent change. version is required. Existing sale snapshots never change.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateVehicleModelRequest" }
+      responses:
+        "200":
+          description: The updated model.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleModel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+    delete:
+      tags: [Catalog]
+      operationId: deleteVehicleModel
+      summary: Permanently delete a model that no sale uses (Admin)
+      description: Exceptional. Removes its versions, colors and images. A model any sale references must be archived instead.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reason
+          in: query
+          required: true
+          description: Why the entry is being deleted. It is kept in the audit trail.
+          schema: { type: string, minLength: 1 }
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /vehicle-models/{id}/archive:
+    parameters:
+      - $ref: "#/components/parameters/VehicleModelId"
+    post:
+      tags: [Catalog]
+      operationId: archiveVehicleModel
+      summary: Archive a model (Admin, Manager)
+      description: An archived model leaves the sale form and Advisor lists. Existing sales are unaffected.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The archived model.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleModel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /vehicle-models/{id}/unarchive:
+    parameters:
+      - $ref: "#/components/parameters/VehicleModelId"
+    post:
+      tags: [Catalog]
+      operationId: unarchiveVehicleModel
+      summary: Unarchive a model (Admin, Manager)
+      description: The model must still have an active version and an active color (CATALOG_INCOMPLETE otherwise).
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The reactivated model.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleModel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /vehicle-models/{id}/versions:
+    parameters:
+      - $ref: "#/components/parameters/VehicleModelId"
+    post:
+      tags: [Catalog]
+      operationId: createVehicleVersion
+      summary: Add a version to a model (Admin, Manager)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CreateVehicleVersionRequest" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleVersion" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /vehicle-models/{id}/colors:
+    parameters:
+      - $ref: "#/components/parameters/VehicleModelId"
+    post:
+      tags: [Catalog]
+      operationId: createVehicleColor
+      summary: Add a color with its Main view image (Admin, Manager)
+      description: Sent as multipart/form-data with a JSON part called data and a file part called mainImage.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/CreateVehicleColorMultipart" }
+            encoding:
+              data: { contentType: application/json }
+              mainImage: { contentType: "image/jpeg, image/png, image/webp" }
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleColor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "413":
+          description: The image is larger than 5 MB (IMAGE_TOO_LARGE).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "503":
+          description: The file store is unavailable (STORAGE_UNAVAILABLE). Nothing was saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+  /vehicle-versions/{id}:
+    parameters:
+      - $ref: "#/components/parameters/VehicleVersionId"
+    patch:
+      tags: [Catalog]
+      operationId: updateVehicleVersion
+      summary: Edit a version (Admin, Manager)
+      description: Existing sales keep the name and price they were created with.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateVehicleVersionRequest" }
+      responses:
+        "200":
+          description: The updated version.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleVersion" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+    delete:
+      tags: [Catalog]
+      operationId: deleteVehicleVersion
+      summary: Permanently delete a version that no sale uses (Admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reason
+          in: query
+          required: true
+          description: Why the entry is being deleted. It is kept in the audit trail.
+          schema: { type: string, minLength: 1 }
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /vehicle-versions/{id}/archive:
+    parameters:
+      - $ref: "#/components/parameters/VehicleVersionId"
+    post:
+      tags: [Catalog]
+      operationId: archiveVehicleVersion
+      summary: Archive a version (Admin, Manager)
+      description: The last active version of an active model cannot be archived (LAST_ACTIVE_VERSION).
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The archived version.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /vehicle-versions/{id}/unarchive:
+    parameters:
+      - $ref: "#/components/parameters/VehicleVersionId"
+    post:
+      tags: [Catalog]
+      operationId: unarchiveVehicleVersion
+      summary: Unarchive a version (Admin, Manager)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The reactivated version.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleVersion" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /vehicle-colors/{id}:
+    parameters:
+      - $ref: "#/components/parameters/VehicleColorId"
+    patch:
+      tags: [Catalog]
+      operationId: updateVehicleColor
+      summary: Rename a color (Admin, Manager)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/UpdateVehicleColorRequest" }
+      responses:
+        "200":
+          description: The updated color.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleColor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+    delete:
+      tags: [Catalog]
+      operationId: deleteVehicleColor
+      summary: Permanently delete a color that no sale uses (Admin)
+      description: Also removes the color's images.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reason
+          in: query
+          required: true
+          description: Why the entry is being deleted. It is kept in the audit trail.
+          schema: { type: string, minLength: 1 }
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /vehicle-colors/{id}/archive:
+    parameters:
+      - $ref: "#/components/parameters/VehicleColorId"
+    post:
+      tags: [Catalog]
+      operationId: archiveVehicleColor
+      summary: Archive a color (Admin, Manager)
+      description: The last active color of an active model cannot be archived (LAST_ACTIVE_COLOR).
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The archived color.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleColor" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /vehicle-colors/{id}/unarchive:
+    parameters:
+      - $ref: "#/components/parameters/VehicleColorId"
+    post:
+      tags: [Catalog]
+      operationId: unarchiveVehicleColor
+      summary: Unarchive a color (Admin, Manager)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The reactivated color.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleColor" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /vehicle-colors/{id}/images/{viewpoint}:
+    parameters:
+      - $ref: "#/components/parameters/VehicleColorId"
+      - name: viewpoint
+        in: path
+        required: true
+        schema: { $ref: "#/components/schemas/Viewpoint" }
+    put:
+      tags: [Catalog]
+      operationId: putVehicleColorImage
+      summary: Add or replace one image of a color (Admin, Manager)
+      description: |
+        Sent as multipart/form-data with one file part called file. A color has at most one image per viewpoint;
+        replacing one uploads the new file, updates the record and deletes the old file after the commit.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema: { $ref: "#/components/schemas/ImageUploadMultipart" }
+            encoding:
+              file: { contentType: "image/jpeg, image/png, image/webp" }
+      responses:
+        "200":
+          description: The color with its images.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleColor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413":
+          description: The image is larger than 5 MB (IMAGE_TOO_LARGE).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+        "503":
+          description: The file store is unavailable (STORAGE_UNAVAILABLE). Nothing was saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+    delete:
+      tags: [Catalog]
+      operationId: deleteVehicleColorImage
+      summary: Remove an optional image of a color (Admin, Manager)
+      description: The Main view cannot be removed (MAIN_IMAGE_REQUIRED), only replaced.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The color without that image.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VehicleColor" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "422": { $ref: "#/components/responses/Unprocessable" }
+  /catalog/selectable:
+    get:
+      tags: [Catalog]
+      operationId: listSelectableCatalog
+      summary: What the sale form can offer
+      description: |
+        Active models that have at least one selectable version and one selectable color, with those versions
+        (ordered by price) and colors (with their Main view image).
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: The selectable catalog.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/SelectableModel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 components:
   securitySchemes:
     bearerAuth:
@@ -663,6 +1176,21 @@ components:
       in: cookie
       name: ef_employee_refresh
   parameters:
+    VehicleModelId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    VehicleVersionId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    VehicleColorId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
     CustomerId:
       name: id
       in: path
@@ -1110,3 +1638,275 @@ components:
         remaining: { type: integer }
         periodStart: { type: string, format: date-time }
         periodEnd: { type: string, format: date-time }
+    VehicleCategory:
+      type: string
+      enum: [camioneta, comercial, familiar, hatchback, sedan]
+    Viewpoint:
+      type: string
+      enum:
+        [
+          main_view,
+          exterior_front,
+          exterior_left,
+          exterior_right,
+          exterior_rear,
+          interior,
+        ]
+    Price:
+      description: A price as a JSON number or a decimal string. It must be greater than zero, with at most two decimals and at most ten digits before the point. Responses always use a string with two decimals.
+      oneOf:
+        - { type: string, example: "35000.00" }
+        - { type: number, example: 35000 }
+    CatalogImage:
+      type: object
+      required: [id, viewpoint, url, mimeType, sizeBytes, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        viewpoint: { $ref: "#/components/schemas/Viewpoint" }
+        url:
+          {
+            type: string,
+            format: uri,
+            description: Public address of the file. A replacement gets a new address.,
+          }
+        mimeType: { type: string, enum: [image/jpeg, image/png, image/webp] }
+        sizeBytes: { type: integer }
+        updatedAt: { type: string, format: date-time }
+    VehicleVersion:
+      type: object
+      required:
+        [
+          id,
+          modelId,
+          name,
+          referencePrice,
+          isActive,
+          version,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        modelId: { type: string, format: uuid }
+        name: { type: string }
+        referencePrice:
+          {
+            type: string,
+            example: "35000.00",
+            description: Decimal string with two decimals.,
+          }
+        isActive: { type: boolean }
+        version: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    VehicleColor:
+      type: object
+      required:
+        [
+          id,
+          modelId,
+          name,
+          isActive,
+          mainImageUrl,
+          images,
+          version,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        modelId: { type: string, format: uuid }
+        name: { type: string }
+        isActive: { type: boolean }
+        mainImageUrl: { type: string, format: uri }
+        images:
+          type: array
+          items: { $ref: "#/components/schemas/CatalogImage" }
+        version: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    VehicleModel:
+      type: object
+      required:
+        [
+          id,
+          name,
+          categories,
+          isActive,
+          versions,
+          colors,
+          version,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/VehicleCategory" }
+        isActive: { type: boolean }
+        versions:
+          type: array
+          items: { $ref: "#/components/schemas/VehicleVersion" }
+        colors:
+          type: array
+          items: { $ref: "#/components/schemas/VehicleColor" }
+        version: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    VehicleModelSummary:
+      type: object
+      required:
+        [
+          id,
+          name,
+          categories,
+          isActive,
+          activeVersionCount,
+          activeColorCount,
+          version,
+          createdAt,
+          updatedAt,
+        ]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/VehicleCategory" }
+        isActive: { type: boolean }
+        activeVersionCount: { type: integer }
+        activeColorCount: { type: integer }
+        minPrice:
+          {
+            type: string,
+            nullable: true,
+            description: Lowest active version price.,
+          }
+        mainImageUrl:
+          {
+            type: string,
+            format: uri,
+            nullable: true,
+            description: Main view of the first active color.,
+          }
+        version: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    VehicleModelList:
+      type: object
+      required: [items, page, pageSize, total]
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/VehicleModelSummary" }
+        page: { type: integer }
+        pageSize: { type: integer }
+        total: { type: integer }
+    CreateVehicleModelData:
+      type: object
+      required: [name, categories, version, color]
+      properties:
+        name: { type: string, maxLength: 120 }
+        description: { type: string, maxLength: 1000 }
+        categories:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/VehicleCategory" }
+        version:
+          type: object
+          required: [name, referencePrice]
+          properties:
+            name: { type: string, maxLength: 80 }
+            referencePrice: { $ref: "#/components/schemas/Price" }
+        color:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string, maxLength: 60 }
+    CreateVehicleModelMultipart:
+      type: object
+      required: [data, mainImage]
+      properties:
+        data: { $ref: "#/components/schemas/CreateVehicleModelData" }
+        mainImage: { type: string, format: binary }
+    CreateVehicleColorMultipart:
+      type: object
+      required: [data, mainImage]
+      properties:
+        data:
+          type: object
+          required: [name]
+          properties:
+            name: { type: string, maxLength: 60 }
+        mainImage: { type: string, format: binary }
+    ImageUploadMultipart:
+      type: object
+      required: [file]
+      properties:
+        file: { type: string, format: binary }
+    UpdateVehicleModelRequest:
+      type: object
+      required: [version]
+      properties:
+        version: { type: integer }
+        name: { type: string, maxLength: 120 }
+        description:
+          {
+            type: string,
+            maxLength: 1000,
+            description: An empty string clears it.,
+          }
+        categories:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/VehicleCategory" }
+    CreateVehicleVersionRequest:
+      type: object
+      required: [name, referencePrice]
+      properties:
+        name: { type: string, maxLength: 80 }
+        referencePrice: { $ref: "#/components/schemas/Price" }
+    UpdateVehicleVersionRequest:
+      type: object
+      required: [version]
+      properties:
+        version: { type: integer }
+        name: { type: string, maxLength: 80 }
+        referencePrice: { $ref: "#/components/schemas/Price" }
+    UpdateVehicleColorRequest:
+      type: object
+      required: [version]
+      properties:
+        version: { type: integer }
+        name: { type: string, maxLength: 60 }
+    SelectableModel:
+      type: object
+      required: [id, name, categories, versions, colors]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/VehicleCategory" }
+        versions:
+          type: array
+          items:
+            type: object
+            required: [id, name, referencePrice]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              referencePrice: { type: string }
+        colors:
+          type: array
+          items:
+            type: object
+            required: [id, name, mainImageUrl]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              mainImageUrl: { type: string, format: uri }
