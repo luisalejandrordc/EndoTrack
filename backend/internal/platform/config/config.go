@@ -24,7 +24,21 @@ type Config struct {
 	TrustProxy      bool   // read the client IP from X-Forwarded-For (only behind a proxy you control)
 	CodartToken     string // bearer token for the Codart identity API; empty turns automatic name lookup off
 	CodartBaseURL   string // Codart address; empty means the production address
+
+	// Object storage for catalog images. Cloudflare R2 is used when all five R2 values are set. Otherwise,
+	// local and test environments keep files in LocalMediaDir and serve them at MediaBaseURL.
+	R2AccountID       string
+	R2AccessKeyID     string
+	R2SecretAccessKey string
+	R2Bucket          string
+	R2PublicBaseURL   string
+	R2Endpoint        string // optional override, for tests
+	LocalMediaDir     string
+	MediaBaseURL      string
 }
+
+// R2Configured reports whether Cloudflare R2 should be used.
+func (c Config) R2Configured() bool { return c.R2AccountID != "" }
 
 var validEnvs = map[string]bool{"local": true, "test": true, "staging": true, "production": true}
 
@@ -111,6 +125,28 @@ func Load(getenv func(string) string) (Config, error) {
 
 	cfg.CodartToken = strings.TrimSpace(getenv("CODART_TOKEN"))
 	cfg.CodartBaseURL = strings.TrimRight(strings.TrimSpace(getenv("CODART_BASE_URL")), "/")
+
+	cfg.R2AccountID = strings.TrimSpace(getenv("R2_ACCOUNT_ID"))
+	cfg.R2AccessKeyID = strings.TrimSpace(getenv("R2_ACCESS_KEY_ID"))
+	cfg.R2SecretAccessKey = strings.TrimSpace(getenv("R2_SECRET_ACCESS_KEY"))
+	cfg.R2Bucket = strings.TrimSpace(getenv("R2_BUCKET"))
+	cfg.R2PublicBaseURL = strings.TrimRight(strings.TrimSpace(getenv("R2_PUBLIC_BASE_URL")), "/")
+	cfg.R2Endpoint = strings.TrimRight(strings.TrimSpace(getenv("R2_ENDPOINT")), "/")
+	r2Values := map[string]string{
+		"R2_ACCOUNT_ID": cfg.R2AccountID, "R2_ACCESS_KEY_ID": cfg.R2AccessKeyID,
+		"R2_SECRET_ACCESS_KEY": cfg.R2SecretAccessKey, "R2_BUCKET": cfg.R2Bucket, "R2_PUBLIC_BASE_URL": cfg.R2PublicBaseURL,
+	}
+	setCount := 0
+	for _, v := range r2Values {
+		if v != "" {
+			setCount++
+		}
+	}
+	if setCount > 0 && setCount < len(r2Values) {
+		problems = append(problems, "R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET and R2_PUBLIC_BASE_URL must be set together")
+	}
+	cfg.LocalMediaDir = valueOr(getenv("LOCAL_MEDIA_DIR"), "./var/media")
+	cfg.MediaBaseURL = strings.TrimRight(valueOr(getenv("MEDIA_BASE_URL"), "http://localhost:8080/media"), "/")
 
 	if len(problems) > 0 {
 		return Config{}, errors.New("invalid configuration:\n  - " + strings.Join(problems, "\n  - "))

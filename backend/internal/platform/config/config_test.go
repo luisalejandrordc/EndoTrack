@@ -115,3 +115,39 @@ func TestLoadReportsEveryProblemAtOnce(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadStorageDefaultsToLocalFolder(t *testing.T) {
+	cfg, err := Load(env(withBase(nil)))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.R2Configured() || cfg.LocalMediaDir != "./var/media" || cfg.MediaBaseURL != "http://localhost:8080/media" {
+		t.Fatalf("unexpected storage defaults: %+v", cfg)
+	}
+	if cfg.CodartToken != "" {
+		t.Fatalf("Codart must be off without a token: %+v", cfg)
+	}
+}
+
+func TestLoadAcceptsAFullR2Setup(t *testing.T) {
+	cfg, err := Load(env(withBase(map[string]string{
+		"R2_ACCOUNT_ID": "acct", "R2_ACCESS_KEY_ID": "key", "R2_SECRET_ACCESS_KEY": "secret",
+		"R2_BUCKET": "endosoflow", "R2_PUBLIC_BASE_URL": "https://img.example.pe/",
+	})))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !cfg.R2Configured() || cfg.R2PublicBaseURL != "https://img.example.pe" {
+		t.Fatalf("unexpected R2 settings: %+v", cfg)
+	}
+}
+
+func TestLoadRejectsAHalfConfiguredR2WithoutLeakingValues(t *testing.T) {
+	_, err := Load(env(withBase(map[string]string{"R2_ACCOUNT_ID": "acct", "R2_SECRET_ACCESS_KEY": "super-secret-value"})))
+	if err == nil || !strings.Contains(err.Error(), "R2_BUCKET") {
+		t.Fatalf("a partial R2 setup must be reported: %v", err)
+	}
+	if strings.Contains(err.Error(), "super-secret-value") {
+		t.Fatalf("the error must not echo secrets: %v", err)
+	}
+}

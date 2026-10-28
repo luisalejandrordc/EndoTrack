@@ -18,12 +18,20 @@ const (
 	EntityEmployee = "employee"
 	EntityCustomer = "customer"
 
+	EntityVehicleModel   = "vehicle_model"
+	EntityVehicleVersion = "vehicle_version"
+	EntityVehicleColor   = "vehicle_color"
+	EntityCatalogImage   = "catalog_image"
+
 	ActionCreated     = "CREATED"
 	ActionUpdated     = "UPDATED"
 	ActionDeactivated = "DEACTIVATED"
 	ActionReactivated = "REACTIVATED"
 	ActionDeleted     = "DELETED"
 	ActionRoleChanged = "ROLE_CHANGED"
+	ActionUploaded    = "UPLOADED"
+	ActionReplaced    = "REPLACED"
+	ActionRemoved     = "REMOVED"
 )
 
 type execer interface {
