@@ -9,9 +9,12 @@
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "api:types": "openapi-typescript ../backend/api/openapi.yaml --default-non-nullable=false -o src/shared/api/schema.d.ts",
+    "api:types:check": "openapi-typescript ../backend/api/openapi.yaml --default-non-nullable=false -o /tmp/schema.check.d.ts && diff -q /tmp/schema.check.d.ts src/shared/api/schema.d.ts"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.105.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -23,6 +26,7 @@
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^30.1.3",
+    "openapi-typescript": "^7.13.0",
     "typescript": "~5.6.3",
     "vite": "^6.0.1",
     "vitest": "^5.0.5"
