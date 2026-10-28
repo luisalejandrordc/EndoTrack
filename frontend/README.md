@@ -50,14 +50,31 @@ In live mode the access token stays in memory; the refresh cookie is handled by 
 
 If the Go server listens on a different port, update `VITE_API_PROXY_TARGET`. For a deployment where the API is on a different origin, set `VITE_API_BASE_URL` to the appropriate API base and configure CORS/cookies to match the backend's security contract; same-origin proxying is the expected setup.
 
+## API types and data fetching
+
+- `src/shared/api/schema.d.ts` is generated from `backend/api/openapi.yaml`. Run `npm run api:types` whenever the contract changes and commit the result; `npm run api:types:check` fails if the file is stale. Use it through `Schemas` in `src/shared/api/schema.ts`, so a screen cannot drift from the real contract.
+- Server data goes through TanStack Query (`@tanstack/react-query`). Each feature keeps its calls in `api.ts` and its hooks in `queries.ts`. Requests the server refused (4xx) are not retried.
+- A screen runs in one of two modes: **live** (talks to the API) or **demo** (`VITE_DEMO_MODE`, sample data in memory). Customers is live; the other screens still use demo data until their backend modules are wired.
+
 ## Validation
 
 Environment variable VITE_DEMO_MODE must be set to true before running the tests.
 
 ```bash
-npm run typecheck   # tsc --noEmit
-npm test            # Vitest: pure sale logic + app smoke tests (jsdom)
-npm run build       # tsc -b && vite build
+npm run typecheck        # tsc --noEmit
+npm test                 # Vitest: logic, screens against a fake API, app smoke tests
+npm run build            # tsc -b && vite build
+npm run api:types:check  # the generated types match the OpenAPI contract
+```
+
+### Integration test against a real backend
+
+`src/features/customers/customers.integration.test.ts` drives the real API client against a running backend with three employees (Admin, Manager, Advisor). It is skipped unless `INTEGRATION_API` is set:
+
+```bash
+INTEGRATION_API=1 VITE_API_BASE_URL=http://localhost:8080/api/v1 INTEGRATION_PASSWORD=... \
+INTEGRATION_ADMIN=DNI:<number> INTEGRATION_MANAGER=DNI:<number> INTEGRATION_ADVISOR=DNI:<number> \
+npx vitest run src/features/customers/customers.integration.test.ts
 ```
 
 ## Project structure
@@ -74,7 +91,8 @@ src/
     auth/                  LoginPage, useAuth
     sales/                 SalesWorkspace, SaleDetail (+ detail/ tabs), NewSaleWizard,
                            ConfirmModal, saleActions.ts (DEMO-ONLY rules), hooks
-    customers/  catalog/  staff/  profile/
+    customers/             LiveCustomersPage (API), DemoCustomersPage, form modal, dialogs, api/queries
+    catalog/  staff/  profile/
   shared/
     api/client.ts          typed API client, token refresh, error envelope
     demo/data.ts           presentation data and the 13 task definitions
