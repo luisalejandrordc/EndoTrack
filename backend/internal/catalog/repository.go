@@ -45,7 +45,7 @@ func findModelRow(ctx context.Context, q querier, id uuid.UUID, forUpdate bool) 
 }
 
 func modelCategories(ctx context.Context, q querier, id uuid.UUID) ([]string, error) {
-	rows, err := q.Query(ctx, `SELECT category::text FROM vehicle_model_categories WHERE model_id = $1 ORDER BY category`, id)
+	rows, err := q.Query(ctx, `SELECT category::text FROM vehicle_model_categories WHERE model_id = $1 ORDER BY vehicle_model_categories.category`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -257,12 +257,15 @@ func scanImage(row pgx.Row) (*imageRow, error) {
 	return &i, nil
 }
 
+// colorImages returns the images of the given colors in the order of the viewpoint enum (Main view first).
+// The ORDER BY names the table column on purpose: a bare "viewpoint" would match the text output column of
+// the same name and sort alphabetically instead.
 func colorImages(ctx context.Context, q querier, colorIDs []uuid.UUID) (map[uuid.UUID][]imageRow, error) {
 	out := map[uuid.UUID][]imageRow{}
 	if len(colorIDs) == 0 {
 		return out, nil
 	}
-	rows, err := q.Query(ctx, `SELECT `+imageColumns+` FROM catalog_images WHERE vehicle_color_id = ANY($1) ORDER BY viewpoint`, colorIDs)
+	rows, err := q.Query(ctx, `SELECT `+imageColumns+` FROM catalog_images WHERE vehicle_color_id = ANY($1) ORDER BY catalog_images.viewpoint`, colorIDs)
 	if err != nil {
 		return nil, err
 	}

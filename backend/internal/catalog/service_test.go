@@ -578,6 +578,31 @@ func TestPutImageAddsReplacesAndRemoves(t *testing.T) {
 	}
 }
 
+func TestImagesComeBackInViewpointOrderMainViewFirst(t *testing.T) {
+	e := newTestEnv(t)
+	manager := e.insertEmployee(auth.RoleSalesManager, "")
+	m := e.createModel(manager.actor())
+	cid := m.Colors[0].ID
+	// Uploaded in reverse, and alphabetical order would put "interior" before "main_view".
+	for _, vp := range []string{"interior", "exterior_rear", "exterior_right", "exterior_left", "exterior_front"} {
+		if _, err := e.svc.PutImage(e.ctx, manager.actor(), cid, vp, pngBytes(1)); err != nil {
+			t.Fatalf("%s: %v", vp, err)
+		}
+	}
+	got, err := e.svc.Get(e.ctx, manager.actor(), m.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var order []string
+	for _, img := range got.Colors[0].Images {
+		order = append(order, img.Viewpoint)
+	}
+	want := "main_view,exterior_front,exterior_left,exterior_right,exterior_rear,interior"
+	if strings.Join(order, ",") != want {
+		t.Fatalf("images are ordered %v, want %s", order, want)
+	}
+}
+
 func TestPutImageValidation(t *testing.T) {
 	e := newTestEnv(t)
 	manager := e.insertEmployee(auth.RoleSalesManager, "")
