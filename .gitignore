@@ -12,6 +12,9 @@ dist/
 coverage/
 build/
 
+# Local media and documents
+backend/var/
+
 # Logs
 *.log
 npm-debug.log*
