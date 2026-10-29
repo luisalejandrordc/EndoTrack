@@ -92,8 +92,8 @@ The API now serves the employee authentication routes under `/api/v1`:
 Create the first System Admin once (it refuses to run if one already exists):
 
 ```
-make bootstrap-admin ARGS="-doc-number 10000001 -first-name Maju -last-name Admin -gender F \
-  -phone 999111222 -email maju@admin.com -birthdate 2004-10-05 -hire-date 2026-01-01"
+make bootstrap-admin ARGS="-doc-number 10000001 -first-name System -last-name Administrator -gender M \
+  -phone 999111222 -email sysadmin@endosoflow.com -birthdate 1990-01-01 -hire-date 2026-01-01"
 ```
 
 It prints an activation link. Locally no real email is sent: emails are written to the server log, so you

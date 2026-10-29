@@ -99,7 +99,7 @@ VALUES
     DATE '2000-01-01',
     DATE '2000-01-01',
     '000000000',
-    'system@endosoflow.invalid',
+    'system@endosoflow.com',
     'system_admin',
     true,
     false,
