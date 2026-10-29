@@ -214,6 +214,7 @@ export default function App() {
         {page === "catalog" && (
           <CatalogPage
             vehicles={vehicles}
+            query={query}
             demo={demoMode}
             role={currentUser.role}
             toast={notify}

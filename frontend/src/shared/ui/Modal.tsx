@@ -7,12 +7,15 @@ export function Modal({
   children,
   onClose,
   footer,
+  wide = false,
 }: {
   title: string;
   description?: string;
   children: ReactNode;
   onClose: () => void;
   footer?: ReactNode;
+  /** A wider window for screens that hold tables or image grids. */
+  wide?: boolean;
 }) {
   return (
     <div
@@ -23,7 +26,7 @@ export function Modal({
       }}
     >
       <section
-        className="modal"
+        className={wide ? "modal modal-wide" : "modal"}
         role="dialog"
         aria-modal="true"
         aria-label={title}

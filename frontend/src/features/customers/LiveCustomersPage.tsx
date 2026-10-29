@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDebounced } from "../../shared/lib/useDebounced";
 import { initials } from "../../shared/lib/format";
 import type { Role } from "../../shared/types";
@@ -27,12 +27,15 @@ export function LiveCustomersPage({
 }) {
   const [typeFilter, setTypeFilter] = useState("");
   const [status, setStatus] = useState<"all" | "active" | "inactive">("all");
-  const [page, setPage] = useState(1);
+  const [pageState, setPageState] = useState({ key: "", page: 1 });
   const [modal, setModal] = useState<FormMode | null>(null);
   const search = useDebounced(query.trim());
 
-  // A new search or filter starts again from the first page.
-  useEffect(() => setPage(1), [search, typeFilter, status]);
+  // A new search or filter starts again from the first page, without a wasted request for the old page.
+  const filterKey = `${search}|${typeFilter}|${status}`;
+  const page = pageState.key === filterKey ? pageState.page : 1;
+  const setPage = (update: (current: number) => number) =>
+    setPageState({ key: filterKey, page: update(page) });
 
   const list = useCustomerList({
     q: search,

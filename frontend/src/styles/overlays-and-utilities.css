@@ -223,3 +223,7 @@
 .loading-screen p {
   margin-top: 16px;
 }
+
+.modal.modal-wide {
+  width: min(880px, calc(100vw - 32px));
+}

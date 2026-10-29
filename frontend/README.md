@@ -54,7 +54,7 @@ If the Go server listens on a different port, update `VITE_API_PROXY_TARGET`. Fo
 
 - `src/shared/api/schema.d.ts` is generated from `backend/api/openapi.yaml`. Run `npm run api:types` whenever the contract changes and commit the result; `npm run api:types:check` fails if the file is stale. Use it through `Schemas` in `src/shared/api/schema.ts`, so a screen cannot drift from the real contract.
 - Server data goes through TanStack Query (`@tanstack/react-query`). Each feature keeps its calls in `api.ts` and its hooks in `queries.ts`. Requests the server refused (4xx) are not retried.
-- A screen runs in one of two modes: **live** (talks to the API) or **demo** (`VITE_DEMO_MODE`, sample data in memory). Customers is live; the other screens still use demo data until their backend modules are wired.
+- A screen runs in one of two modes: **live** (talks to the API) or **demo** (`VITE_DEMO_MODE`, sample data in memory). Customers and the vehicle catalog are live; the other screens still use demo data until their backend modules are wired.
 
 ## Validation
 
@@ -69,12 +69,12 @@ npm run api:types:check  # the generated types match the OpenAPI contract
 
 ### Integration test against a real backend
 
-`src/features/customers/customers.integration.test.ts` drives the real API client against a running backend with three employees (Admin, Manager, Advisor). It is skipped unless `INTEGRATION_API` is set:
+`customers.integration.test.ts` and `catalog.integration.test.ts` (in each feature folder) drive the real API client against a running backend with three employees (Admin, Manager, Advisor); the catalog one uploads real files and fetches them back, so the backend must serve its images. They are skipped unless `INTEGRATION_API` is set:
 
 ```bash
 INTEGRATION_API=1 VITE_API_BASE_URL=http://localhost:8080/api/v1 INTEGRATION_PASSWORD=... \
 INTEGRATION_ADMIN=DNI:<number> INTEGRATION_MANAGER=DNI:<number> INTEGRATION_ADVISOR=DNI:<number> \
-npx vitest run src/features/customers/customers.integration.test.ts
+npx vitest run src/features/customers/customers.integration.test.ts src/features/catalog/catalog.integration.test.ts
 ```
 
 ## Project structure
@@ -92,7 +92,8 @@ src/
     sales/                 SalesWorkspace, SaleDetail (+ detail/ tabs), NewSaleWizard,
                            ConfirmModal, saleActions.ts (DEMO-ONLY rules), hooks
     customers/             LiveCustomersPage (API), DemoCustomersPage, form modal, dialogs, api/queries
-    catalog/  staff/  profile/
+    catalog/               LiveCatalogPage (API), DemoCatalogPage, model detail, create/version/color/image dialogs
+    staff/  profile/
   shared/
     api/client.ts          typed API client, token refresh, error envelope
     demo/data.ts           presentation data and the 13 task definitions
